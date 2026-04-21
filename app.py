@@ -84,14 +84,28 @@ def seleccionar_premio_inteligente(estacion_id):
     return dict(premio_ganador)
 
 def init_db():
-    conn = get_db()
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS estaciones (id SERIAL PRIMARY KEY, nombre TEXT NOT NULL, admin_user TEXT UNIQUE NOT NULL, admin_pass TEXT NOT NULL, ruleta_user TEXT UNIQUE, ruleta_pass TEXT)''')
-    c.execute('''CREATE TABLE IF NOT EXISTS canjes (id SERIAL PRIMARY KEY, estacion_id INTEGER, nombre TEXT, dni TEXT, email TEXT, telefono TEXT, premio TEXT, token TEXT, sector TEXT, estado TEXT DEFAULT 'PENDIENTE', vendedor_canje TEXT, fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(estacion_id) REFERENCES estaciones(id))''')
-    c.execute('''CREATE TABLE IF NOT EXISTS premios (id SERIAL PRIMARY KEY, estacion_id INTEGER, nombre TEXT NOT NULL, tipo TEXT NOT NULL, dificultad TEXT NOT NULL, peso INTEGER NOT NULL, sector TEXT NOT NULL, imagen_url TEXT, limite_diario INTEGER DEFAULT 0, FOREIGN KEY(estacion_id) REFERENCES estaciones(id))''')
-    c.execute('''CREATE TABLE IF NOT EXISTS vendedores (id SERIAL PRIMARY KEY, estacion_id INTEGER, nombre TEXT NOT NULL, pin TEXT NOT NULL, sector TEXT NOT NULL, FOREIGN KEY(estacion_id) REFERENCES estaciones(id))''')
-    conn.commit()
-    conn.close()
+    try:
+        print("=========================================")
+        print("⏳ INTENTANDO CONECTAR A LA BASE DE DATOS...")
+        print(f"URL detectada: {str(DATABASE_URL)[:20]}...") 
+        print("=========================================")
+        
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('''CREATE TABLE IF NOT EXISTS estaciones (id SERIAL PRIMARY KEY, nombre TEXT NOT NULL, admin_user TEXT UNIQUE NOT NULL, admin_pass TEXT NOT NULL, ruleta_user TEXT UNIQUE, ruleta_pass TEXT)''')
+        c.execute('''CREATE TABLE IF NOT EXISTS canjes (id SERIAL PRIMARY KEY, estacion_id INTEGER, nombre TEXT, dni TEXT, email TEXT, telefono TEXT, premio TEXT, token TEXT, sector TEXT, estado TEXT DEFAULT 'PENDIENTE', vendedor_canje TEXT, fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(estacion_id) REFERENCES estaciones(id))''')
+        c.execute('''CREATE TABLE IF NOT EXISTS premios (id SERIAL PRIMARY KEY, estacion_id INTEGER, nombre TEXT NOT NULL, tipo TEXT NOT NULL, dificultad TEXT NOT NULL, peso INTEGER NOT NULL, sector TEXT NOT NULL, imagen_url TEXT, limite_diario INTEGER DEFAULT 0, FOREIGN KEY(estacion_id) REFERENCES estaciones(id))''')
+        c.execute('''CREATE TABLE IF NOT EXISTS vendedores (id SERIAL PRIMARY KEY, estacion_id INTEGER, nombre TEXT NOT NULL, pin TEXT NOT NULL, sector TEXT NOT NULL, FOREIGN KEY(estacion_id) REFERENCES estaciones(id))''')
+        conn.commit()
+        conn.close()
+        
+        print("✅ BASE DE DATOS CONECTADA Y LISTA")
+    except Exception as e:
+        print("=========================================")
+        print("🔥 ERROR FATAL AL INICIAR LA BASE DE DATOS 🔥")
+        print(f"MOTIVO EXACTO: {e}")
+        print("Revisa tus variables de entorno en Render.")
+        print("=========================================")
 
 init_db()
 
