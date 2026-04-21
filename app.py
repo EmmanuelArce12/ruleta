@@ -108,26 +108,22 @@ def init_db():
         print("=========================================")
         
         conn = get_db()
+        conn.autocommit = True  # <-- CLAVE: Evita que la base de datos se bloquee
         c = conn.cursor()
+        
         c.execute('''CREATE TABLE IF NOT EXISTS estaciones (id SERIAL PRIMARY KEY, nombre TEXT NOT NULL, admin_user TEXT UNIQUE NOT NULL, admin_pass TEXT NOT NULL, ruleta_user TEXT UNIQUE, ruleta_pass TEXT)''')
         c.execute('''CREATE TABLE IF NOT EXISTS canjes (id SERIAL PRIMARY KEY, estacion_id INTEGER, nombre TEXT, dni TEXT, email TEXT, telefono TEXT, premio TEXT, token TEXT, sector TEXT, estado TEXT DEFAULT 'PENDIENTE', vendedor_canje TEXT, fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(estacion_id) REFERENCES estaciones(id))''')
         c.execute('''CREATE TABLE IF NOT EXISTS premios (id SERIAL PRIMARY KEY, estacion_id INTEGER, nombre TEXT NOT NULL, tipo TEXT NOT NULL, dificultad TEXT NOT NULL, peso INTEGER NOT NULL, sector TEXT NOT NULL, imagen_url TEXT, limite_diario INTEGER DEFAULT 0, FOREIGN KEY(estacion_id) REFERENCES estaciones(id))''')
         c.execute('''CREATE TABLE IF NOT EXISTS vendedores (id SERIAL PRIMARY KEY, estacion_id INTEGER, nombre TEXT NOT NULL, pin TEXT NOT NULL, sector TEXT NOT NULL, FOREIGN KEY(estacion_id) REFERENCES estaciones(id))''')
         
-        # Parches para agregar columnas de correo sin romper la base existente
-        try: c.execute("ALTER TABLE estaciones ADD COLUMN correo_emisor TEXT")
-        except: pass
-        try: c.execute("ALTER TABLE estaciones ADD COLUMN password_correo TEXT")
-        except: pass
+        # Parches oficiales y seguros para Postgres
+        c.execute("ALTER TABLE estaciones ADD COLUMN IF NOT EXISTS correo_emisor TEXT")
+        c.execute("ALTER TABLE estaciones ADD COLUMN IF NOT EXISTS password_correo TEXT")
 
-        conn.commit()
         conn.close()
         print("✅ BASE DE DATOS CONECTADA Y LISTA")
     except Exception as e:
         print("🔥 ERROR FATAL AL INICIAR LA BASE DE DATOS 🔥", e)
-
-init_db()
-
 # ==========================================
 # 1. LOGIN UNIFICADO E INICIO
 # ==========================================
@@ -196,14 +192,12 @@ def blanquear_clave(id):
 # ==========================================
 # 3. ADMIN DE ESTACIÓN
 # ==========================================
-@app.route('/logout_admin')
-def logout_admin(): session.clear(); return redirect('/login')
-
 @app.route('/admin')
 def panel_admin():
     if 'estacion_id' not in session: return redirect('/login')
     eid = session['estacion_id']
-    conn = get_db(); c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     
     c.execute("SELECT * FROM estaciones WHERE id = %s", (eid,))
     estacion = c.fetchone()
@@ -226,18 +220,27 @@ def panel_admin():
     for p in premios_db:
         limite = p['limite_diario'] if p['limite_diario'] else 0
         entregados = entregados_hoy.get(p['nombre'], 0)
-        if limite == 0 or entregados < limite: total_peso_activo += p['peso']
+        if limite == 0 or entregados < limite: 
+            total_peso_activo += p['peso']
     
     premios = []
     for p in premios_db:
         p_dict = dict(p)
+        
+        # LA SOLUCIÓN DEL ERROR 500: Obligamos a que el límite sea un número, nunca "None"
         limite = p['limite_diario'] if p['limite_diario'] else 0
+        p_dict['limite_diario'] = limite  
+        
         entregados = entregados_hoy.get(p['nombre'], 0)
         p_dict['entregados_hoy'] = entregados
+        
         if limite > 0 and entregados >= limite:
-            p_dict['probabilidad_porcentaje'] = 0.00; p_dict['estado'] = "AGOTADO HOY"
+            p_dict['probabilidad_porcentaje'] = 0.00
+            p_dict['estado'] = "AGOTADO HOY"
         else:
-            p_dict['probabilidad_porcentaje'] = round((p['peso'] / total_peso_activo * 100), 2) if total_peso_activo > 0 else 0; p_dict['estado'] = "ACTIVO"
+            p_dict['probabilidad_porcentaje'] = round((p['peso'] / total_peso_activo * 100), 2) if total_peso_activo > 0 else 0
+            p_dict['estado'] = "ACTIVO"
+            
         premios.append(p_dict)
         
     conn.close()
