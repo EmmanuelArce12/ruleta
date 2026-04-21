@@ -7,24 +7,29 @@ import random
 import string
 import openpyxl
 import os
+from dotenv import load_dotenv  # <--- NUEVO: Importamos el lector
 from datetime import date
 from io import BytesIO
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+# <--- NUEVO: Le decimos a Python que busque y lea el archivo .env
+load_dotenv() 
+
 app = Flask(__name__)
 
 # ==========================================
-# VARIABLES DE ENTORNO (Tus "campos vacíos")
+# VARIABLES DE ENTORNO
 # ==========================================
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'super_clave_secreta_ge')
 DATABASE_URL = os.environ.get('DATABASE_URL')
 MI_PASSWORD = os.environ.get('PASSWORD_CORREO')
 
-# Credenciales del Super Admin leídas 100% desde la nube
+# Credenciales del Super Admin
 SUPERADMIN_USER = os.environ.get('USUARIO_SUPERADMIN')
 SUPERADMIN_PASS = os.environ.get('CLAVE_SUPERADMIN')
 
+# ... (El resto del código sigue igual hacia abajo)
 # Configuraciones fijas
 MI_CORREO = "echeverriaehijosaforadores@gmail.com"
 
