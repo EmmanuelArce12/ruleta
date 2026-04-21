@@ -3,20 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ruleta GE Echeverría</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruleta de Premios</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script>const ESTACION_ID = {{ estacion_id }};</script>
-    <a href="/logout_ruleta" style="position: fixed; bottom: 15px; right: 15px; background: rgba(0, 0, 0, 0.6); color: white; padding: 8px 12px; text-decoration: none; border-radius: 8px; font-size: 12px; font-family: Arial, sans-serif; z-index: 9999; border: 1px solid rgba(255,255,255,0.3); transition: 0.3s;" onmouseover="this.style.background='#e74c3c'" onmouseout="this.style.background='rgba(0,0,0,0.6)'">Cerrar Sesión</a>
 </head>
-<body>
+
+<body class="{{ estilo_ruleta }}">
+
+    <a href="/logout_ruleta" style="position: fixed; bottom: 15px; right: 15px; background: rgba(0, 0, 0, 0.6); color: white; padding: 8px 12px; text-decoration: none; border-radius: 8px; font-size: 12px; font-family: Arial, sans-serif; z-index: 9999; border: 1px solid rgba(255,255,255,0.3); transition: 0.3s;" onmouseover="this.style.background='#e74c3c'" onmouseout="this.style.background='rgba(0,0,0,0.6)'">Cerrar Sesión</a>
 
     <div class="contenedor-principal">
         <h1>¡Girá y Ganá con {{ nombre_estacion }}!</h1>
         
         <div class="contenedor-ruleta">
             <div class="flecha">▼</div>
+            
+            <div id="colores-marca" 
+                 data-color1="{% if 'AXION' in estilo_ruleta %}#5d2a8e{% else %}#005CAB{% endif %}" 
+                 data-color2="{% if 'AXION' in estilo_ruleta %}#ffffff{% else %}#F1C40F{% endif %}">
+            </div>
+
             <canvas id="canvas-ruleta" width="350" height="350"></canvas>
             
             <div class="centro-logo">
@@ -29,7 +36,7 @@
 
     <div id="modal-premio" class="modal oculto">
         <div class="contenido-modal animacion-fiesta">
-            <h2 style="color: #005CAB; font-size: 28px;">🎉 ¡Tenemos un resultado! 🎉</h2>
+            <h2 class="titulo-modal">🎉 ¡Tenemos un resultado! 🎉</h2>
             
             <img id="img-premio" src="" alt="Premio" style="max-width: 150px; max-height: 150px; display: none; margin: 0 auto 15px auto; object-fit: contain;">
             
@@ -51,4 +58,3 @@
     <script src="{{ url_for('static', filename='js/ruleta.js') }}"></script>
 </body>
 </html>
-
