@@ -12,7 +12,15 @@ document.addEventListener("DOMContentLoaded", () => {
     let gradosActuales = 0;
     let premioGanado = null;
 
-    const colores = ["#005CAB", "#ffffff", "#005CAB", "#ffffff", "#005CAB", "#ffffff", "#005CAB", "#ffffff"];
+    // --- MAGIA MULTIMARCA: LEER COLORES DEL HTML ---
+    let divColores = document.getElementById('colores-marca');
+    // Si no encuentra el div, usa azul y blanco por defecto. Si lo encuentra, usa el color 1 y el color 2 (o blanco).
+    let colorPrimario = divColores ? divColores.getAttribute('data-color1') : "#005CAB";
+    let colorSecundario = divColores ? divColores.getAttribute('data-color2') : "#ffffff";
+    
+    // El arreglo de colores intercala el primario y el secundario
+    const coloresGajos = [colorPrimario, colorSecundario];
+    const coloresConfeti = [colorPrimario, colorSecundario, '#ffffff'];
 
     fetch(`/api/premios/${ESTACION_ID}`)
         .then(res => res.json())
@@ -29,15 +37,21 @@ document.addEventListener("DOMContentLoaded", () => {
             ctx.beginPath();
             ctx.moveTo(centro, centro);
             ctx.arc(centro, centro, centro, i * porcion, (i + 1) * porcion);
-            ctx.fillStyle = colores[i % colores.length];
+            // Pinta intercalando los colores corporativos
+            ctx.fillStyle = coloresGajos[i % 2];
             ctx.fill();
+            // Pinta la línea separadora con el color primario
+            ctx.strokeStyle = colorPrimario;
             ctx.stroke();
 
             ctx.save();
             ctx.translate(centro, centro);
             ctx.rotate(i * porcion + porcion / 2);
             ctx.textAlign = "right";
-            ctx.fillStyle = (i % 2 === 0) ? "#ffffff" : "#005CAB"; 
+            
+            // Si el fondo es oscuro (índice 0, color primario), el texto es blanco. 
+            // Si el fondo es claro (índice 1, color secundario), el texto es del color primario.
+            ctx.fillStyle = (i % 2 === 0) ? "#ffffff" : colorPrimario; 
             ctx.font = "bold 14px Arial";
             
             let texto = premios[i].nombre.substring(0, 15);
@@ -54,7 +68,6 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(premio => {
                 premioGanado = premio;
                 
-                // --- LA NUEVA MATEMÁTICA DE SINCRONIZACIÓN ---
                 // 1. Buscamos qué porción es la ganadora
                 const indicePremio = premios.findIndex(p => p.nombre === premio.nombre);
                 
@@ -96,10 +109,38 @@ document.addEventListener("DOMContentLoaded", () => {
                         formulario.classList.add("oculto");
                         btnCerrarModal.classList.remove("oculto");
                     } else {
-                        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, zIndex: 200 });
-                        textoPremio.innerHTML = `¡Ganaste:<br><strong style="color:#005CAB;">${premio.nombre}</strong>!`;
+                        // --- NUEVO CONFETI: LLUVIA LATERAL CORPORATIVA ---
+                        textoPremio.innerHTML = `¡Ganaste:<br><strong style="color:${colorPrimario};">${premio.nombre}</strong>!`;
                         formulario.classList.remove("oculto");
                         btnCerrarModal.classList.add("oculto");
+
+                        var duration = 3000;
+                        var end = Date.now() + duration;
+
+                        (function frame() {
+                            confetti({
+                                particleCount: 5,
+                                angle: 60,
+                                spread: 55,
+                                origin: { x: 0 }, // Lado Izquierdo
+                                colors: coloresConfeti,
+                                zIndex: 90, // Detrás del formulario
+                                disableForReducedMotion: true
+                            });
+                            confetti({
+                                particleCount: 5,
+                                angle: 120,
+                                spread: 55,
+                                origin: { x: 1 }, // Lado Derecho
+                                colors: coloresConfeti,
+                                zIndex: 90
+                            });
+
+                            if (Date.now() < end) {
+                                requestAnimationFrame(frame);
+                            }
+                        }());
+                        // ------------------------------------------------
                     }
                 }, 5000); 
             });
