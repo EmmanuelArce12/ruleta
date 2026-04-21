@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Administración - Grupo GE</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f7f6; padding: 20px; margin: 0; }
+        .header { background: #005CAB; color: white; padding: 15px 25px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .btn-nav { background: #F1C40F; color: #005CAB; padding: 10px 15px; border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 14px; margin-left: 10px; transition: 0.3s; }
+        .btn-nav:hover { background: #FFD700; transform: translateY(-2px); }
+        .contenedor { display: flex; gap: 20px; flex-wrap: wrap; }
+        .tarjeta { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); flex: 1; min-width: 320px; border-top: 4px solid #005CAB; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #f8f9fa; }
+        .btn-accion { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; }
+        .btn-verde { background: #27ae60; }
+        .btn-azul { background: #3498db; }
+        .btn-rojo { background: #e74c3c; }
+        .agotado { background: #ffebee; color: #c0392b; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1 style="margin: 0; font-size: 24px;">Panel: {{ nombre_estacion }}</h1>
+        <div>
+            <a href="/iniciar_terminal" class="btn-nav" target="_blank">💻 Ir a Terminal POS</a>
+            <a href="/iniciar_ruleta" class="btn-nav" target="_blank">🎡 Ir a Ruleta</a>
+            <a href="/logout_admin" style="color: white; margin-left: 20px; font-size: 14px; text-decoration: none; font-weight: bold;">Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <div class="contenedor">
+        
+        <div class="tarjeta" style="min-width: 100%;">
+            <h2 style="color: #e67e22; margin-top: 0; border-bottom: 2px solid #e67e22; padding-bottom: 10px;">🔐 Acceso para Tablet (Ruleta / Terminal)</h2>
+            <form action="/admin/configurar_ruleta" method="POST" style="background: #fff9e6; padding: 20px; border-radius: 8px; border: 1px solid #f39c12; display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+                <div style="flex: 1; min-width: 200px;">
+                    <label style="font-weight: bold; color: #d35400; font-size: 14px;">Usuario de Tablet:</label>
+                    <input type="text" name="ruleta_user" value="{{ estacion['ruleta_user'] or '' }}" placeholder="Ej: tablet_playa" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; margin-top: 5px;">
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <label style="font-weight: bold; color: #d35400; font-size: 14px;">Contraseña:</label>
+                    <input type="text" name="ruleta_pass" value="{{ estacion['ruleta_pass'] or '' }}" placeholder="Contraseña" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; margin-top: 5px;">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn-accion btn-verde" style="padding: 12px 20px;">💾 Guardar / Actualizar</button>
+                </div>
+            </form>
+            {% if estacion['ruleta_user'] %}
+            <form action="/admin/borrar_ruleta" method="POST" style="margin-top: 15px; text-align: right;">
+                <button type="submit" class="btn-accion btn-rojo" onclick="return confirm('¿Seguro? Deberás crear uno nuevo para que la tablet funcione.')">🗑️ Eliminar Acceso</button>
+            </form>
+            {% endif %}
+        </div>
+
+        <div class="tarjeta">
+            <h2 style="border-bottom: 2px solid #005CAB; padding-bottom: 10px;">🎁 Configurar Premios y Estadísticas</h2>
+            <p style="font-size: 13px; color: #555;">Establece un límite de cuántas veces por día puede salir un premio. Si llega al límite, el sistema lo desactiva hasta mañana y reajusta las probabilidades.</p>
+            
+            <form action="/admin/agregar_premio" method="POST" style="background: #fdfdfd; padding: 15px; border: 1px solid #eee; border-radius: 8px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <input type="text" name="nombre" placeholder="Nombre del Premio (Ej: Tanque Lleno)" required style="flex: 2; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    <input type="number" name="limite_diario" placeholder="Límite Diario (Dejar en 0 si es ilimitado)" min="0" value="0" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; background: #fff9e6;" title="Cuántas veces por día quieres regalar esto">
+                </div>
+                
+                <select name="dificultad" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;" required>
+                    <option value="" disabled selected>¿Qué tan fácil es ganarlo?</option>
+                    <option value="Consuelo">Sale Siempre (Consuelo / Sigue intentando)</option>
+                    <option value="Frecuente">Fácil (Frecuente)</option>
+                    <option value="Normal">Normal</option>
+                    <option value="Raro">Difícil</option>
+                    <option value="Imposible">Casi Imposible (Premio Mayor)</option>
+                </select>
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <select name="sector" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px;"> 
+                        <option value="PLAYA">Playa</option> 
+                        <option value="FULL">Full</option> 
+                        <option value="NINGUNO">Ninguno (No se canjea)</option>
+                    </select>
+                    <input type="text" name="imagen_url" placeholder="Pegar URL de la imagen (Opcional)" style="flex: 2; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                
+                <button type="submit" class="btn-accion btn-azul" style="width: 100%; padding: 12px;">+ Agregar Premio al Bolillero</button>
+            </form>
+            
+            <table>
+                <thead><tr><th>Premio</th><th>Dificultad</th><th>Límite Hoy</th><th style="background:#fff9e6;">% Chance (Ahora)</th><th>Acción</th></tr></thead>
+                <tbody>
+                    {% for p in premios %}
+                    <tr class="{% if p['estado'] == 'AGOTADO HOY' %}agotado{% endif %}">
+                        <td>{{ p['nombre'] }}<br><small style="color: gray;">{{ p['sector'] }}</small></td>
+                        <td>{{ p['dificultad'] }}</td>
+                        <td style="text-align: center; font-weight: bold;">
+                            {% if p['limite_diario'] > 0 %}
+                                {{ p['entregados_hoy'] }} / {{ p['limite_diario'] }}
+                            {% else %}
+                                Ilimitado
+                            {% endif %}
+                        </td>
+                        <td style="font-weight: bold; color: {% if p['estado'] == 'AGOTADO HOY' %}#c0392b{% else %}#27ae60{% endif %}; font-size: 16px;">
+                            {% if p['estado'] == 'AGOTADO HOY' %}
+                                Agotado
+                            {% else %}
+                                {{ p['probabilidad_porcentaje'] }}%
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form action="/admin/borrar_premio/{{ p['id'] }}" method="POST" style="margin: 0;">
+                                <button type="submit" class="btn-rojo" style="padding: 6px 10px;">Borrar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" style="text-align: center;">Aún no hay premios cargados.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="tarjeta">
+            <h2 style="border-bottom: 2px solid #005CAB; padding-bottom: 10px;">👤 Personal (Terminal)</h2>
+            <form action="/admin/agregar_vendedor" method="POST" style="background: #fdfdfd; padding: 15px; border: 1px solid #eee; border-radius: 8px;">
+                <input type="text" name="nombre" placeholder="Nombre Vendedor" required style="width: 95%; padding: 10px; margin-bottom:10px; border: 1px solid #ccc; border-radius: 4px;">
+                <input type="number" name="pin" placeholder="PIN Secreto" required style="width: 45%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                <select name="sector" style="width: 45%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;"> 
+                    <option value="PLAYA">Playa</option> 
+                    <option value="FULL">Full</option> 
+                </select>
+                <button type="submit" class="btn-accion btn-verde" style="margin-top:15px; width: 100%; padding: 12px;">+ Crear Vendedor</button>
+            </form>
+            <table style="margin-top:15px;">
+                <thead><tr><th>Nombre</th><th>Sector</th><th>PIN</th></tr></thead>
+                <tbody>
+                    {% for v in vendedores %}
+                    <tr><td>{{ v['nombre'] }}</td><td>{{ v['sector'] }}</td><td style="font-family: monospace;">****</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="tarjeta" style="flex: 2; min-width: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #005CAB; padding-bottom: 10px; margin-bottom: 15px;">
+                <h2 style="margin: 0; border: none; padding: 0;">📊 Historial de Participantes</h2>
+                <a href="/admin/exportar_excel" class="btn-accion btn-verde" style="text-decoration: none; font-size: 14px; padding: 10px 15px;">⬇ Exportar a Excel</a>
+            </div>
+            <table>
+                <thead><tr><th>Fecha</th><th>Cliente</th><th>Premio</th><th>Token</th><th>Estado / Entregó</th></tr></thead>
+                <tbody>
+                    {% for c in clientes %}
+                    <tr>
+                        <td>{{ c['fecha'][:10] }}</td>
+                        <td>{{ c['nombre'] }}<br><small style="color: #005CAB;">{{ c['email'] }}</small></td>
+                        <td><strong>{{ c['premio'] }}</strong></td>
+                        <td style="font-family: monospace; font-size: 14px; letter-spacing: 1px;">{{ c['token'] }}</td>
+                        <td style="color: {{ 'green' if c['estado'] == 'CANJEADO' else 'orange' }}; font-weight: bold;">
+                            {{ c['estado'] }} <br><small style="color:black; font-weight: normal;">{% if c['vendedor_canje'] %}👤 {{ c['vendedor_canje'] }}{% else %}-{% endif %}</small>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
