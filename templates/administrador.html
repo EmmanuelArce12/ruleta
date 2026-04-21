@@ -96,11 +96,13 @@
                     
                     <select name="estilo_ruleta" style="width: 100%; padding: 10px; margin-top: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px;">
                         {% if estacion['bandera'] == 'YPF' %}
-                            <option value="YPF_CLASICO" {% if estacion['estilo_ruleta'] == 'YPF_CLASICO' %}selected{% endif %}>YPF: Clásico (Azul y Amarillo)</option>
-                            <option value="YPF_MODERNO" {% if estacion['estilo_ruleta'] == 'YPF_MODERNO' %}selected{% endif %}>YPF: Moderno (Carbono y Vidrio)</option>
+                            <option value="YPF_CLASICO" {% if estacion['estilo_ruleta'] == 'YPF_CLASICO' %}selected{% endif %}>YPF: Clásico (Plano Azul/Amarillo)</option>
+                            <option value="YPF_MODERNO" {% if estacion['estilo_ruleta'] == 'YPF_MODERNO' %}selected{% endif %}>YPF: Moderno (Vidrio y Plata)</option>
+                            <option value="YPF_LED" {% if estacion['estilo_ruleta'] == 'YPF_LED' %}selected{% endif %}>YPF: Premium (Luces LED)</option>
                         {% elif estacion['bandera'] == 'AXION' %}
-                            <option value="AXION_CLASICO" {% if estacion['estilo_ruleta'] == 'AXION_CLASICO' %}selected{% endif %}>Axion: Clásico (Violeta y Rojo)</option>
-                            <option value="AXION_PREMIUM" {% if estacion['estilo_ruleta'] == 'AXION_PREMIUM' %}selected{% endif %}>Axion: Premium (Luces LED Oro)</option>
+                            <option value="AXION_CLASICO" {% if estacion['estilo_ruleta'] == 'AXION_CLASICO' %}selected{% endif %}>Axion: Clásico (Plano Violeta/Rojo)</option>
+                            <option value="AXION_MODERNO" {% if estacion['estilo_ruleta'] == 'AXION_MODERNO' %}selected{% endif %}>Axion: Moderno (Vidrio y Plata)</option>
+                            <option value="AXION_LED" {% if estacion['estilo_ruleta'] == 'AXION_LED' %}selected{% endif %}>Axion: Premium (Luces LED Oro)</option>
                         {% else %}
                             <option value="YPF_CLASICO" {% if estacion['estilo_ruleta'] == 'YPF_CLASICO' %}selected{% endif %}>Clásico (Por defecto)</option>
                         {% endif %}
