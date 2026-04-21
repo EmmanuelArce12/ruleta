@@ -299,7 +299,15 @@ def agregar_vendedor():
     if 'estacion_id' not in session: return redirect('/login')
     conn = get_db(); c = conn.cursor(); c.execute('INSERT INTO vendedores (estacion_id, nombre, pin, sector) VALUES (%s, %s, %s, %s)', (session['estacion_id'], request.form['nombre'], request.form['pin'], request.form['sector'])); conn.commit(); conn.close()
     return redirect('/admin')
-
+@app.route('/admin/borrar_vendedor/<int:id>', methods=['POST'])
+def borrar_vendedor(id):
+    if 'estacion_id' not in session: return redirect('/login')
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('DELETE FROM vendedores WHERE id = %s AND estacion_id = %s', (id, session['estacion_id']))
+    conn.commit()
+    conn.close()
+    return redirect('/admin')
 @app.route('/admin/exportar_excel')
 def exportar_excel():
     if 'estacion_id' not in session: return redirect('/login')
