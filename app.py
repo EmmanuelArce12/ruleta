@@ -109,7 +109,10 @@ def init_db():
         print("=========================================")
 
 init_db()
-
+@app.route('/')
+def inicio():
+    # Redirige automáticamente al panel maestro
+    return redirect('/superadmin')
 # ==========================================
 # 1. SUPER ADMIN
 # ==========================================
