@@ -2,16 +2,23 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Acceso al Sistema - Grupo GE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Acceso al Sistema - Grupo GE</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-box { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 350px; text-align: center; border-top: 5px solid #005CAB;}
-        h2 { color: #333; margin-bottom: 5px; }
+        body { font-family: Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .login-box { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 380px; text-align: center; border-top: 5px solid #005CAB; box-sizing: border-box;}
+        h2 { color: #333; margin-bottom: 5px; font-size: 24px; }
         p { color: #666; font-size: 14px; margin-bottom: 25px; }
-        input { width: 90%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; box-sizing: border-box; }
         button { background: #005CAB; color: white; border: none; padding: 15px; width: 100%; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 16px; transition: 0.3s;}
         button:hover { background: #004280; }
         .error { color: white; background: #e74c3c; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-weight: bold; }
+        
+        /* Adaptación para celulares pequeños */
+        @media (max-width: 480px) {
+            .login-box { padding: 30px 20px; }
+            h2 { font-size: 20px; }
+            input, button { font-size: 14px; padding: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -24,7 +31,7 @@
         {% endif %}
         
         <form action="/login" method="POST">
-            <input type="text" name="usuario" placeholder="Usuario" required autocomplete="off">
+            <input type="text" name="usuario" placeholder="Usuario (Ej: dueño o admin_playa)" required autocomplete="off">
             <input type="password" name="password" placeholder="Contraseña" required>
             <button type="submit">INGRESAR</button>
         </form>
