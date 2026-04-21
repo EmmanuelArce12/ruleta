@@ -124,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 spread: 55,
                                 origin: { x: 0 }, // Lado Izquierdo
                                 colors: coloresConfeti,
-                                zIndex: 90, // Detrás del formulario
+                                zIndex: 9999, // Detrás del formulario
                                 disableForReducedMotion: true
                             });
                             confetti({
