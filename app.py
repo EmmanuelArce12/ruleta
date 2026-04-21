@@ -7,13 +7,12 @@ import random
 import string
 import openpyxl
 import os
-from dotenv import load_dotenv  # <--- NUEVO: Importamos el lector
+from dotenv import load_dotenv
 from datetime import date
 from io import BytesIO
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-# <--- NUEVO: Le decimos a Python que busque y lea el archivo .env
 load_dotenv() 
 
 app = Flask(__name__)
@@ -26,17 +25,14 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 MI_PASSWORD = os.environ.get('PASSWORD_CORREO')
 
 # Credenciales del Super Admin
-SUPERADMIN_USER = os.environ.get('USUARIO_SUPERADMIN')
-SUPERADMIN_PASS = os.environ.get('CLAVE_SUPERADMIN')
+SUPERADMIN_USER = os.environ.get('USUARIO_SUPERADMIN', 'dueño')
+SUPERADMIN_PASS = os.environ.get('CLAVE_SUPERADMIN', 'admin123')
 
-# ... (El resto del código sigue igual hacia abajo)
 # Configuraciones fijas
 MI_CORREO = "echeverriaehijosaforadores@gmail.com"
 
 def get_db():
     return psycopg2.connect(DATABASE_URL)
-
-# ... (el resto del código sigue exactamente igual hacia abajo) ...
 
 def enviar_email(destinatario, nombre_cliente, premio, token):
     try:
@@ -48,7 +44,6 @@ def enviar_email(destinatario, nombre_cliente, premio, token):
         msg.attach(MIMEText(cuerpo, 'plain'))
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
-        # Limpieza por si quedó algún espacio en la variable de entorno
         clave_limpia = MI_PASSWORD.replace(" ", "") if MI_PASSWORD else ""
         server.login(MI_CORREO, clave_limpia)
         server.send_message(msg)
@@ -121,31 +116,53 @@ def init_db():
         print("=========================================")
 
 init_db()
+
+# ==========================================
+# 1. LOGIN UNIFICADO E INICIO
+# ==========================================
 @app.route('/')
 def inicio():
-    # Redirige automáticamente al panel maestro
-    return redirect('/superadmin')
-# ==========================================
-# 1. SUPER ADMIN
-# ==========================================
-@app.route('/login_superadmin', methods=['GET', 'POST'])
-def login_superadmin():
+    return redirect('/login')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
     error = None
     if request.method == 'POST':
-        if request.form['usuario'] == SUPERADMIN_USER and request.form['password'] == SUPERADMIN_PASS:
+        usuario_ingresado = request.form['usuario'].lower().strip()
+        password_ingresado = request.form['password']
+
+        # 1. ¿Es el dueño (SuperAdmin)?
+        if usuario_ingresado == SUPERADMIN_USER.lower() and password_ingresado == SUPERADMIN_PASS:
             session['super_auth'] = True
             return redirect('/superadmin')
-        error = "Credenciales incorrectas"
-    return render_template('login_superadmin.html', error=error)
 
+        # 2. ¿Es un Administrador de Estación?
+        conn = get_db()
+        c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        c.execute("SELECT * FROM estaciones WHERE admin_user = %s", (usuario_ingresado,))
+        estacion = c.fetchone()
+        conn.close()
+
+        if estacion and check_password_hash(estacion['admin_pass'], password_ingresado):
+            session['estacion_id'] = estacion['id']
+            session['estacion_nombre'] = estacion['nombre']
+            return redirect('/admin')
+            
+        error = "Credenciales incorrectas."
+        
+    return render_template('login.html', error=error)
+
+# ==========================================
+# 2. SUPER ADMIN
+# ==========================================
 @app.route('/logout_superadmin')
 def logout_superadmin():
     session.pop('super_auth', None)
-    return redirect('/login_superadmin')
+    return redirect('/login')
 
 @app.route('/superadmin')
 def superadmin():
-    if not session.get('super_auth'): return redirect('/login_superadmin')
+    if not session.get('super_auth'): return redirect('/login')
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     c.execute("SELECT * FROM estaciones ORDER BY id DESC")
@@ -155,7 +172,7 @@ def superadmin():
 
 @app.route('/superadmin/crear_estacion', methods=['POST'])
 def crear_estacion():
-    if not session.get('super_auth'): return redirect('/login_superadmin')
+    if not session.get('super_auth'): return redirect('/login')
     h = generate_password_hash(request.form['password'])
     conn = get_db()
     c = conn.cursor()
@@ -171,7 +188,7 @@ def crear_estacion():
 
 @app.route('/superadmin/borrar_estacion/<int:id>', methods=['POST'])
 def borrar_estacion(id):
-    if not session.get('super_auth'): return redirect('/login_superadmin')
+    if not session.get('super_auth'): return redirect('/login')
     conn = get_db()
     c = conn.cursor()
     c.execute('DELETE FROM premios WHERE estacion_id = %s', (id,))
@@ -183,7 +200,7 @@ def borrar_estacion(id):
 
 @app.route('/superadmin/blanquear_clave/<int:id>', methods=['POST'])
 def blanquear_clave(id):
-    if not session.get('super_auth'): return redirect('/login_superadmin')
+    if not session.get('super_auth'): return redirect('/login')
     h = generate_password_hash(request.form['nueva_clave'])
     conn = get_db()
     c = conn.cursor()
@@ -192,26 +209,12 @@ def blanquear_clave(id):
     return redirect('/superadmin')
 
 # ==========================================
-# 2. ADMIN DE ESTACIÓN
+# 3. ADMIN DE ESTACIÓN
 # ==========================================
-@app.route('/login', methods=['GET', 'POST'])
-def login_admin():
-    error = None
-    if request.method == 'POST':
-        conn = get_db()
-        c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        c.execute("SELECT * FROM estaciones WHERE admin_user = %s", (request.form['usuario'],))
-        estacion = c.fetchone()
-        conn.close()
-        if estacion and check_password_hash(estacion['admin_pass'], request.form['password']):
-            session['estacion_id'] = estacion['id']
-            session['estacion_nombre'] = estacion['nombre']
-            return redirect('/admin')
-        error = "Datos incorrectos."
-    return render_template('login_admin.html', error=error)
-
 @app.route('/logout_admin')
-def logout_admin(): session.clear(); return redirect('/login')
+def logout_admin(): 
+    session.clear()
+    return redirect('/login')
 
 @app.route('/admin')
 def panel_admin():
@@ -344,7 +347,7 @@ def exportar_excel():
     return Response(salida.getvalue(), mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers={"Content-Disposition":"attachment;filename=historial_clientes_ge.xlsx"})
 
 # ==========================================
-# 3. RULETA
+# 4. RULETA
 # ==========================================
 @app.route('/iniciar_ruleta', methods=['GET', 'POST'])
 def iniciar_ruleta():
@@ -361,6 +364,12 @@ def iniciar_ruleta():
             return redirect('/ruleta')
         error = "Credenciales incorrectas."
     return render_template('login_ruleta.html', error=error)
+
+@app.route('/logout_ruleta')
+def logout_ruleta():
+    session.pop('ruleta_auth_id', None)
+    session.pop('ruleta_auth_nombre', None)
+    return redirect('/iniciar_ruleta')
 
 @app.route('/ruleta')
 def ver_ruleta():
@@ -393,7 +402,7 @@ def registrar(estacion_id):
     return jsonify({"status": "ok", "token": t})
 
 # ==========================================
-# 4. TERMINAL
+# 5. TERMINAL
 # ==========================================
 @app.route('/iniciar_terminal', methods=['GET', 'POST'])
 def iniciar_terminal():
@@ -411,16 +420,16 @@ def iniciar_terminal():
         error = "Credenciales incorrectas."
     return render_template('login_terminal.html', error=error)
 
-@app.route('/terminal_canje')
-def terminal_canje():
-    if 'terminal_auth_id' not in session: return redirect('/iniciar_terminal')
-    return render_template('terminal.html', estacion_id=session['terminal_auth_id'], nombre_estacion=session['terminal_auth_nombre'])
-
 @app.route('/logout_terminal')
 def logout_terminal():
     session.pop('terminal_auth_id', None)
     session.pop('terminal_auth_nombre', None)
     return redirect('/iniciar_terminal')
+
+@app.route('/terminal_canje')
+def terminal_canje():
+    if 'terminal_auth_id' not in session: return redirect('/iniciar_terminal')
+    return render_template('terminal.html', estacion_id=session['terminal_auth_id'], nombre_estacion=session['terminal_auth_nombre'])
 
 @app.route('/procesar_canje/<int:estacion_id>', methods=['POST'])
 def procesar_canje(estacion_id):
