@@ -6,24 +6,22 @@ import smtplib
 import random
 import string
 import openpyxl
+import os
 from datetime import date
 from io import BytesIO
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 app = Flask(__name__)
-app.secret_key = 'super_clave_secreta_saas'
+# Variables leídas desde Render
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'super_clave_secreta_ge')
+MI_PASSWORD = os.environ.get('PASSWORD_CORREO')
+SUPERADMIN_PASS = os.environ.get('CLAVE_SUPERADMIN')
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
-# --- CONFIGURACIÓN GENERAL ---
+# Configuraciones fijas
 MI_CORREO = "echeverriaehijosaforadores@gmail.com"
-MI_PASSWORD = "TU_CONTRASEÑA_DE_GOOGLE_AQUI"
-
-# CREDENCIALES DEL DUEÑO (SUPERADMIN)
 SUPERADMIN_USER = "dueño"
-SUPERADMIN_PASS = "admin123"
-
-# BASE DE DATOS SUPABASE
-DATABASE_URL = "postgresql://postgres.xxxx:tu_clave@aws-0-sa-east-1.pooler.supabase.com:6543/postgres"
 
 def get_db():
     return psycopg2.connect(DATABASE_URL)
@@ -38,7 +36,9 @@ def enviar_email(destinatario, nombre_cliente, premio, token):
         msg.attach(MIMEText(cuerpo, 'plain'))
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
-        server.login(MI_CORREO, MI_PASSWORD.replace(" ", ""))
+        # Limpieza por si quedó algún espacio en la variable de entorno
+        clave_limpia = MI_PASSWORD.replace(" ", "") if MI_PASSWORD else ""
+        server.login(MI_CORREO, clave_limpia)
         server.send_message(msg)
         server.quit()
         return True
@@ -87,7 +87,8 @@ def init_db():
     try:
         print("=========================================")
         print("⏳ INTENTANDO CONECTAR A LA BASE DE DATOS...")
-        print(f"URL detectada: {str(DATABASE_URL)[:20]}...") 
+        url_segura = f"{str(DATABASE_URL)[:20]}..." if DATABASE_URL else "NINGUNA (Revisar Render)"
+        print(f"URL detectada: {url_segura}") 
         print("=========================================")
         
         conn = get_db()
@@ -110,7 +111,7 @@ def init_db():
 init_db()
 
 # ==========================================
-# 1. SUPER ADMIN (SEGURIDAD AÑADIDA)
+# 1. SUPER ADMIN
 # ==========================================
 @app.route('/login_superadmin', methods=['GET', 'POST'])
 def login_superadmin():
@@ -158,7 +159,6 @@ def borrar_estacion(id):
     if not session.get('super_auth'): return redirect('/login_superadmin')
     conn = get_db()
     c = conn.cursor()
-    # Se deben borrar los hijos primero en Postgres por la llave foránea
     c.execute('DELETE FROM premios WHERE estacion_id = %s', (id,))
     c.execute('DELETE FROM vendedores WHERE estacion_id = %s', (id,))
     c.execute('DELETE FROM canjes WHERE estacion_id = %s', (id,))
@@ -305,7 +305,6 @@ def agregar_vendedor():
     conn.commit(); conn.close()
     return redirect('/admin')
 
-# EXCEL NATIVO (.xlsx)
 @app.route('/admin/exportar_excel')
 def exportar_excel():
     if 'estacion_id' not in session: return redirect('/login')
@@ -315,19 +314,14 @@ def exportar_excel():
     canjes = c.fetchall()
     conn.close()
     
-    # Crear Archivo Excel Real
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Historial Clientes"
-    
-    # Encabezados
     ws.append(['Fecha', 'Cliente', 'DNI', 'Email', 'Telefono', 'Premio Ganado', 'Token', 'Estado', 'Entregado Por'])
     
-    # Datos
     for canje in canjes:
         ws.append([str(canje['fecha'])[:16], canje['nombre'], canje['dni'], canje['email'], canje['telefono'], canje['premio'], canje['token'], canje['estado'], canje['vendedor_canje']])
     
-    # Generar salida
     salida = BytesIO()
     wb.save(salida)
     salida.seek(0)
@@ -362,7 +356,6 @@ def ver_ruleta():
 def api_premios(estacion_id):
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    # Lógica Postgres para ocultar premios sin stock hoy
     c.execute("SELECT nombre, imagen_url FROM premios WHERE estacion_id = %s AND (limite_diario = 0 OR limite_diario IS NULL OR nombre NOT IN (SELECT premio FROM canjes WHERE estacion_id = %s AND DATE(fecha) = CURRENT_DATE GROUP BY premio HAVING COUNT(*) >= premios.limite_diario))", (estacion_id, estacion_id))
     premios = c.fetchall()
     conn.close()
