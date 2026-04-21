@@ -2,12 +2,14 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Administración - Grupo GE</title>
+    <title>Administración</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f7f6; padding: 20px; margin: 0; }
         .header { background: #005CAB; color: white; padding: 15px 25px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .btn-nav { background: #F1C40F; color: #005CAB; padding: 10px 15px; border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 14px; margin-left: 10px; transition: 0.3s; }
         .btn-nav:hover { background: #FFD700; transform: translateY(-2px); }
+        .btn-logout { background: #e74c3c; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 14px; margin-left: 20px; transition: 0.3s; border: 1px solid #c0392b;}
+        .btn-logout:hover { background: #c0392b; }
         .contenedor { display: flex; gap: 20px; flex-wrap: wrap; }
         .tarjeta { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); flex: 1; min-width: 320px; border-top: 4px solid #005CAB; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
@@ -27,7 +29,7 @@
         <div>
             <a href="/iniciar_terminal" class="btn-nav" target="_blank">💻 Ir a Terminal POS</a>
             <a href="/iniciar_ruleta" class="btn-nav" target="_blank">🎡 Ir a Ruleta</a>
-            <a href="/logout_admin" style="color: white; margin-left: 20px; font-size: 14px; text-decoration: none; font-weight: bold;">Cerrar Sesión</a>
+            <a href="/logout_admin" class="btn-logout">🚪 Cerrar Sesión</a>
         </div>
     </div>
 
@@ -57,8 +59,6 @@
 
         <div class="tarjeta">
             <h2 style="border-bottom: 2px solid #005CAB; padding-bottom: 10px;">🎁 Configurar Premios y Estadísticas</h2>
-            <p style="font-size: 13px; color: #555;">Establece un límite de cuántas veces por día puede salir un premio. Si llega al límite, el sistema lo desactiva hasta mañana y reajusta las probabilidades.</p>
-            
             <form action="/admin/agregar_premio" method="POST" style="background: #fdfdfd; padding: 15px; border: 1px solid #eee; border-radius: 8px;">
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                     <input type="text" name="nombre" placeholder="Nombre del Premio (Ej: Tanque Lleno)" required style="flex: 2; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
@@ -80,7 +80,7 @@
                         <option value="FULL">Full</option> 
                         <option value="NINGUNO">Ninguno (No se canjea)</option>
                     </select>
-                    <input type="text" name="imagen_url" placeholder="Pegar URL de la imagen (Opcional)" style="flex: 2; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    <input type="text" name="imagen_url" placeholder="URL de la imagen (Opcional)" style="flex: 2; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
                 </div>
                 
                 <button type="submit" class="btn-accion btn-azul" style="width: 100%; padding: 12px;">+ Agregar Premio al Bolillero</button>
@@ -124,7 +124,7 @@
             <h2 style="border-bottom: 2px solid #005CAB; padding-bottom: 10px;">👤 Personal (Terminal)</h2>
             <form action="/admin/agregar_vendedor" method="POST" style="background: #fdfdfd; padding: 15px; border: 1px solid #eee; border-radius: 8px;">
                 <input type="text" name="nombre" placeholder="Nombre Vendedor" required style="width: 95%; padding: 10px; margin-bottom:10px; border: 1px solid #ccc; border-radius: 4px;">
-                <input type="number" name="pin" placeholder="PIN Secreto" required style="width: 45%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                <input type="password" name="pin" placeholder="PIN Secreto (Ej: 1234)" required style="width: 45%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
                 <select name="sector" style="width: 45%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;"> 
                     <option value="PLAYA">Playa</option> 
                     <option value="FULL">Full</option> 
@@ -144,7 +144,7 @@
         <div class="tarjeta" style="flex: 2; min-width: 100%;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #005CAB; padding-bottom: 10px; margin-bottom: 15px;">
                 <h2 style="margin: 0; border: none; padding: 0;">📊 Historial de Participantes</h2>
-                <a href="/admin/exportar_excel" class="btn-accion btn-verde" style="text-decoration: none; font-size: 14px; padding: 10px 15px;">⬇ Exportar a Excel</a>
+                <a href="/admin/exportar_excel" class="btn-accion btn-verde" style="text-decoration: none; font-size: 14px; padding: 10px 15px;">⬇ Descargar Excel Real (.xlsx)</a>
             </div>
             <table>
                 <thead><tr><th>Fecha</th><th>Cliente</th><th>Premio</th><th>Token</th><th>Estado / Entregó</th></tr></thead>
