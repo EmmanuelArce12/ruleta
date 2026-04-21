@@ -3,3 +3,4 @@ Werkzeug
 psycopg2-binary
 openpyxl
 gunicorn
+python-dotenv
