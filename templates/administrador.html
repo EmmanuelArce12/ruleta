@@ -148,10 +148,21 @@
                 <button type="submit" class="btn-accion btn-verde" style="margin-top:15px; width: 100%; padding: 12px;">+ Crear Vendedor</button>
             </form>
             <table style="margin-top:15px;">
-                <thead><tr><th>Nombre</th><th>Sector</th><th>PIN</th></tr></thead>
+                <thead><tr><th>Nombre</th><th>Sector</th><th>PIN</th><th>Acción</th></tr></thead>
                 <tbody>
                     {% for v in vendedores %}
-                    <tr><td>{{ v['nombre'] }}</td><td>{{ v['sector'] }}</td><td style="font-family: monospace;">****</td></tr>
+                    <tr>
+                        <td>{{ v['nombre'] }}</td>
+                        <td>{{ v['sector'] }}</td>
+                        <td style="font-family: monospace; color: #888;">****</td>
+                        <td>
+                            <form action="/admin/borrar_vendedor/{{ v['id'] }}" method="POST" style="margin: 0;" onsubmit="return confirm('¿Seguro que deseas borrar este vendedor?');">
+                                <button type="submit" class="btn-rojo" style="padding: 6px 10px; border-radius: 4px; font-size: 12px;">Borrar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" style="text-align: center; color: #666;">Aún no hay vendedores cargados.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
