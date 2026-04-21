@@ -124,6 +124,9 @@ def init_db():
         print("✅ BASE DE DATOS CONECTADA Y LISTA")
     except Exception as e:
         print("🔥 ERROR FATAL AL INICIAR LA BASE DE DATOS 🔥", e)
+
+init_db()
+
 # ==========================================
 # 1. LOGIN UNIFICADO E INICIO
 # ==========================================
@@ -192,6 +195,11 @@ def blanquear_clave(id):
 # ==========================================
 # 3. ADMIN DE ESTACIÓN
 # ==========================================
+@app.route('/logout_admin')
+def logout_admin(): 
+    session.clear()
+    return redirect('/login')
+
 @app.route('/admin')
 def panel_admin():
     if 'estacion_id' not in session: return redirect('/login')
@@ -227,7 +235,6 @@ def panel_admin():
     for p in premios_db:
         p_dict = dict(p)
         
-        # LA SOLUCIÓN DEL ERROR 500: Obligamos a que el límite sea un número, nunca "None"
         limite = p['limite_diario'] if p['limite_diario'] else 0
         p_dict['limite_diario'] = limite  
         
@@ -299,6 +306,7 @@ def agregar_vendedor():
     if 'estacion_id' not in session: return redirect('/login')
     conn = get_db(); c = conn.cursor(); c.execute('INSERT INTO vendedores (estacion_id, nombre, pin, sector) VALUES (%s, %s, %s, %s)', (session['estacion_id'], request.form['nombre'], request.form['pin'], request.form['sector'])); conn.commit(); conn.close()
     return redirect('/admin')
+
 @app.route('/admin/borrar_vendedor/<int:id>', methods=['POST'])
 def borrar_vendedor(id):
     if 'estacion_id' not in session: return redirect('/login')
@@ -308,6 +316,7 @@ def borrar_vendedor(id):
     conn.commit()
     conn.close()
     return redirect('/admin')
+
 @app.route('/admin/exportar_excel')
 def exportar_excel():
     if 'estacion_id' not in session: return redirect('/login')
@@ -336,7 +345,10 @@ def iniciar_ruleta():
     return render_template('login_ruleta.html', error=error)
 
 @app.route('/logout_ruleta')
-def logout_ruleta(): session.pop('ruleta_auth_id', None); session.pop('ruleta_auth_nombre', None); return redirect('/login_ruleta')
+def logout_ruleta(): 
+    session.pop('ruleta_auth_id', None)
+    session.pop('ruleta_auth_nombre', None)
+    return redirect('/login')
 
 @app.route('/ruleta')
 def ver_ruleta():
@@ -383,7 +395,10 @@ def iniciar_terminal():
     return render_template('login_terminal.html', error=error)
 
 @app.route('/logout_terminal')
-def logout_terminal(): session.pop('terminal_auth_id', None); session.pop('terminal_auth_nombre', None); return redirect('/iniciar_terminal')
+def logout_terminal(): 
+    session.pop('terminal_auth_id', None)
+    session.pop('terminal_auth_nombre', None)
+    return redirect('/login')
 
 @app.route('/terminal_canje')
 def terminal_canje():
