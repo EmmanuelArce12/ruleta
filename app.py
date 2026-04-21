@@ -13,18 +13,25 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 app = Flask(__name__)
-# Variables leídas desde Render
+
+# ==========================================
+# VARIABLES DE ENTORNO (Tus "campos vacíos")
+# ==========================================
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'super_clave_secreta_ge')
-MI_PASSWORD = os.environ.get('PASSWORD_CORREO')
-SUPERADMIN_PASS = os.environ.get('CLAVE_SUPERADMIN')
 DATABASE_URL = os.environ.get('DATABASE_URL')
+MI_PASSWORD = os.environ.get('PASSWORD_CORREO')
+
+# Credenciales del Super Admin leídas 100% desde la nube
+SUPERADMIN_USER = os.environ.get('USUARIO_SUPERADMIN')
+SUPERADMIN_PASS = os.environ.get('CLAVE_SUPERADMIN')
 
 # Configuraciones fijas
 MI_CORREO = "echeverriaehijosaforadores@gmail.com"
-SUPERADMIN_USER = "dueño"
 
 def get_db():
     return psycopg2.connect(DATABASE_URL)
+
+# ... (el resto del código sigue exactamente igual hacia abajo) ...
 
 def enviar_email(destinatario, nombre_cliente, premio, token):
     try:
