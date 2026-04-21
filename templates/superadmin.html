@@ -2,19 +2,36 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel Maestro - Grupo GE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Panel Maestro</title>
     <style>
         body { font-family: Arial, sans-serif; background: #1a1a2e; color: #fff; padding: 20px; margin: 0; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e94560; padding-bottom: 15px; margin-bottom: 20px; }
-        h1 { margin: 0; color: #e94560; }
-        .logout-btn { background: #e74c3c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; transition: 0.3s; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e94560; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;}
+        h1 { margin: 0; color: #e94560; font-size: 24px; }
+        .logout-btn { background: #e74c3c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; transition: 0.3s; white-space: nowrap;}
         .logout-btn:hover { background: #c0392b; }
         .card { background: #16213e; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        input { padding: 10px; margin-right: 10px; border-radius: 4px; border: none; }
-        button { background: #e94560; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #fff; color: #333; border-radius: 8px; overflow: hidden; }
+        
+        /* Formulario responsivo */
+        .form-crear { display: flex; gap: 10px; flex-wrap: wrap; }
+        .form-crear input { padding: 10px; border-radius: 4px; border: none; flex: 1; min-width: 200px; box-sizing: border-box; }
+        .form-crear button { background: #e94560; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        
+        /* Contenedor para que la tabla sea deslizable en celular */
+        .table-responsive { width: 100%; overflow-x: auto; background: #fff; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; color: #333; min-width: 600px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background: #0f3460; color: #fff; }
+        
+        /* Botones de acción en tabla */
+        .acciones { display: flex; gap: 10px; flex-wrap: wrap; }
+        .acciones input { padding: 6px; border: 1px solid #ccc; box-sizing: border-box; width: 120px; }
+        .btn-accion { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; color: #333; font-weight: bold;}
+        
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            h1 { font-size: 20px; }
+            .form-crear button { width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -25,8 +42,8 @@
     </div>
 
     <div class="card">
-        <h2 style="margin-top: 0;">➕ Crear Nueva Estación</h2>
-        <form action="/superadmin/crear_estacion" method="POST">
+        <h2 style="margin-top: 0; font-size: 18px;">➕ Crear Nueva Estación</h2>
+        <form action="/superadmin/crear_estacion" method="POST" class="form-crear">
             <input type="text" name="nombre" placeholder="Nombre de Estación (Ej: YPF Centro)" required>
             <input type="text" name="usuario" placeholder="Usuario Admin" required autocomplete="off">
             <input type="password" name="password" placeholder="Contraseña Admin" required>
@@ -35,35 +52,34 @@
     </div>
 
     <div class="card" style="background: transparent; box-shadow: none; padding: 0;">
-        <h2 style="color: #fff;">Estaciones Activas</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Usuario Admin</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for e in estaciones %}
-                <tr>
-                    <td>{{ e['id'] }}</td>
-                    <td><strong>{{ e['nombre'] }}</strong></td>
-                    <td>{{ e['admin_user'] }}</td>
-                    <td style="display: flex; gap: 10px;">
-                        <form action="/superadmin/blanquear_clave/{{ e['id'] }}" method="POST" style="margin: 0; display:flex;">
-                            <input type="password" name="nueva_clave" placeholder="Nueva Clave" required style="padding: 6px; border: 1px solid #ccc;">
-                            <button type="submit" style="background: #f1c40f; color: #333; padding: 6px 12px;">Resetear</button>
-                        </form>
-                        <form action="/superadmin/borrar_estacion/{{ e['id'] }}" method="POST" style="margin: 0;" onsubmit="return confirm('¿Seguro que deseas borrar esta estación y todos sus datos?');">
-                            <button type="submit" style="background: #e74c3c; padding: 6px 12px;">Borrar</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <h2 style="color: #fff; font-size: 18px;">Estaciones Activas</h2>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>Nombre</th><th>Usuario Admin</th><th>Acciones</th></tr>
+                </thead>
+                <tbody>
+                    {% for e in estaciones %}
+                    <tr>
+                        <td>{{ e['id'] }}</td>
+                        <td><strong>{{ e['nombre'] }}</strong></td>
+                        <td>{{ e['admin_user'] }}</td>
+                        <td>
+                            <div class="acciones">
+                                <form action="/superadmin/blanquear_clave/{{ e['id'] }}" method="POST" style="margin: 0; display:flex; gap: 5px;">
+                                    <input type="password" name="nueva_clave" placeholder="Nueva Clave" required>
+                                    <button type="submit" class="btn-accion" style="background: #f1c40f;">Resetear</button>
+                                </form>
+                                <form action="/superadmin/borrar_estacion/{{ e['id'] }}" method="POST" style="margin: 0;" onsubmit="return confirm('¿Seguro que deseas borrar esta estación y todos sus datos?');">
+                                    <button type="submit" class="btn-accion" style="background: #e74c3c; color: white;">Borrar</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
 </body>
