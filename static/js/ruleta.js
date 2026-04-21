@@ -109,38 +109,39 @@ document.addEventListener("DOMContentLoaded", () => {
                         formulario.classList.add("oculto");
                         btnCerrarModal.classList.remove("oculto");
                     } else {
-                        // --- NUEVO CONFETI: LLUVIA LATERAL CORPORATIVA ---
-                        textoPremio.innerHTML = `¡Ganaste:<br><strong style="color:${colorPrimario};">${premio.nombre}</strong>!`;
-                        formulario.classList.remove("oculto");
-                        btnCerrarModal.classList.add("oculto");
-
-                        var duration = 3000;
+                        // --- NUEVO CONFETI UNIFICADO: Lluvia Lateral con Desbloqueo ---
+                        // Forzamos a que dure un poco más para mayor suspenso (4 segundos)
+                        var duration = 4000;
                         var end = Date.now() + duration;
-
+                        
+                        // Leemos dinámicamente los colores corporativos de la estación
+                        let divColores = document.getElementById('colores-marca');
+                        let colorConfeti = divColores ? [divColores.getAttribute('data-color1'), '#ffffff'] : ['#F1C40F', '#005CAB', '#ffffff'];
+                        
                         (function frame() {
-                            confetti({
-                                particleCount: 5,
-                                angle: 60,
-                                spread: 55,
-                                origin: { x: 0 }, // Lado Izquierdo
-                                colors: coloresConfeti,
-                                zIndex: 9999, // Detrás del formulario
-                                disableForReducedMotion: true
-                            });
-                            confetti({
-                                particleCount: 5,
-                                angle: 120,
-                                spread: 55,
-                                origin: { x: 1 }, // Lado Derecho
-                                colors: coloresConfeti,
-                                zIndex: 90
-                            });
-
-                            if (Date.now() < end) {
-                                requestAnimationFrame(frame);
-                            }
+                          confetti({
+                            particleCount: 5,
+                            angle: 60,
+                            spread: 55,
+                            origin: { x: 0 }, // Lado Izquierdo
+                            colors: colorConfeti,
+                            zIndex: 90, // <--- LA CLAVE: z-index 90 está por DEBAJO de tu modal (que tiene 100). No bloquea nada.
+                            disableForReducedMotion: true
+                          });
+                          confetti({
+                            particleCount: 5,
+                            angle: 120,
+                            spread: 55,
+                            origin: { x: 1 }, // Lado Derecho
+                            colors: colorConfeti,
+                            zIndex: 90 // <--- LA CLAVE
+                          });
+                        
+                          if (Date.now() < end) {
+                            requestAnimationFrame(frame);
+                          }
                         }());
-                        // ------------------------------------------------
+                        // ------------------------------------------------------------
                     }
                 }, 5000); 
             });
