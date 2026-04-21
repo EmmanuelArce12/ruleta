@@ -1,65 +1,111 @@
 /* ==========================================
-   1. VARIABLES DE ESTILO MULTIMARCA
+   1. VARIABLES DE ESTILO MULTIMARCA (6 TEMAS)
    ========================================== */
 
-/* 🟢 POR DEFECTO: YPF CLÁSICO */
-:root {
+/* 🔵 YPF: CLÁSICO (Azul y Amarillo sólido) */
+:root, body.YPF_CLASICO {
     --bg-body-color: #f4f4f4;
     --bg-patron: radial-gradient(circle, #e2e2e2 10%, transparent 11%), radial-gradient(circle, #e2e2e2 10%, transparent 11%);
     --caja-fondo: #005CAB;
     --caja-borde: #F1C40F;
+    --caja-sombra: 0 15px 35px rgba(0,0,0,0.4);
     --btn-fondo: #F1C40F;
     --btn-texto: #005CAB;
+    --btn-sombra: 0 5px 15px rgba(0,0,0,0.2);
     --flecha-color: #F1C40F;
+    --ruleta-sombra: 0 0 20px rgba(0,0,0,0.5);
     --modal-borde: #005CAB;
     --modal-sombra: rgba(241, 196, 15, 0.5);
     --modal-titulo: #005CAB;
 }
 
-/* 🔵 YPF MODERNO (Elegante Carbono y Vidrio) */
+/* 🔵 YPF: MODERNO (Carbono oscuro y Vidrio azulado) */
 body.YPF_MODERNO {
     --bg-body-color: #1a1a1a;
-    --bg-patron: none;
-    --caja-fondo: rgba(0, 92, 171, 0.3); /* Azul transparente tipo vidrio */
-    --caja-borde: #bdc3c7; /* Plata */
+    --bg-patron: linear-gradient(45deg, #222 25%, transparent 25%, transparent 75%, #222 75%, #222), linear-gradient(45deg, #222 25%, transparent 25%, transparent 75%, #222 75%, #222); /* Estilo fibra sutil */
+    --caja-fondo: rgba(0, 92, 171, 0.2); /* Vidrio azul */
+    --caja-borde: #bdc3c7; /* Metal Plata */
+    --caja-sombra: 0 10px 40px rgba(0,0,0,0.8);
     --btn-fondo: #bdc3c7;
     --btn-texto: #005CAB;
+    --btn-sombra: 0 5px 15px rgba(0,0,0,0.5);
     --flecha-color: #bdc3c7;
+    --ruleta-sombra: 0 0 25px rgba(0,0,0,0.8);
     --modal-borde: #bdc3c7;
-    --modal-sombra: rgba(189, 195, 199, 0.5);
+    --modal-sombra: rgba(189, 195, 199, 0.4);
     --modal-titulo: #005CAB;
 }
 
-/* 🟣 AXION CLÁSICO (Violeta y Rojo) */
+/* 🔵 YPF: LED (Fondo negro profundo, bordes Neón) */
+body.YPF_LED {
+    --bg-body-color: #050505;
+    --bg-patron: none;
+    --caja-fondo: #111111;
+    --caja-borde: #00d2ff; /* Neón Azul/Celeste YPF */
+    --caja-sombra: 0 0 30px rgba(0, 210, 255, 0.3);
+    --btn-fondo: #00d2ff;
+    --btn-texto: #050505;
+    --btn-sombra: 0 0 20px rgba(0, 210, 255, 0.5);
+    --flecha-color: #00d2ff;
+    --ruleta-sombra: 0 0 35px rgba(0, 210, 255, 0.6);
+    --modal-borde: #00d2ff;
+    --modal-sombra: rgba(0, 210, 255, 0.5);
+    --modal-titulo: #005CAB;
+}
+
+/* 🟣 AXION: CLÁSICO (Violeta y Rojo) */
 body.AXION_CLASICO {
-    --bg-body-color: #2b1145; /* Fondo oscuro */
+    --bg-body-color: #2b1145; 
     --bg-patron: radial-gradient(circle, #3a175c 10%, transparent 11%), radial-gradient(circle, #3a175c 10%, transparent 11%);
-    --caja-fondo: #5d2a8e; /* Violeta Axion */
-    --caja-borde: #ed1c24; /* Rojo Axion */
+    --caja-fondo: #5d2a8e; 
+    --caja-borde: #ed1c24; 
+    --caja-sombra: 0 15px 35px rgba(0,0,0,0.6);
     --btn-fondo: #ed1c24;
     --btn-texto: #ffffff;
+    --btn-sombra: 0 5px 15px rgba(0,0,0,0.3);
     --flecha-color: #ed1c24;
+    --ruleta-sombra: 0 0 20px rgba(0,0,0,0.6);
     --modal-borde: #5d2a8e;
     --modal-sombra: rgba(237, 28, 36, 0.5);
     --modal-titulo: #5d2a8e;
 }
 
-/* 🟡 AXION PREMIUM (LED y Oro) */
-body.AXION_PREMIUM {
-    --bg-body-color: #111111;
-    --bg-patron: linear-gradient(45deg, #1a1a1a 25%, transparent 25%), linear-gradient(-45deg, #1a1a1a 25%, transparent 25%);
-    --caja-fondo: #222222;
-    --caja-borde: #f1c40f; /* Oro LED */
+/* 🟣 AXION: MODERNO (Carbono oscuro y Vidrio violeta) */
+body.AXION_MODERNO {
+    --bg-body-color: #1a1a1a;
+    --bg-patron: linear-gradient(45deg, #222 25%, transparent 25%, transparent 75%, #222 75%, #222), linear-gradient(45deg, #222 25%, transparent 25%, transparent 75%, #222 75%, #222);
+    --caja-fondo: rgba(93, 42, 142, 0.25); /* Vidrio violeta */
+    --caja-borde: #e0e0e0; /* Plata */
+    --caja-sombra: 0 10px 40px rgba(0,0,0,0.8);
+    --btn-fondo: #e0e0e0;
+    --btn-texto: #5d2a8e;
+    --btn-sombra: 0 5px 15px rgba(0,0,0,0.5);
+    --flecha-color: #e0e0e0;
+    --ruleta-sombra: 0 0 25px rgba(0,0,0,0.8);
+    --modal-borde: #e0e0e0;
+    --modal-sombra: rgba(224, 224, 224, 0.4);
+    --modal-titulo: #5d2a8e;
+}
+
+/* 🟣 AXION: LED PREMIUM (Luces Neón Oro y Rojo) */
+body.AXION_LED {
+    --bg-body-color: #050505;
+    --bg-patron: none;
+    --caja-fondo: #15101a;
+    --caja-borde: #f1c40f; /* Neón Oro */
+    --caja-sombra: 0 0 30px rgba(241, 196, 15, 0.3);
     --btn-fondo: #f1c40f;
-    --btn-texto: #111111;
+    --btn-texto: #050505;
+    --btn-sombra: 0 0 20px rgba(241, 196, 15, 0.5);
     --flecha-color: #f1c40f;
+    --ruleta-sombra: 0 0 35px rgba(241, 196, 15, 0.6);
     --modal-borde: #f1c40f;
-    --modal-sombra: rgba(241, 196, 15, 0.8); /* Resplandor LED */
-    --modal-titulo: #222222;
+    --modal-sombra: rgba(241, 196, 15, 0.5);
+    --modal-titulo: #ed1c24; /* Texto rojo */
 }
 
 /* ==========================================
-   2. ESTILOS APLICADOS
+   2. ESTILOS APLICADOS A LA RULETA
    ========================================== */
 
 body { 
@@ -72,6 +118,7 @@ body {
     align-items: center; 
     height: 100vh; 
     margin: 0; 
+    transition: background 0.5s ease; /* Transición suave si cambias el diseño */
 }
 
 .contenedor-principal { 
@@ -80,11 +127,13 @@ body {
     color: white; 
     padding: 40px; 
     border-radius: 20px; 
-    box-shadow: 0 15px 35px rgba(0,0,0,0.4); 
+    box-shadow: var(--caja-sombra); 
     border: 5px solid var(--caja-borde); 
     max-width: 450px; 
     width: 90%; 
-    backdrop-filter: blur(8px); /* Efecto vidrio para los estilos modernos */
+    backdrop-filter: blur(10px); /* Efecto vidrio activado en modernos */
+    -webkit-backdrop-filter: blur(10px);
+    transition: all 0.5s ease;
 }
 
 h1 { 
@@ -92,31 +141,114 @@ h1 {
     font-weight: 900; 
     text-transform: uppercase; 
     letter-spacing: 1px; 
-    text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* Sombra para que resalte en fondos claros u oscuros */
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8); 
 }
 
-/* Ruleta Visual Dinámica */
-.contenedor-ruleta { position: relative; width: 350px; height: 350px; margin: 0 auto 40px auto; display: flex; justify-content: center; align-items: center; }
-.flecha { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 40px; color: var(--flecha-color); z-index: 20; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+/* Contenedor de la Ruleta */
+.contenedor-ruleta { 
+    position: relative; 
+    width: 350px; 
+    height: 350px; 
+    margin: 0 auto 40px auto; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+}
 
-canvas { border-radius: 50%; border: 8px solid var(--caja-borde); box-shadow: 0 0 20px rgba(0,0,0,0.5); transition: transform 5s cubic-bezier(0.1, 0.7, 0.1, 1); }
+/* Puntero/Flecha */
+.flecha { 
+    position: absolute; 
+    top: -25px; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    font-size: 45px; 
+    color: var(--flecha-color); 
+    z-index: 20; 
+    text-shadow: 0 5px 10px rgba(0,0,0,0.8); 
+    transition: color 0.5s ease;
+}
 
-/* El Logo Flotante en el Medio */
-.centro-logo { position: absolute; width: 90px; height: 90px; background: white; border-radius: 50%; z-index: 10; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 15px rgba(0,0,0,0.3); border: 4px solid var(--caja-fondo); }
+/* Borde del Canvas (La Rueda) */
+canvas { 
+    border-radius: 50%; 
+    border: 8px solid var(--caja-borde); 
+    box-shadow: var(--ruleta-sombra); 
+    transition: transform 5s cubic-bezier(0.1, 0.7, 0.1, 1), border-color 0.5s ease, box-shadow 0.5s ease; 
+    background-color: white; /* Por si el canvas tiene partes transparentes */
+}
+
+/* El Logo Central Flotante */
+.centro-logo { 
+    position: absolute; 
+    width: 90px; 
+    height: 90px; 
+    background: white; 
+    border-radius: 50%; 
+    z-index: 10; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+    border: 4px solid var(--caja-borde); 
+    transition: border-color 0.5s ease;
+}
 .centro-logo img { width: 70%; object-fit: contain; }
 
-/* Botones */
-.btn-primario, .btn-secundario { background-color: var(--btn-fondo); color: var(--btn-texto); border: none; padding: 18px 30px; font-size: 20px; font-weight: bold; border-radius: 30px; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.2); width: 80%; }
-.btn-primario:hover, .btn-secundario:hover { transform: translateY(-2px); filter: brightness(1.1); }
+/* Botones Principales */
+.btn-primario, .btn-secundario { 
+    background-color: var(--btn-fondo); 
+    color: var(--btn-texto); 
+    border: none; 
+    padding: 18px 30px; 
+    font-size: 20px; 
+    font-weight: bold; 
+    border-radius: 30px; 
+    cursor: pointer; 
+    transition: all 0.3s ease; 
+    box-shadow: var(--btn-sombra); 
+    width: 80%; 
+    text-transform: uppercase;
+}
+.btn-primario:hover, .btn-secundario:hover { 
+    transform: translateY(-3px) scale(1.02); 
+    filter: brightness(1.2); 
+}
 
-/* Modal Fiesta */
-.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); display: flex; justify-content: center; align-items: center; z-index: 100; }
+/* ==========================================
+   3. MODAL Y FORMULARIO (Responsive)
+   ========================================== */
+.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); display: flex; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(5px); }
 .oculto { display: none !important; }
-.contenido-modal { background: white; color: #333; padding: 40px; border-radius: 15px; width: 90%; max-width: 400px; text-align: center; border: 5px solid var(--modal-borde); box-shadow: 0 0 30px var(--modal-sombra); }
-.animacion-fiesta { animation: popIn 0.5s ease-out; }
-.titulo-modal { color: var(--modal-titulo); font-size: 28px; }
 
-@keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.contenido-modal { 
+    background: white; 
+    color: #333; 
+    padding: 40px; 
+    border-radius: 15px; 
+    width: 90%; 
+    max-width: 400px; 
+    text-align: center; 
+    border: 5px solid var(--modal-borde); 
+    box-shadow: 0 0 30px var(--modal-sombra); 
+    transition: all 0.5s ease;
+}
 
-input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-input:focus { border-color: var(--modal-titulo); outline: none; }
+.animacion-fiesta { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.titulo-modal { color: var(--modal-titulo); font-size: 28px; font-weight: 900; margin-top:0;}
+
+@keyframes popIn { 
+    0% { transform: scale(0.5); opacity: 0; } 
+    100% { transform: scale(1); opacity: 1; } 
+}
+
+input { 
+    width: 100%; 
+    padding: 14px; 
+    margin: 8px 0 15px 0; 
+    border: 2px solid #ddd; 
+    border-radius: 8px; 
+    font-size: 16px; 
+    box-sizing: border-box; 
+    transition: border-color 0.3s ease;
+}
+input:focus { border-color: var(--modal-titulo); outline: none; box-shadow: 0 0 8px rgba(0,0,0,0.1); }
