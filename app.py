@@ -24,18 +24,14 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'super_clave_secreta_ge')
 DATABASE_URL = os.environ.get('DATABASE_URL')
 MI_PASSWORD_GLOBAL = os.environ.get('PASSWORD_CORREO')
 
-# Credenciales del Super Admin
 SUPERADMIN_USER = os.environ.get('USUARIO_SUPERADMIN', 'dueño')
 SUPERADMIN_PASS = os.environ.get('CLAVE_SUPERADMIN', 'admin123')
-
-# Configuraciones fijas de respaldo
 MI_CORREO_GLOBAL = "echeverriaehijosaforadores@gmail.com"
 
 def get_db():
     return psycopg2.connect(DATABASE_URL)
 
 def enviar_email(destinatario, nombre_cliente, premio, token, estacion_id):
-    # 1. Buscar el correo propio de la estación
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     c.execute("SELECT nombre, correo_emisor, password_correo FROM estaciones WHERE id = %s", (estacion_id,))
@@ -46,7 +42,6 @@ def enviar_email(destinatario, nombre_cliente, premio, token, estacion_id):
     correo_origen = estacion['correo_emisor']
     pass_origen = estacion['password_correo']
 
-    # Si la estación no configuró su correo, usamos el global por defecto
     if not correo_origen or not pass_origen:
         correo_origen = MI_CORREO_GLOBAL
         pass_origen = MI_PASSWORD_GLOBAL
@@ -101,14 +96,8 @@ def seleccionar_premio_inteligente(estacion_id):
 
 def init_db():
     try:
-        print("=========================================")
-        print("⏳ INTENTANDO CONECTAR A LA BASE DE DATOS...")
-        url_segura = f"{str(DATABASE_URL)[:20]}..." if DATABASE_URL else "NINGUNA"
-        print(f"URL detectada: {url_segura}") 
-        print("=========================================")
-        
         conn = get_db()
-        conn.autocommit = True  # <-- CLAVE: Evita que la base de datos se bloquee
+        conn.autocommit = True 
         c = conn.cursor()
         
         c.execute('''CREATE TABLE IF NOT EXISTS estaciones (id SERIAL PRIMARY KEY, nombre TEXT NOT NULL, admin_user TEXT UNIQUE NOT NULL, admin_pass TEXT NOT NULL, ruleta_user TEXT UNIQUE, ruleta_pass TEXT)''')
@@ -116,9 +105,12 @@ def init_db():
         c.execute('''CREATE TABLE IF NOT EXISTS premios (id SERIAL PRIMARY KEY, estacion_id INTEGER, nombre TEXT NOT NULL, tipo TEXT NOT NULL, dificultad TEXT NOT NULL, peso INTEGER NOT NULL, sector TEXT NOT NULL, imagen_url TEXT, limite_diario INTEGER DEFAULT 0, FOREIGN KEY(estacion_id) REFERENCES estaciones(id))''')
         c.execute('''CREATE TABLE IF NOT EXISTS vendedores (id SERIAL PRIMARY KEY, estacion_id INTEGER, nombre TEXT NOT NULL, pin TEXT NOT NULL, sector TEXT NOT NULL, FOREIGN KEY(estacion_id) REFERENCES estaciones(id))''')
         
-        # Parches oficiales y seguros para Postgres
         c.execute("ALTER TABLE estaciones ADD COLUMN IF NOT EXISTS correo_emisor TEXT")
         c.execute("ALTER TABLE estaciones ADD COLUMN IF NOT EXISTS password_correo TEXT")
+        
+        # NUEVAS COLUMNAS PARA MARCA Y DISEÑO
+        c.execute("ALTER TABLE estaciones ADD COLUMN IF NOT EXISTS bandera TEXT DEFAULT 'YPF'")
+        c.execute("ALTER TABLE estaciones ADD COLUMN IF NOT EXISTS estilo_ruleta TEXT DEFAULT 'YPF_CLASICO'")
 
         conn.close()
         print("✅ BASE DE DATOS CONECTADA Y LISTA")
@@ -171,9 +163,18 @@ def superadmin():
 def crear_estacion():
     if not session.get('super_auth'): return redirect('/login')
     h = generate_password_hash(request.form['password'])
+    bandera = request.form.get('bandera', 'YPF')
+    
+    # Asignar estilo por defecto según la bandera elegida
+    estilo_default = 'YPF_CLASICO' if bandera == 'YPF' else 'AXION_CLASICO'
+    
     conn = get_db(); c = conn.cursor()
-    try: c.execute('INSERT INTO estaciones (nombre, admin_user, admin_pass) VALUES (%s, %s, %s)', (request.form['nombre'], request.form['usuario'].lower().replace(" ", ""), h)); conn.commit()
-    except Exception as e: conn.rollback()
+    try: 
+        c.execute('INSERT INTO estaciones (nombre, admin_user, admin_pass, bandera, estilo_ruleta) VALUES (%s, %s, %s, %s, %s)', 
+                  (request.form['nombre'], request.form['usuario'].lower().replace(" ", ""), h, bandera, estilo_default))
+        conn.commit()
+    except Exception as e: 
+        print(e); conn.rollback()
     finally: conn.close()
     return redirect('/superadmin')
 
@@ -196,9 +197,7 @@ def blanquear_clave(id):
 # 3. ADMIN DE ESTACIÓN
 # ==========================================
 @app.route('/logout_admin')
-def logout_admin(): 
-    session.clear()
-    return redirect('/login')
+def logout_admin(): session.clear(); return redirect('/login')
 
 @app.route('/admin')
 def panel_admin():
@@ -234,24 +233,28 @@ def panel_admin():
     premios = []
     for p in premios_db:
         p_dict = dict(p)
-        
         limite = p['limite_diario'] if p['limite_diario'] else 0
         p_dict['limite_diario'] = limite  
-        
         entregados = entregados_hoy.get(p['nombre'], 0)
         p_dict['entregados_hoy'] = entregados
         
         if limite > 0 and entregados >= limite:
-            p_dict['probabilidad_porcentaje'] = 0.00
-            p_dict['estado'] = "AGOTADO HOY"
+            p_dict['probabilidad_porcentaje'] = 0.00; p_dict['estado'] = "AGOTADO HOY"
         else:
-            p_dict['probabilidad_porcentaje'] = round((p['peso'] / total_peso_activo * 100), 2) if total_peso_activo > 0 else 0
-            p_dict['estado'] = "ACTIVO"
-            
+            p_dict['probabilidad_porcentaje'] = round((p['peso'] / total_peso_activo * 100), 2) if total_peso_activo > 0 else 0; p_dict['estado'] = "ACTIVO"
         premios.append(p_dict)
         
     conn.close()
     return render_template('administrador.html', clientes=clientes, premios=premios, vendedores=vendedores, estacion=estacion, nombre_estacion=session['estacion_nombre'])
+
+@app.route('/admin/configurar_estilo', methods=['POST'])
+def configurar_estilo():
+    if 'estacion_id' not in session: return redirect('/login')
+    estilo = request.form.get('estilo_ruleta')
+    conn = get_db(); c = conn.cursor()
+    c.execute('UPDATE estaciones SET estilo_ruleta = %s WHERE id = %s', (estilo, session['estacion_id']))
+    conn.commit(); conn.close()
+    return redirect('/admin')
 
 @app.route('/admin/configurar_ruleta', methods=['POST'])
 def configurar_ruleta():
@@ -310,11 +313,8 @@ def agregar_vendedor():
 @app.route('/admin/borrar_vendedor/<int:id>', methods=['POST'])
 def borrar_vendedor(id):
     if 'estacion_id' not in session: return redirect('/login')
-    conn = get_db()
-    c = conn.cursor()
-    c.execute('DELETE FROM vendedores WHERE id = %s AND estacion_id = %s', (id, session['estacion_id']))
-    conn.commit()
-    conn.close()
+    conn = get_db(); c = conn.cursor()
+    c.execute('DELETE FROM vendedores WHERE id = %s AND estacion_id = %s', (id, session['estacion_id'])); conn.commit(); conn.close()
     return redirect('/admin')
 
 @app.route('/admin/exportar_excel')
@@ -346,14 +346,20 @@ def iniciar_ruleta():
 
 @app.route('/logout_ruleta')
 def logout_ruleta(): 
-    session.pop('ruleta_auth_id', None)
-    session.pop('ruleta_auth_nombre', None)
-    return redirect('/login')
+    session.pop('ruleta_auth_id', None); session.pop('ruleta_auth_nombre', None); return redirect('/login')
 
 @app.route('/ruleta')
 def ver_ruleta():
     if 'ruleta_auth_id' not in session: return redirect('/iniciar_ruleta')
-    return render_template('index.html', estacion_id=session['ruleta_auth_id'], nombre_estacion=session['ruleta_auth_nombre'])
+    
+    # Extraemos el estilo configurado de la base de datos para pasárselo al HTML de la ruleta
+    conn = get_db(); c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute("SELECT estilo_ruleta FROM estaciones WHERE id = %s", (session['ruleta_auth_id'],))
+    est = c.fetchone(); conn.close()
+    
+    estilo_actual = est['estilo_ruleta'] if est and est['estilo_ruleta'] else 'YPF_CLASICO'
+    
+    return render_template('index.html', estacion_id=session['ruleta_auth_id'], nombre_estacion=session['ruleta_auth_nombre'], estilo_ruleta=estilo_actual)
 
 @app.route('/api/premios/<int:estacion_id>')
 def api_premios(estacion_id):
@@ -372,11 +378,7 @@ def registrar(estacion_id):
     conn = get_db(); c = conn.cursor()
     c.execute('INSERT INTO canjes (estacion_id, nombre, dni, email, telefono, premio, token, sector) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)', (estacion_id, d['nombre'], d['dni'], d['email'], d['telefono'], d['premio'], t, d['sector']))
     conn.commit(); conn.close()
-    
-    if d['sector'] != 'NINGUNO': 
-        # IMPORTANTE: Ahora le pasamos la estación para que sepa desde qué correo enviar
-        enviar_email(d['email'], d['nombre'], d['premio'], t, estacion_id)
-        
+    if d['sector'] != 'NINGUNO': enviar_email(d['email'], d['nombre'], d['premio'], t, estacion_id)
     return jsonify({"status": "ok", "token": t})
 
 # ==========================================
@@ -395,10 +397,7 @@ def iniciar_terminal():
     return render_template('login_terminal.html', error=error)
 
 @app.route('/logout_terminal')
-def logout_terminal(): 
-    session.pop('terminal_auth_id', None)
-    session.pop('terminal_auth_nombre', None)
-    return redirect('/login')
+def logout_terminal(): session.pop('terminal_auth_id', None); session.pop('terminal_auth_nombre', None); return redirect('/login')
 
 @app.route('/terminal_canje')
 def terminal_canje():
