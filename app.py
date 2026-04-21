@@ -336,7 +336,7 @@ def iniciar_ruleta():
     return render_template('login_ruleta.html', error=error)
 
 @app.route('/logout_ruleta')
-def logout_ruleta(): session.pop('ruleta_auth_id', None); session.pop('ruleta_auth_nombre', None); return redirect('/iniciar_ruleta')
+def logout_ruleta(): session.pop('ruleta_auth_id', None); session.pop('ruleta_auth_nombre', None); return redirect('/login')
 
 @app.route('/ruleta')
 def ver_ruleta():
