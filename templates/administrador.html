@@ -167,7 +167,7 @@
                 <tbody>
                     {% for c in clientes %}
                     <tr>
-                        <td>{{ c['fecha'][:10] }}</td>
+                        <td>{{ (c['fecha'] | string)[:10] }}</td>
                         <td>{{ c['nombre'] }}<br><small style="color: #005CAB;">{{ c['email'] }}</small></td>
                         <td><strong>{{ c['premio'] }}</strong></td>
                         <td style="font-family: monospace; font-size: 14px; letter-spacing: 1px;">{{ c['token'] }}</td>
