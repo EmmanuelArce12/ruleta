@@ -22,9 +22,9 @@
 /* 🔵 YPF: MODERNO (Carbono oscuro y Vidrio azulado) */
 body.YPF_MODERNO {
     --bg-body-color: #1a1a1a;
-    --bg-patron: linear-gradient(45deg, #222 25%, transparent 25%, transparent 75%, #222 75%, #222), linear-gradient(45deg, #222 25%, transparent 25%, transparent 75%, #222 75%, #222); /* Estilo fibra sutil */
-    --caja-fondo: rgba(0, 92, 171, 0.2); /* Vidrio azul */
-    --caja-borde: #bdc3c7; /* Metal Plata */
+    --bg-patron: linear-gradient(45deg, #222 25%, transparent 25%, transparent 75%, #222 75%, #222), linear-gradient(45deg, #222 25%, transparent 25%, transparent 75%, #222 75%, #222);
+    --caja-fondo: rgba(0, 92, 171, 0.2);
+    --caja-borde: #bdc3c7;
     --caja-sombra: 0 10px 40px rgba(0,0,0,0.8);
     --btn-fondo: #bdc3c7;
     --btn-texto: #005CAB;
@@ -41,7 +41,7 @@ body.YPF_LED {
     --bg-body-color: #050505;
     --bg-patron: none;
     --caja-fondo: #111111;
-    --caja-borde: #00d2ff; /* Neón Azul/Celeste YPF */
+    --caja-borde: #00d2ff;
     --caja-sombra: 0 0 30px rgba(0, 210, 255, 0.3);
     --btn-fondo: #00d2ff;
     --btn-texto: #050505;
@@ -74,8 +74,8 @@ body.AXION_CLASICO {
 body.AXION_MODERNO {
     --bg-body-color: #1a1a1a;
     --bg-patron: linear-gradient(45deg, #222 25%, transparent 25%, transparent 75%, #222 75%, #222), linear-gradient(45deg, #222 25%, transparent 25%, transparent 75%, #222 75%, #222);
-    --caja-fondo: rgba(93, 42, 142, 0.25); /* Vidrio violeta */
-    --caja-borde: #e0e0e0; /* Plata */
+    --caja-fondo: rgba(93, 42, 142, 0.25);
+    --caja-borde: #e0e0e0;
     --caja-sombra: 0 10px 40px rgba(0,0,0,0.8);
     --btn-fondo: #e0e0e0;
     --btn-texto: #5d2a8e;
@@ -92,7 +92,7 @@ body.AXION_LED {
     --bg-body-color: #050505;
     --bg-patron: none;
     --caja-fondo: #15101a;
-    --caja-borde: #f1c40f; /* Neón Oro */
+    --caja-borde: #f1c40f;
     --caja-sombra: 0 0 30px rgba(241, 196, 15, 0.3);
     --btn-fondo: #f1c40f;
     --btn-texto: #050505;
@@ -101,7 +101,7 @@ body.AXION_LED {
     --ruleta-sombra: 0 0 35px rgba(241, 196, 15, 0.6);
     --modal-borde: #f1c40f;
     --modal-sombra: rgba(241, 196, 15, 0.5);
-    --modal-titulo: #ed1c24; /* Texto rojo */
+    --modal-titulo: #ed1c24; 
 }
 
 /* ==========================================
@@ -118,7 +118,8 @@ body {
     align-items: center; 
     height: 100vh; 
     margin: 0; 
-    transition: background 0.5s ease; /* Transición suave si cambias el diseño */
+    transition: background 0.5s ease;
+    overflow-x: hidden; /* EVITA EL SCROLL HORIZONTAL DEL CONFETI EN CELULARES */
 }
 
 .contenedor-principal { 
@@ -131,9 +132,10 @@ body {
     border: 5px solid var(--caja-borde); 
     max-width: 450px; 
     width: 90%; 
-    backdrop-filter: blur(10px); /* Efecto vidrio activado en modernos */
+    backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     transition: all 0.5s ease;
+    box-sizing: border-box;
 }
 
 h1 { 
@@ -174,7 +176,7 @@ canvas {
     border: 8px solid var(--caja-borde); 
     box-shadow: var(--ruleta-sombra); 
     transition: transform 5s cubic-bezier(0.1, 0.7, 0.1, 1), border-color 0.5s ease, box-shadow 0.5s ease; 
-    background-color: white; /* Por si el canvas tiene partes transparentes */
+    background-color: white; 
 }
 
 /* El Logo Central Flotante */
@@ -215,9 +217,21 @@ canvas {
 }
 
 /* ==========================================
-   3. MODAL Y FORMULARIO (Responsive)
+   3. MODAL Y FORMULARIO
    ========================================== */
-.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); display: flex; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(5px); }
+.modal { 
+    position: fixed; 
+    top: 0; left: 0; 
+    width: 100%; height: 100%; 
+    background: rgba(0, 0, 0, 0.85); 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    z-index: 100; 
+    backdrop-filter: blur(5px); 
+    padding: 20px; /* Para que en celulares no pegue a los bordes */
+    box-sizing: border-box;
+}
 .oculto { display: none !important; }
 
 .contenido-modal { 
@@ -225,12 +239,15 @@ canvas {
     color: #333; 
     padding: 40px; 
     border-radius: 15px; 
-    width: 90%; 
+    width: 100%; 
     max-width: 400px; 
     text-align: center; 
     border: 5px solid var(--modal-borde); 
     box-shadow: 0 0 30px var(--modal-sombra); 
     transition: all 0.5s ease;
+    box-sizing: border-box;
+    max-height: 95vh; /* Evita que el modal sea más alto que la pantalla */
+    overflow-y: auto; /* Permite deslizar si el celular es muy chico */
 }
 
 .animacion-fiesta { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -253,44 +270,50 @@ input {
 }
 input:focus { border-color: var(--modal-titulo); outline: none; box-shadow: 0 0 8px rgba(0,0,0,0.1); }
 
+
 /* ==========================================
-   4. RESPONSIVE DESIGN (Celulares y Tablets)
+   4. RESPONSIVE DESIGN (MÁGIA PARA CELULARES)
    ========================================== */
 @media (max-width: 768px) {
-    /* Achicamos la caja principal para que entre en la pantalla */
+    /* 1. Achicamos la caja principal y los títulos */
     .contenedor-principal { 
         padding: 20px 15px; 
-        width: 95%; 
         border-width: 3px;
     }
-    
     h1 { font-size: 20px; margin-bottom: 20px; }
     
-    /* Magia para que el Canvas se encoja proporcionalmente */
+    /* 2. Achicamos la ruleta proporcionalmente */
     .contenedor-ruleta { 
         width: 280px; 
         height: 280px; 
         margin-bottom: 30px; 
     }
-    canvas { 
-        width: 100%; 
-        height: 100%; 
-        border-width: 5px;
-    }
-    
-    /* Ajustes de elementos flotantes */
+    canvas { border-width: 5px; }
     .flecha { font-size: 35px; top: -18px; }
     .centro-logo { width: 70px; height: 70px; border-width: 3px; }
     
-    /* Botones más amigables para tocar con el dedo */
+    /* 3. Ajustamos los botones principales */
     .btn-primario, .btn-secundario { 
         width: 100%; 
         font-size: 16px; 
-        padding: 15px 20px; 
+        padding: 15px; 
     }
     
-    /* Modal de Premio adaptable */
-    .contenido-modal { padding: 25px 15px; width: 95%; }
-    .titulo-modal { font-size: 22px; }
-    #texto-premio { font-size: 18px !important; }
+    /* 4. MODAL: Lo hacemos compacto para que entre todo en la pantalla */
+    .contenido-modal { 
+        padding: 20px 15px; 
+        border-width: 3px;
+    }
+    .titulo-modal { font-size: 20px; margin-bottom: 10px; }
+    #texto-premio { font-size: 16px !important; margin-bottom: 15px !important; }
+    #img-premio { max-width: 80px !important; max-height: 80px !important; margin-bottom: 10px !important;}
+    
+    /* 5. Inputs más finos para ahorrar espacio vertical */
+    input { 
+        padding: 10px; 
+        margin: 5px 0 10px 0; 
+        font-size: 14px; 
+    }
+    
+    #formulario-datos p { font-size: 14px; margin-bottom: 5px; }
 }
