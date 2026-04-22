@@ -5,168 +5,203 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administración - Grupo GE</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f7f6; padding: 20px; margin: 0; box-sizing: border-box; }
-        .header { background: #005CAB; color: white; padding: 15px 25px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); flex-wrap: wrap; gap: 15px;}
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; margin: 0; box-sizing: border-box; color: #333;}
+        
+        /* HEADER PRINCIPAL */
+        .header { background: #005CAB; color: white; padding: 15px 25px; border-radius: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); flex-wrap: wrap; gap: 15px;}
         .botones-nav { display: flex; gap: 10px; flex-wrap: wrap; }
-        .btn-nav { background: #F1C40F; color: #005CAB; padding: 10px 15px; border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 14px; transition: 0.3s; }
+        .btn-nav { background: #F1C40F; color: #005CAB; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
         .btn-nav:hover { background: #FFD700; transform: translateY(-2px); }
-        .btn-logout { background: #e74c3c; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 14px; transition: 0.3s; border: 1px solid #c0392b;}
-        .btn-logout:hover { background: #c0392b; }
+        .btn-logout { background: transparent; color: white; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; transition: 0.3s; border: 2px solid #e74c3c;}
+        .btn-logout:hover { background: #e74c3c; }
+
+        /* SISTEMA DE PESTAÑAS (TABS) */
+        .tabs-container { background: white; border-radius: 12px 12px 0 0; padding: 10px 10px 0 10px; display: flex; gap: 5px; flex-wrap: wrap; border-bottom: 3px solid #005CAB;}
+        .tab-btn { background: #f8f9fa; border: none; padding: 12px 20px; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 15px; font-weight: bold; color: #666; transition: 0.3s; outline: none; flex-grow: 1; text-align: center; white-space: nowrap;}
+        .tab-btn:hover { background: #e9ecef; color: #005CAB; }
+        .tab-btn.active { background: #005CAB; color: white; box-shadow: 0 -3px 10px rgba(0,0,0,0.1); }
+
+        .tab-content { display: none; background: transparent; padding: 20px 0; animation: fadeEffect 0.4s; }
+        @keyframes fadeEffect { from {opacity: 0; transform: translateY(10px);} to {opacity: 1; transform: translateY(0);} }
+
+        /* ESTRUCTURA DE TARJETAS */
+        .grid-configuracion { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .tarjeta { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-top: 4px solid #ccc; box-sizing: border-box; }
         
-        .contenedor { display: flex; gap: 20px; flex-wrap: wrap; width: 100%; }
-        .tarjeta { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); flex: 1; min-width: 300px; border-top: 4px solid #005CAB; box-sizing: border-box; }
+        .tarjeta-full { width: 100%; border-top: 4px solid #005CAB; }
+
+        /* FORMULARIOS Y BOTONES */
+        label { font-weight: bold; font-size: 13px; margin-bottom: 5px; display: block; }
+        input, select { width: 100%; padding: 10px 12px; margin-bottom: 15px; border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box; font-size: 14px; transition: border-color 0.3s; background: #fdfdfd;}
+        input:focus, select:focus { border-color: #005CAB; outline: none; box-shadow: 0 0 5px rgba(0,92,171,0.2);}
         
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background: #f8f9fa; }
-        
-        .btn-accion { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; }
+        .form-row { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 10px;}
+        .form-col { flex: 1; min-width: 200px; }
+
+        .btn-accion { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; width: 100%; font-size: 14px; transition: 0.3s;}
+        .btn-accion:hover { filter: brightness(1.1); transform: translateY(-1px);}
         .btn-verde { background: #27ae60; }
         .btn-azul { background: #3498db; }
-        .btn-rojo { background: #e74c3c; }
-        .agotado { background: #ffebee; color: #c0392b; font-weight: bold; }
-        
-        /* Estilos para el recuadro de ayuda de Gmail */
-        .caja-ayuda { background: #e8f4fd; border-left: 4px solid #3498db; padding: 15px; margin-top: 10px; border-radius: 4px; font-size: 13px; color: #333; display: none; margin-bottom: 10px; }
-        .btn-ayuda { background: #3498db; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; margin-left: 10px; }
-        
-        .table-responsive { width: 100%; overflow-x: auto; }
+        .btn-morado { background: #8e44ad; }
+        .btn-rojo { background: #e74c3c; width: auto; padding: 6px 12px; font-size: 12px;}
+        .btn-export { background: #27ae60; width: auto; text-decoration: none; display: inline-block; text-align: center;}
+
+        /* TABLAS RESPONSIVAS */
+        .table-responsive { width: 100%; overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #e9ecef;}
+        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 600px; }
+        th, td { border-bottom: 1px solid #e9ecef; padding: 12px 15px; text-align: left; }
+        th { background: #f8f9fa; color: #495057; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;}
+        tr:hover { background-color: #f8f9fa; }
+        .agotado { background: #fff5f5; color: #c0392b; font-weight: bold; }
+        .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; color: white; }
+
+        /* Adapta a celulares */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .header h1 { font-size: 20px; }
+            .botones-nav { width: 100%; }
+            .btn-nav, .btn-logout { width: 100%; text-align: center; }
+            .tab-btn { flex-basis: 40%; font-size: 13px; padding: 10px; }
+            .form-row { flex-direction: column; gap: 0; }
+        }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1 style="margin: 0; font-size: 24px;">Panel: {{ nombre_estacion }}</h1>
+        <h1 style="margin: 0;">Panel: {{ nombre_estacion }}</h1>
         <div class="botones-nav">
-            <a href="/iniciar_terminal" class="btn-nav" target="_blank">💻 Ir a Terminal POS</a>
+            <a href="/iniciar_terminal" class="btn-nav" target="_blank">💻 Ir a Terminal</a>
             <a href="/iniciar_ruleta" class="btn-nav" target="_blank">🎡 Ir a Ruleta</a>
             <a href="/logout_admin" class="btn-logout">🚪 Cerrar Sesión</a>
         </div>
     </div>
-    <div class="tarjeta" style="border-top-color: #27ae60;">
-                <h2 style="color: #27ae60; margin-top: 0; border-bottom: 2px solid #27ae60; padding-bottom: 10px; font-size: 18px;">⚙️ Límite de Giros</h2>
-                
-                <form action="/admin/configurar_giros" method="POST" style="background: #eafaf1; padding: 15px; border-radius: 8px; border: 1px solid #27ae60;">
-                    <label style="font-weight: bold; color: #1e8449; font-size: 13px;">Giros Totales por Día (0 = Ilimitado):</label>
-                    <input type="number" name="limite_giros" value="{{ estacion['limite_giros'] or 0 }}" min="0" required style="width: 100%; padding: 10px; margin-top: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px;">
-                    
-                    <button type="submit" class="btn-accion" style="background: #27ae60; color: white; width: 100%;">💾 Guardar Límite</button>
-                </form>
-            </div>
-    <div class="contenedor">
-        
-        <div style="display: flex; gap: 20px; flex-wrap: wrap; width: 100%;">
+
+    <div class="tabs-container">
+        <button class="tab-btn" id="btn-Configuracion" onclick="openTab('Configuracion')">⚙️ Configuración</button>
+        <button class="tab-btn" id="btn-Premios" onclick="openTab('Premios')">🎁 Premios</button>
+        <button class="tab-btn" id="btn-Personal" onclick="openTab('Personal')">👤 Personal</button>
+        <button class="tab-btn" id="btn-Historial" onclick="openTab('Historial')">📊 Historial</button>
+    </div>
+
+    <div id="Configuracion" class="tab-content">
+        <div class="grid-configuracion">
             
             <div class="tarjeta" style="border-top-color: #e67e22;">
-                <h2 style="color: #e67e22; margin-top: 0; border-bottom: 2px solid #e67e22; padding-bottom: 10px; font-size: 18px;">🔐 Acceso Tablet</h2>
-                <form action="/admin/configurar_ruleta" method="POST" style="background: #fff9e6; padding: 15px; border-radius: 8px; border: 1px solid #f39c12;">
-                    <label style="font-weight: bold; color: #d35400; font-size: 13px;">Usuario de Tablet:</label>
-                    <input type="text" name="ruleta_user" value="{{ estacion['ruleta_user'] or '' }}" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px; box-sizing: border-box;">
-                    
-                    <label style="font-weight: bold; color: #d35400; font-size: 13px;">Contraseña:</label>
-                    <input type="text" name="ruleta_pass" value="{{ estacion['ruleta_pass'] or '' }}" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px; box-sizing: border-box;">
-                    
-                    <button type="submit" class="btn-accion btn-verde" style="width: 100%;">💾 Guardar / Actualizar</button>
+                <h2 style="color: #e67e22; margin-top: 0; font-size: 18px;">🔐 Acceso Tablet</h2>
+                <form action="/admin/configurar_ruleta" method="POST">
+                    <label style="color: #d35400;">Usuario de Tablet:</label>
+                    <input type="text" name="ruleta_user" value="{{ estacion['ruleta_user'] or '' }}" required>
+                    <label style="color: #d35400;">Contraseña:</label>
+                    <input type="text" name="ruleta_pass" value="{{ estacion['ruleta_pass'] or '' }}" required>
+                    <button type="submit" class="btn-accion btn-verde">💾 Guardar Acceso</button>
                 </form>
             </div>
 
             <div class="tarjeta" style="border-top-color: #2980b9;">
-                <h2 style="color: #2980b9; margin-top: 0; border-bottom: 2px solid #2980b9; padding-bottom: 10px; font-size: 18px; display: flex; align-items: center;">
-                    ✉️ Correo de Envíos 
-                    <button type="button" class="btn-ayuda" onclick="document.getElementById('ayuda-gmail').style.display = document.getElementById('ayuda-gmail').style.display === 'block' ? 'none' : 'block'" title="¿Cómo obtener la contraseña?">?</button>
-                </h2>
-                
-                <div id="ayuda-gmail" class="caja-ayuda">
-                    <strong>¿Cómo obtener la clave de 16 dígitos?</strong>
-                    <ol style="margin-top: 5px; padding-left: 20px;">
-                        <li>Entra a la cuenta de Gmail.</li>
-                        <li>Ve a "Gestionar tu cuenta" > Seguridad.</li>
-                        <li>Activa la <strong>Verificación en dos pasos</strong>.</li>
-                        <li>Busca "Contraseñas de aplicaciones" y crea una.</li>
-                    </ol>
-                </div>
-
-                <form action="/admin/configurar_correo" method="POST" style="background: #f4f9fd; padding: 15px; border-radius: 8px; border: 1px solid #3498db;">
-                    <label style="font-weight: bold; color: #2980b9; font-size: 13px;">Cuenta de Gmail:</label>
-                    <input type="email" name="correo" value="{{ estacion['correo_emisor'] or '' }}" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px; box-sizing: border-box;">
-                    
-                    <label style="font-weight: bold; color: #2980b9; font-size: 13px;">Clave (16 dígitos):</label>
-                    <input type="password" name="password_correo" value="{{ estacion['password_correo'] or '' }}" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px; box-sizing: border-box;">
-                    
-                    <button type="submit" class="btn-accion btn-azul" style="width: 100%;">💾 Guardar Correo</button>
+                <h2 style="color: #2980b9; margin-top: 0; font-size: 18px;">✉️ Correo de Envíos</h2>
+                <form action="/admin/configurar_correo" method="POST">
+                    <label style="color: #2980b9;">Cuenta de Gmail:</label>
+                    <input type="email" name="correo" value="{{ estacion['correo_emisor'] or '' }}" required>
+                    <label style="color: #2980b9;">Clave Aplicación (16 dígitos):</label>
+                    <input type="password" name="password_correo" value="{{ estacion['password_correo'] or '' }}" required>
+                    <button type="submit" class="btn-accion btn-azul">💾 Guardar Correo</button>
                 </form>
             </div>
 
             <div class="tarjeta" style="border-top-color: #8e44ad;">
-                <h2 style="color: #8e44ad; margin-top: 0; border-bottom: 2px solid #8e44ad; padding-bottom: 10px; font-size: 18px;">🎨 Diseño de Ruleta</h2>
-                
-                <form action="/admin/configurar_estilo" method="POST" style="background: #f9f4ff; padding: 15px; border-radius: 8px; border: 1px solid #8e44ad;">
-                    <label style="font-weight: bold; color: #8e44ad; font-size: 13px;">Seleccionar Tema Visual ({{ estacion['bandera'] }}):</label>
-                    
-                    <select name="estilo_ruleta" style="width: 100%; padding: 10px; margin-top: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px;">
+                <h2 style="color: #8e44ad; margin-top: 0; font-size: 18px;">🎨 Diseño de Ruleta</h2>
+                <form action="/admin/configurar_estilo" method="POST">
+                    <label style="color: #8e44ad;">Tema Visual ({{ estacion['bandera'] }}):</label>
+                    <select name="estilo_ruleta">
                         {% if estacion['bandera'] == 'YPF' %}
-                            <option value="YPF_CLASICO" {% if estacion['estilo_ruleta'] == 'YPF_CLASICO' %}selected{% endif %}>YPF: Clásico (Plano Azul/Amarillo)</option>
-                            <option value="YPF_MODERNO" {% if estacion['estilo_ruleta'] == 'YPF_MODERNO' %}selected{% endif %}>YPF: Moderno (Vidrio y Plata)</option>
+                            <option value="YPF_CLASICO" {% if estacion['estilo_ruleta'] == 'YPF_CLASICO' %}selected{% endif %}>YPF: Clásico (Azul/Amarillo)</option>
+                            <option value="YPF_MODERNO" {% if estacion['estilo_ruleta'] == 'YPF_MODERNO' %}selected{% endif %}>YPF: Moderno (Vidrio/Plata)</option>
                             <option value="YPF_LED" {% if estacion['estilo_ruleta'] == 'YPF_LED' %}selected{% endif %}>YPF: Premium (Luces LED)</option>
                         {% elif estacion['bandera'] == 'AXION' %}
-                            <option value="AXION_CLASICO" {% if estacion['estilo_ruleta'] == 'AXION_CLASICO' %}selected{% endif %}>Axion: Clásico (Plano Violeta/Rojo)</option>
-                            <option value="AXION_MODERNO" {% if estacion['estilo_ruleta'] == 'AXION_MODERNO' %}selected{% endif %}>Axion: Moderno (Vidrio y Plata)</option>
-                            <option value="AXION_LED" {% if estacion['estilo_ruleta'] == 'AXION_LED' %}selected{% endif %}>Axion: Premium (Luces LED Oro)</option>
+                            <option value="AXION_CLASICO" {% if estacion['estilo_ruleta'] == 'AXION_CLASICO' %}selected{% endif %}>Axion: Clásico (Violeta/Rojo)</option>
+                            <option value="AXION_MODERNO" {% if estacion['estilo_ruleta'] == 'AXION_MODERNO' %}selected{% endif %}>Axion: Moderno (Vidrio/Plata)</option>
+                            <option value="AXION_LED" {% if estacion['estilo_ruleta'] == 'AXION_LED' %}selected{% endif %}>Axion: Premium (LED Oro)</option>
                         {% else %}
                             <option value="YPF_CLASICO" {% if estacion['estilo_ruleta'] == 'YPF_CLASICO' %}selected{% endif %}>Clásico (Por defecto)</option>
                         {% endif %}
                     </select>
-                    
-                    <button type="submit" class="btn-accion" style="background: #8e44ad; color: white; width: 100%;">💾 Aplicar Diseño</button>
+                    <button type="submit" class="btn-accion btn-morado">💾 Aplicar Diseño</button>
                 </form>
             </div>
 
-        </div> <div class="tarjeta">
-            <h2 style="border-bottom: 2px solid #005CAB; padding-bottom: 10px; font-size: 18px;">🎁 Configurar Premios y Estadísticas</h2>
-            <form action="/admin/agregar_premio" method="POST" style="background: #fdfdfd; padding: 15px; border: 1px solid #eee; border-radius: 8px;">
-                <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
-                    <input type="text" name="nombre" placeholder="Nombre del Premio (Ej: Tanque Lleno)" required style="flex: 2; min-width: 200px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
-                    <input type="number" name="limite_diario" placeholder="Límite Diario (Dejar en 0 si es ilimitado)" min="0" value="0" style="flex: 1; min-width: 150px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; background: #fff9e6; box-sizing: border-box;">
+            <div class="tarjeta" style="border-top-color: #16a085;">
+                <h2 style="color: #16a085; margin-top: 0; font-size: 18px;">⚙️ Límite Operativo</h2>
+                <form action="/admin/configurar_giros" method="POST">
+                    <label style="color: #16a085;">Giros Totales por Día (0 = Ilimitado):</label>
+                    <input type="number" name="limite_giros" value="{{ estacion['limite_giros'] or 0 }}" min="0" required>
+                    <button type="submit" class="btn-accion" style="background: #16a085;">💾 Guardar Límite</button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="Premios" class="tab-content">
+        <div class="tarjeta tarjeta-full">
+            <h2 style="color: #005CAB; margin-top: 0;">🎁 Configurar Premios</h2>
+            
+            <form action="/admin/agregar_premio" method="POST" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e9ecef;">
+                <div class="form-row">
+                    <div class="form-col" style="flex: 2;">
+                        <label>Nombre del Premio</label>
+                        <input type="text" name="nombre" placeholder="Ej: Tanque Lleno" required>
+                    </div>
+                    <div class="form-col">
+                        <label>Límite Diario (0 = Infinito)</label>
+                        <input type="number" name="limite_diario" value="0" min="0">
+                    </div>
+                    <div class="form-col">
+                        <label>Dificultad de Salida</label>
+                        <select name="dificultad" required>
+                            <option value="Consuelo">Sale Siempre (Consuelo)</option>
+                            <option value="Frecuente">Fácil (Frecuente)</option>
+                            <option value="Normal" selected>Normal</option>
+                            <option value="Raro">Difícil (Raro)</option>
+                            <option value="Imposible">Premio Mayor (Casi Imposible)</option>
+                        </select>
+                    </div>
                 </div>
                 
-                <select name="dificultad" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" required>
-                    <option value="" disabled selected>¿Qué tan fácil es ganarlo?</option>
-                    <option value="Consuelo">Sale Siempre (Consuelo)</option>
-                    <option value="Frecuente">Fácil (Frecuente)</option>
-                    <option value="Normal">Normal</option>
-                    <option value="Raro">Difícil</option>
-                    <option value="Imposible">Casi Imposible (Premio Mayor)</option>
-                </select>
-                
-                <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
-                    <select name="sector" style="flex: 1; min-width: 150px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"> 
-                        <option value="PLAYA">Playa</option> 
-                        <option value="FULL">Full</option> 
-                        <option value="NINGUNO">Ninguno (No se canjea)</option>
-                    </select>
-                    <input type="text" name="imagen_url" placeholder="URL de la imagen (Opcional)" style="flex: 2; min-width: 200px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Sector de Canje</label>
+                        <select name="sector"> 
+                            <option value="PLAYA">Playa</option> 
+                            <option value="FULL">Full</option> 
+                            <option value="NINGUNO">Ninguno (No es canjeable)</option>
+                        </select>
+                    </div>
+                    <div class="form-col" style="flex: 2;">
+                        <label>URL de Imagen (Opcional)</label>
+                        <input type="text" name="imagen_url" placeholder="https://...">
+                    </div>
                 </div>
-                
-                <button type="submit" class="btn-accion btn-azul" style="width: 100%; padding: 12px;">+ Agregar Premio</button>
+                <button type="submit" class="btn-accion btn-azul" style="max-width: 200px;">+ Agregar Premio</button>
             </form>
             
             <div class="table-responsive">
                 <table>
-                    <thead><tr><th>Premio</th><th>Dificultad</th><th>Límite Hoy</th><th style="background:#fff9e6;">% Chance (Ahora)</th><th>Acción</th></tr></thead>
+                    <thead><tr><th>Premio</th><th>Dificultad</th><th>Límite Hoy</th><th>% Chance Actual</th><th>Acción</th></tr></thead>
                     <tbody>
                         {% for p in premios %}
                         <tr class="{% if p['estado'] == 'AGOTADO HOY' %}agotado{% endif %}">
-                            <td>{{ p['nombre'] }}<br><small style="color: gray;">{{ p['sector'] }}</small></td>
+                            <td><strong>{{ p['nombre'] }}</strong><br><span style="color: #666; font-size:12px;">{{ p['sector'] }}</span></td>
                             <td>{{ p['dificultad'] }}</td>
                             <td style="text-align: center; font-weight: bold;">
                                 {% if p['limite_diario'] > 0 %}{{ p['entregados_hoy'] }} / {{ p['limite_diario'] }}{% else %}Ilimitado{% endif %}
                             </td>
-                            <td style="font-weight: bold; color: {% if p['estado'] == 'AGOTADO HOY' %}#c0392b{% else %}#27ae60{% endif %}; font-size: 16px;">
+                            <td style="font-weight: bold; color: {% if p['estado'] == 'AGOTADO HOY' %}#c0392b{% else %}#27ae60{% endif %}; font-size: 15px;">
                                 {% if p['estado'] == 'AGOTADO HOY' %}Agotado{% else %}{{ p['probabilidad_porcentaje'] }}%{% endif %}
                             </td>
                             <td>
                                 <form action="/admin/borrar_premio/{{ p['id'] }}" method="POST" style="margin: 0;">
-                                    <button type="submit" class="btn-rojo" style="padding: 6px 10px;">Borrar</button>
+                                    <button type="submit" class="btn-accion btn-rojo">Borrar</button>
                                 </form>
                             </td>
                         </tr>
@@ -175,60 +210,81 @@
                 </table>
             </div>
         </div>
+    </div>
 
-        <div class="tarjeta">
-            <h2 style="border-bottom: 2px solid #005CAB; padding-bottom: 10px; font-size: 18px;">👤 Personal (Terminal)</h2>
-            <form action="/admin/agregar_vendedor" method="POST" style="background: #fdfdfd; padding: 15px; border: 1px solid #eee; border-radius: 8px;">
-                <input type="text" name="nombre" placeholder="Nombre Vendedor" required style="width: 100%; padding: 10px; margin-bottom:10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
-                <div style="display: flex; gap: 10px;">
-                    <input type="password" name="pin" placeholder="PIN Secreto" required style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
-                    <select name="sector" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"> 
-                        <option value="PLAYA">Playa</option> 
-                        <option value="FULL">Full</option> 
-                    </select>
+    <div id="Personal" class="tab-content">
+        <div class="tarjeta tarjeta-full" style="border-top-color: #8e44ad;">
+            <h2 style="color: #8e44ad; margin-top: 0;">👤 Gestión de Personal</h2>
+            
+            <form action="/admin/agregar_vendedor" method="POST" style="background: #fdfaf6; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #f3e5f5;">
+                <div class="form-row">
+                    <div class="form-col" style="flex: 2;">
+                        <label style="color:#8e44ad;">Nombre del Vendedor</label>
+                        <input type="text" name="nombre" placeholder="Nombre y Apellido" required>
+                    </div>
+                    <div class="form-col">
+                        <label style="color:#8e44ad;">PIN Secreto</label>
+                        <input type="password" name="pin" placeholder="****" required>
+                    </div>
+                    <div class="form-col">
+                        <label style="color:#8e44ad;">Sector</label>
+                        <select name="sector"> 
+                            <option value="PLAYA">Playa</option> 
+                            <option value="FULL">Full</option> 
+                        </select>
+                    </div>
                 </div>
-                <button type="submit" class="btn-accion btn-verde" style="margin-top:15px; width: 100%; padding: 12px;">+ Crear Vendedor</button>
+                <button type="submit" class="btn-accion btn-verde" style="max-width: 200px;">+ Cargar Vendedor</button>
             </form>
+
             <div class="table-responsive">
-                <table style="margin-top:15px;">
-                    <thead><tr><th>Nombre</th><th>Sector</th><th>PIN</th><th>Acción</th></tr></thead>
+                <table>
+                    <thead><tr><th>Nombre</th><th>Sector</th><th>PIN de Acceso</th><th>Acción</th></tr></thead>
                     <tbody>
                         {% for v in vendedores %}
                         <tr>
-                            <td>{{ v['nombre'] }}</td>
-                            <td>{{ v['sector'] }}</td>
+                            <td><strong>{{ v['nombre'] }}</strong></td>
+                            <td><span class="badge" style="background:#8e44ad;">{{ v['sector'] }}</span></td>
                             <td style="font-family: monospace; color: #888;">****</td>
                             <td>
                                 <form action="/admin/borrar_vendedor/{{ v['id'] }}" method="POST" style="margin: 0;" onsubmit="return confirm('¿Seguro que deseas borrar este vendedor?');">
-                                    <button type="submit" class="btn-rojo" style="padding: 6px 10px; border-radius: 4px; font-size: 12px;">Borrar</button>
+                                    <button type="submit" class="btn-accion btn-rojo">Borrar</button>
                                 </form>
                             </td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="4" style="text-align: center; color: #666;">Aún no hay vendedores cargados.</td></tr>
+                        <tr><td colspan="4" style="text-align: center; color: #999; padding: 20px;">No hay vendedores registrados aún.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
+    </div>
 
-        <div class="tarjeta" style="width: 100%;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #005CAB; padding-bottom: 10px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                <h2 style="margin: 0; border: none; padding: 0; font-size: 18px;">📊 Historial de Participantes</h2>
-                <a href="/admin/exportar_excel" class="btn-accion btn-verde" style="text-decoration: none; font-size: 14px; padding: 10px 15px; text-align: center;">⬇ Descargar Excel (.xlsx)</a>
+    <div id="Historial" class="tab-content">
+        <div class="tarjeta tarjeta-full" style="border-top-color: #27ae60;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                <h2 style="color: #27ae60; margin: 0;">📊 Historial de Participantes</h2>
+                <a href="/admin/exportar_excel" class="btn-accion btn-export">⬇ Descargar Excel (.xlsx)</a>
             </div>
+            
             <div class="table-responsive">
                 <table>
                     <thead><tr><th>Fecha</th><th>Cliente</th><th>Premio</th><th>Token</th><th>Estado / Entregó</th></tr></thead>
                     <tbody>
                         {% for c in clientes %}
                         <tr>
-                            <td style="white-space: nowrap;">{{ (c['fecha'] | string)[:10] }}</td>
-                            <td>{{ c['nombre'] }}<br><small style="color: #005CAB;">{{ c['email'] }}</small></td>
+                            <td style="white-space: nowrap;">{{ (c['fecha'] | string)[:16] }}</td>
+                            <td><strong>{{ c['nombre'] }}</strong><br><a href="mailto:{{ c['email'] }}" style="color: #005CAB; text-decoration: none; font-size: 13px;">{{ c['email'] }}</a></td>
                             <td><strong>{{ c['premio'] }}</strong></td>
                             <td style="font-family: monospace; font-size: 14px; letter-spacing: 1px;">{{ c['token'] }}</td>
-                            <td style="color: {{ 'green' if c['estado'] == 'CANJEADO' else 'orange' }}; font-weight: bold;">
-                                {{ c['estado'] }} <br><small style="color:black; font-weight: normal;">{% if c['vendedor_canje'] %}👤 {{ c['vendedor_canje'] }}{% else %}-{% endif %}</small>
+                            <td>
+                                {% if c['estado'] == 'CANJEADO' %}
+                                    <span style="color: #27ae60; font-weight: bold;">✔ CANJEADO</span><br>
+                                    <small style="color:#555;">👤 {{ c['vendedor_canje'] }}</small>
+                                {% else %}
+                                    <span style="color: #f39c12; font-weight: bold;">⏳ PENDIENTE</span>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
@@ -236,7 +292,33 @@
                 </table>
             </div>
         </div>
-
     </div>
+
+    <script>
+        function openTab(tabName) {
+            // Ocultar todos los contenidos
+            let contents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < contents.length; i++) {
+                contents[i].style.display = "none";
+            }
+            // Quitar clase active de todos los botones
+            let btns = document.getElementsByClassName("tab-btn");
+            for (let i = 0; i < btns.length; i++) {
+                btns[i].classList.remove("active");
+            }
+            // Mostrar la pestaña seleccionada
+            document.getElementById(tabName).style.display = "block";
+            document.getElementById("btn-" + tabName).classList.add("active");
+            
+            // Guardar en memoria (localStorage)
+            localStorage.setItem("tabActivaGe", tabName);
+        }
+
+        // Al cargar la página, abrir la última pestaña que visitó el usuario
+        document.addEventListener("DOMContentLoaded", function() {
+            let activeTab = localStorage.getItem("tabActivaGe") || "Configuracion";
+            openTab(activeTab);
+        });
+    </script>
 </body>
 </html>
