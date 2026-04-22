@@ -72,10 +72,24 @@ def generar_token():
 def seleccionar_premio_inteligente(estacion_id):
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    
+    hoy = date.today().strftime('%Y-%m-%d')
+    
+    # NUEVO: Control de límite de giros diarios
+    c.execute("SELECT limite_giros FROM estaciones WHERE id = %s", (estacion_id,))
+    est = c.fetchone()
+    limite_giros = est['limite_giros'] if est and est['limite_giros'] else 0
+    
+    if limite_giros > 0:
+        c.execute("SELECT COUNT(*) as total FROM canjes WHERE estacion_id = %s AND DATE(fecha) = %s", (estacion_id, hoy))
+        total_hoy = c.fetchone()['total']
+        if total_hoy >= limite_giros:
+            conn.close()
+            return {"nombre": "Cupo Diario Lleno", "sector": "NINGUNO", "imagen_url": ""}
+
     c.execute("SELECT * FROM premios WHERE estacion_id = %s", (estacion_id,))
     premios_db = c.fetchall()
     
-    hoy = date.today().strftime('%Y-%m-%d')
     c.execute("SELECT premio, COUNT(*) as cant FROM canjes WHERE estacion_id = %s AND DATE(fecha) = %s GROUP BY premio", (estacion_id, hoy))
     canjes_hoy = c.fetchall()
     entregados_hoy = {row['premio']: row['cant'] for row in canjes_hoy}
@@ -107,10 +121,11 @@ def init_db():
         
         c.execute("ALTER TABLE estaciones ADD COLUMN IF NOT EXISTS correo_emisor TEXT")
         c.execute("ALTER TABLE estaciones ADD COLUMN IF NOT EXISTS password_correo TEXT")
-        
-        # NUEVAS COLUMNAS PARA MARCA Y DISEÑO
         c.execute("ALTER TABLE estaciones ADD COLUMN IF NOT EXISTS bandera TEXT DEFAULT 'YPF'")
         c.execute("ALTER TABLE estaciones ADD COLUMN IF NOT EXISTS estilo_ruleta TEXT DEFAULT 'YPF_CLASICO'")
+        
+        # NUEVA COLUMNA: Límite de giros diarios
+        c.execute("ALTER TABLE estaciones ADD COLUMN IF NOT EXISTS limite_giros INTEGER DEFAULT 0")
 
         conn.close()
         print("✅ BASE DE DATOS CONECTADA Y LISTA")
@@ -164,8 +179,6 @@ def crear_estacion():
     if not session.get('super_auth'): return redirect('/login')
     h = generate_password_hash(request.form['password'])
     bandera = request.form.get('bandera', 'YPF')
-    
-    # Asignar estilo por defecto según la bandera elegida
     estilo_default = 'YPF_CLASICO' if bandera == 'YPF' else 'AXION_CLASICO'
     
     conn = get_db(); c = conn.cursor()
@@ -176,6 +189,16 @@ def crear_estacion():
     except Exception as e: 
         print(e); conn.rollback()
     finally: conn.close()
+    return redirect('/superadmin')
+
+@app.route('/superadmin/editar_estacion/<int:id>', methods=['POST'])
+def editar_estacion(id):
+    if not session.get('super_auth'): return redirect('/login')
+    nuevo_nombre = request.form.get('nuevo_nombre')
+    if nuevo_nombre:
+        conn = get_db(); c = conn.cursor()
+        c.execute('UPDATE estaciones SET nombre = %s WHERE id = %s', (nuevo_nombre, id))
+        conn.commit(); conn.close()
     return redirect('/superadmin')
 
 @app.route('/superadmin/borrar_estacion/<int:id>', methods=['POST'])
@@ -208,6 +231,9 @@ def panel_admin():
     
     c.execute("SELECT * FROM estaciones WHERE id = %s", (eid,))
     estacion = c.fetchone()
+    
+    # Actualizar el nombre en la sesión por si el superadmin lo cambió
+    session['estacion_nombre'] = estacion['nombre']
     
     c.execute("SELECT * FROM canjes WHERE estacion_id = %s ORDER BY fecha DESC", (eid,))
     clientes = c.fetchall()
@@ -246,6 +272,15 @@ def panel_admin():
         
     conn.close()
     return render_template('administrador.html', clientes=clientes, premios=premios, vendedores=vendedores, estacion=estacion, nombre_estacion=session['estacion_nombre'])
+
+@app.route('/admin/configurar_giros', methods=['POST'])
+def configurar_giros():
+    if 'estacion_id' not in session: return redirect('/login')
+    limite = request.form.get('limite_giros', 0)
+    conn = get_db(); c = conn.cursor()
+    c.execute('UPDATE estaciones SET limite_giros = %s WHERE id = %s', (int(limite), session['estacion_id']))
+    conn.commit(); conn.close()
+    return redirect('/admin')
 
 @app.route('/admin/configurar_estilo', methods=['POST'])
 def configurar_estilo():
@@ -351,14 +386,10 @@ def logout_ruleta():
 @app.route('/ruleta')
 def ver_ruleta():
     if 'ruleta_auth_id' not in session: return redirect('/iniciar_ruleta')
-    
-    # Extraemos el estilo configurado de la base de datos para pasárselo al HTML de la ruleta
     conn = get_db(); c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     c.execute("SELECT estilo_ruleta FROM estaciones WHERE id = %s", (session['ruleta_auth_id'],))
     est = c.fetchone(); conn.close()
-    
     estilo_actual = est['estilo_ruleta'] if est and est['estilo_ruleta'] else 'YPF_CLASICO'
-    
     return render_template('index.html', estacion_id=session['ruleta_auth_id'], nombre_estacion=session['ruleta_auth_nombre'], estilo_ruleta=estilo_actual)
 
 @app.route('/api/premios/<int:estacion_id>')
