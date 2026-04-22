@@ -252,3 +252,45 @@ input {
     transition: border-color 0.3s ease;
 }
 input:focus { border-color: var(--modal-titulo); outline: none; box-shadow: 0 0 8px rgba(0,0,0,0.1); }
+
+/* ==========================================
+   4. RESPONSIVE DESIGN (Celulares y Tablets)
+   ========================================== */
+@media (max-width: 768px) {
+    /* Achicamos la caja principal para que entre en la pantalla */
+    .contenedor-principal { 
+        padding: 20px 15px; 
+        width: 95%; 
+        border-width: 3px;
+    }
+    
+    h1 { font-size: 20px; margin-bottom: 20px; }
+    
+    /* Magia para que el Canvas se encoja proporcionalmente */
+    .contenedor-ruleta { 
+        width: 280px; 
+        height: 280px; 
+        margin-bottom: 30px; 
+    }
+    canvas { 
+        width: 100%; 
+        height: 100%; 
+        border-width: 5px;
+    }
+    
+    /* Ajustes de elementos flotantes */
+    .flecha { font-size: 35px; top: -18px; }
+    .centro-logo { width: 70px; height: 70px; border-width: 3px; }
+    
+    /* Botones más amigables para tocar con el dedo */
+    .btn-primario, .btn-secundario { 
+        width: 100%; 
+        font-size: 16px; 
+        padding: 15px 20px; 
+    }
+    
+    /* Modal de Premio adaptable */
+    .contenido-modal { padding: 25px 15px; width: 95%; }
+    .titulo-modal { font-size: 22px; }
+    #texto-premio { font-size: 18px !important; }
+}
