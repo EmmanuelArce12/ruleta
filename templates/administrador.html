@@ -5,20 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administración - Grupo GE</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; margin: 0; box-sizing: border-box; color: #333;}
+        /* VARIABLES DE TEMA (CLARO POR DEFECTO) */
+        :root {
+            --bg-body: #f0f2f5;
+            --text-main: #333;
+            --bg-card: #ffffff;
+            --border-color: #e9ecef;
+            --bg-input: #fdfdfd;
+            --text-input: #333;
+            --bg-tab: #f8f9fa;
+            --hover-tab: #e9ecef;
+            --bg-table-header: #f8f9fa;
+            --bg-form: #f8f9fa;
+        }
+
+        /* VARIABLES MODO OSCURO */
+        body.dark-mode {
+            --bg-body: #121212;
+            --text-main: #e0e0e0;
+            --bg-card: #1e1e1e;
+            --border-color: #333333;
+            --bg-input: #2c2c2c;
+            --text-input: #ffffff;
+            --bg-tab: #2a2a2a;
+            --hover-tab: #3d3d3d;
+            --bg-table-header: #2a2a2a;
+            --bg-form: #252525;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-body); color: var(--text-main); padding: 20px; margin: 0; box-sizing: border-box; transition: background 0.3s, color 0.3s;}
         
         /* HEADER PRINCIPAL */
-        .header { background: #005CAB; color: white; padding: 15px 25px; border-radius: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); flex-wrap: wrap; gap: 15px;}
-        .botones-nav { display: flex; gap: 10px; flex-wrap: wrap; }
-        .btn-nav { background: #F1C40F; color: #005CAB; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
-        .btn-nav:hover { background: #FFD700; transform: translateY(-2px); }
+        .header { background: #005CAB; color: white; padding: 15px 25px; border-radius: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); flex-wrap: wrap; gap: 15px;}
+        .botones-nav { display: flex; gap: 10px; flex-wrap: wrap; align-items: center;}
+        
+        .btn-nav, .btn-tema { background: #F1C40F; color: #005CAB; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; border: none;}
+        .btn-nav:hover, .btn-tema:hover { background: #FFD700; transform: translateY(-2px); }
+        
         .btn-logout { background: transparent; color: white; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; transition: 0.3s; border: 2px solid #e74c3c;}
         .btn-logout:hover { background: #e74c3c; }
 
         /* SISTEMA DE PESTAÑAS (TABS) */
-        .tabs-container { background: white; border-radius: 12px 12px 0 0; padding: 10px 10px 0 10px; display: flex; gap: 5px; flex-wrap: wrap; border-bottom: 3px solid #005CAB;}
-        .tab-btn { background: #f8f9fa; border: none; padding: 12px 20px; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 15px; font-weight: bold; color: #666; transition: 0.3s; outline: none; flex-grow: 1; text-align: center; white-space: nowrap;}
-        .tab-btn:hover { background: #e9ecef; color: #005CAB; }
+        .tabs-container { background: var(--bg-card); border-radius: 12px 12px 0 0; padding: 10px 10px 0 10px; display: flex; gap: 5px; flex-wrap: wrap; border-bottom: 3px solid #005CAB; transition: background 0.3s;}
+        .tab-btn { background: var(--bg-tab); border: none; padding: 12px 20px; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 15px; font-weight: bold; color: var(--text-main); transition: 0.3s; outline: none; flex-grow: 1; text-align: center; white-space: nowrap;}
+        .tab-btn:hover { background: var(--hover-tab); }
         .tab-btn.active { background: #005CAB; color: white; box-shadow: 0 -3px 10px rgba(0,0,0,0.1); }
 
         .tab-content { display: none; background: transparent; padding: 20px 0; animation: fadeEffect 0.4s; }
@@ -26,15 +56,16 @@
 
         /* ESTRUCTURA DE TARJETAS */
         .grid-configuracion { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .tarjeta { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-top: 4px solid #ccc; box-sizing: border-box; }
-        
+        .tarjeta { background: var(--bg-card); padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-top: 4px solid #ccc; box-sizing: border-box; transition: background 0.3s;}
         .tarjeta-full { width: 100%; border-top: 4px solid #005CAB; }
 
         /* FORMULARIOS Y BOTONES */
         label { font-weight: bold; font-size: 13px; margin-bottom: 5px; display: block; }
-        input, select { width: 100%; padding: 10px 12px; margin-bottom: 15px; border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box; font-size: 14px; transition: border-color 0.3s; background: #fdfdfd;}
+        input, select { width: 100%; padding: 10px 12px; margin-bottom: 15px; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; font-size: 14px; transition: border-color 0.3s; background: var(--bg-input); color: var(--text-input);}
         input:focus, select:focus { border-color: #005CAB; outline: none; box-shadow: 0 0 5px rgba(0,92,171,0.2);}
         
+        .formulario-caja { background: var(--bg-form); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-top: 10px; transition: background 0.3s, border 0.3s;}
+
         .form-row { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 10px;}
         .form-col { flex: 1; min-width: 200px; }
 
@@ -47,12 +78,12 @@
         .btn-export { background: #27ae60; width: auto; text-decoration: none; display: inline-block; text-align: center;}
 
         /* TABLAS RESPONSIVAS */
-        .table-responsive { width: 100%; overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #e9ecef;}
+        .table-responsive { width: 100%; overflow-x: auto; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color); transition: background 0.3s;}
         table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 600px; }
-        th, td { border-bottom: 1px solid #e9ecef; padding: 12px 15px; text-align: left; }
-        th { background: #f8f9fa; color: #495057; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;}
-        tr:hover { background-color: #f8f9fa; }
-        .agotado { background: #fff5f5; color: #c0392b; font-weight: bold; }
+        th, td { border-bottom: 1px solid var(--border-color); padding: 12px 15px; text-align: left; }
+        th { background: var(--bg-table-header); color: var(--text-main); font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;}
+        tr:hover { background-color: var(--bg-tab); }
+        .agotado { background: rgba(231, 76, 60, 0.1); color: #e74c3c; font-weight: bold; }
         .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; color: white; }
 
         /* Adapta a celulares */
@@ -60,7 +91,7 @@
             body { padding: 10px; }
             .header h1 { font-size: 20px; }
             .botones-nav { width: 100%; }
-            .btn-nav, .btn-logout { width: 100%; text-align: center; }
+            .btn-nav, .btn-logout, .btn-tema { width: 100%; text-align: center; box-sizing: border-box;}
             .tab-btn { flex-basis: 40%; font-size: 13px; padding: 10px; }
             .form-row { flex-direction: column; gap: 0; }
         }
@@ -71,6 +102,7 @@
     <div class="header">
         <h1 style="margin: 0;">Panel: {{ nombre_estacion }}</h1>
         <div class="botones-nav">
+            <button id="btn-toggle-tema" class="btn-tema" onclick="toggleTema()">🌙 Oscuro</button>
             <a href="/iniciar_terminal" class="btn-nav" target="_blank">💻 Ir a Terminal</a>
             <a href="/iniciar_ruleta" class="btn-nav" target="_blank">🎡 Ir a Ruleta</a>
             <a href="/logout_admin" class="btn-logout">🚪 Cerrar Sesión</a>
@@ -89,7 +121,7 @@
             
             <div class="tarjeta" style="border-top-color: #e67e22;">
                 <h2 style="color: #e67e22; margin-top: 0; font-size: 18px;">🔐 Acceso Tablet</h2>
-                <form action="/admin/configurar_ruleta" method="POST">
+                <form action="/admin/configurar_ruleta" method="POST" class="formulario-caja" style="border-color: #e67e22;">
                     <label style="color: #d35400;">Usuario de Tablet:</label>
                     <input type="text" name="ruleta_user" value="{{ estacion['ruleta_user'] or '' }}" required>
                     <label style="color: #d35400;">Contraseña:</label>
@@ -100,7 +132,7 @@
 
             <div class="tarjeta" style="border-top-color: #2980b9;">
                 <h2 style="color: #2980b9; margin-top: 0; font-size: 18px;">✉️ Correo de Envíos</h2>
-                <form action="/admin/configurar_correo" method="POST">
+                <form action="/admin/configurar_correo" method="POST" class="formulario-caja" style="border-color: #2980b9;">
                     <label style="color: #2980b9;">Cuenta de Gmail:</label>
                     <input type="email" name="correo" value="{{ estacion['correo_emisor'] or '' }}" required>
                     <label style="color: #2980b9;">Clave Aplicación (16 dígitos):</label>
@@ -111,7 +143,7 @@
 
             <div class="tarjeta" style="border-top-color: #8e44ad;">
                 <h2 style="color: #8e44ad; margin-top: 0; font-size: 18px;">🎨 Diseño de Ruleta</h2>
-                <form action="/admin/configurar_estilo" method="POST">
+                <form action="/admin/configurar_estilo" method="POST" class="formulario-caja" style="border-color: #8e44ad;">
                     <label style="color: #8e44ad;">Tema Visual ({{ estacion['bandera'] }}):</label>
                     <select name="estilo_ruleta">
                         {% if estacion['bandera'] == 'YPF' %}
@@ -132,7 +164,7 @@
 
             <div class="tarjeta" style="border-top-color: #16a085;">
                 <h2 style="color: #16a085; margin-top: 0; font-size: 18px;">⚙️ Límite Operativo</h2>
-                <form action="/admin/configurar_giros" method="POST">
+                <form action="/admin/configurar_giros" method="POST" class="formulario-caja" style="border-color: #16a085;">
                     <label style="color: #16a085;">Giros Totales por Día (0 = Ilimitado):</label>
                     <input type="number" name="limite_giros" value="{{ estacion['limite_giros'] or 0 }}" min="0" required>
                     <button type="submit" class="btn-accion" style="background: #16a085;">💾 Guardar Límite</button>
@@ -146,7 +178,7 @@
         <div class="tarjeta tarjeta-full">
             <h2 style="color: #005CAB; margin-top: 0;">🎁 Configurar Premios</h2>
             
-            <form action="/admin/agregar_premio" method="POST" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e9ecef;">
+            <form action="/admin/agregar_premio" method="POST" class="formulario-caja" style="border-color: #005CAB; margin-bottom: 20px;">
                 <div class="form-row">
                     <div class="form-col" style="flex: 2;">
                         <label>Nombre del Premio</label>
@@ -216,7 +248,7 @@
         <div class="tarjeta tarjeta-full" style="border-top-color: #8e44ad;">
             <h2 style="color: #8e44ad; margin-top: 0;">👤 Gestión de Personal</h2>
             
-            <form action="/admin/agregar_vendedor" method="POST" style="background: #fdfaf6; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #f3e5f5;">
+            <form action="/admin/agregar_vendedor" method="POST" class="formulario-caja" style="border-color: #8e44ad; margin-bottom: 20px;">
                 <div class="form-row">
                     <div class="form-col" style="flex: 2;">
                         <label style="color:#8e44ad;">Nombre del Vendedor</label>
@@ -275,13 +307,13 @@
                         {% for c in clientes %}
                         <tr>
                             <td style="white-space: nowrap;">{{ (c['fecha'] | string)[:16] }}</td>
-                            <td><strong>{{ c['nombre'] }}</strong><br><a href="mailto:{{ c['email'] }}" style="color: #005CAB; text-decoration: none; font-size: 13px;">{{ c['email'] }}</a></td>
+                            <td><strong>{{ c['nombre'] }}</strong><br><a href="mailto:{{ c['email'] }}" style="color: #3498db; text-decoration: none; font-size: 13px;">{{ c['email'] }}</a></td>
                             <td><strong>{{ c['premio'] }}</strong></td>
                             <td style="font-family: monospace; font-size: 14px; letter-spacing: 1px;">{{ c['token'] }}</td>
                             <td>
                                 {% if c['estado'] == 'CANJEADO' %}
                                     <span style="color: #27ae60; font-weight: bold;">✔ CANJEADO</span><br>
-                                    <small style="color:#555;">👤 {{ c['vendedor_canje'] }}</small>
+                                    <small style="color:var(--text-main);">👤 {{ c['vendedor_canje'] }}</small>
                                 {% else %}
                                     <span style="color: #f39c12; font-weight: bold;">⏳ PENDIENTE</span>
                                 {% endif %}
@@ -295,27 +327,38 @@
     </div>
 
     <script>
+        // 1. Lógica del Modo Oscuro
+        function toggleTema() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('temaGe', isDark ? 'dark' : 'light');
+            document.getElementById('btn-toggle-tema').innerText = isDark ? '☀️ Claro' : '🌙 Oscuro';
+        }
+
+        // 2. Lógica de Pestañas
         function openTab(tabName) {
-            // Ocultar todos los contenidos
             let contents = document.getElementsByClassName("tab-content");
             for (let i = 0; i < contents.length; i++) {
                 contents[i].style.display = "none";
             }
-            // Quitar clase active de todos los botones
             let btns = document.getElementsByClassName("tab-btn");
             for (let i = 0; i < btns.length; i++) {
                 btns[i].classList.remove("active");
             }
-            // Mostrar la pestaña seleccionada
             document.getElementById(tabName).style.display = "block";
             document.getElementById("btn-" + tabName).classList.add("active");
-            
-            // Guardar en memoria (localStorage)
             localStorage.setItem("tabActivaGe", tabName);
         }
 
-        // Al cargar la página, abrir la última pestaña que visitó el usuario
+        // 3. Inicialización al Cargar
         document.addEventListener("DOMContentLoaded", function() {
+            // Cargar Tema
+            if (localStorage.getItem('temaGe') === 'dark') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('btn-toggle-tema').innerText = '☀️ Claro';
+            }
+            
+            // Cargar Pestaña
             let activeTab = localStorage.getItem("tabActivaGe") || "Configuracion";
             openTab(activeTab);
         });
