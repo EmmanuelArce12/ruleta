@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GE Echeverría - Premium Admin</title>
+    <title>Administración Premium - Grupo GE</title>
     <style>
         /* ==========================================
            VARIABLES DE DISEÑO INDUSTRIAL (METALES)
@@ -12,38 +12,45 @@
             /* TEMA CLARO: ACERO CEPILLADO Y PLATA */
             --bg-master: #e0e0e0;
             --text-main: #2c3e50;
+            --text-muted: #555;
             --panel-glass: rgba(255, 255, 255, 0.4);
             --border-glass: rgba(255, 255, 255, 0.6);
             --card-shadow: 10px 10px 20px #bebebe, -10px -10px 20px #ffffff;
+            --inner-shadow: inset 5px 5px 10px #bebebe, inset -5px -5px 10px #ffffff;
             --accent-metal: linear-gradient(145deg, #bdc3c7, #2c3e50);
             --btn-premium: linear-gradient(145deg, #e6e6e6, #ffffff);
             --tab-active: #005CAB;
+            --input-bg: rgba(255, 255, 255, 0.7);
         }
 
         body.dark-mode {
             /* TEMA OSCURO: CARBONO Y METALIZADO ANODIZADO */
             --bg-master: #121212;
             --text-main: #e0e0e0;
+            --text-muted: #aaa;
             --panel-glass: rgba(30, 30, 30, 0.7);
             --border-glass: rgba(255, 255, 255, 0.1);
-            --card-shadow: 5px 5px 15px rgba(0,0,0,0.7);
+            --card-shadow: 5px 5px 15px rgba(0,0,0,0.7), -2px -2px 10px rgba(255,255,255,0.05);
+            --inner-shadow: inset 5px 5px 10px rgba(0,0,0,0.8), inset -2px -2px 5px rgba(255,255,255,0.05);
             --accent-metal: linear-gradient(145deg, #1e1e1e, #111111);
             --btn-premium: linear-gradient(145deg, #2c2c2c, #1a1a1a);
             --tab-active: #F1C40F;
+            --input-bg: rgba(0, 0, 0, 0.4);
         }
 
         body { 
-            font-family: 'Segoe UI', Roboto, sans-serif; 
-            background-color: var(--bg-master); 
-            /* Textura sutil de metal cepillado */
-            background-image: repeating-linear-gradient(45deg, rgba(255,255,255, 0.05) 0px, rgba(255,255,255, 0.05) 1px,transparent 1px, transparent 10px);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg-master); 
+            /* Textura sutil de metal cepillado/carbono */
+            background-image: repeating-linear-gradient(45deg, rgba(255,255,255, 0.03) 0px, rgba(255,255,255, 0.03) 1px,transparent 1px, transparent 10px);
             color: var(--text-main); 
             padding: 20px; 
             margin: 0; 
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-sizing: border-box; 
+            transition: background 0.4s, color 0.4s;
         }
-
-        /* HEADER TIPO CONSOLA */
+        
+        /* HEADER PRINCIPAL TIPO CONSOLA */
         .header { 
             background: var(--accent-metal); 
             color: white; 
@@ -54,52 +61,72 @@
             justify-content: space-between; 
             align-items: center; 
             box-shadow: var(--card-shadow);
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid var(--border-glass);
+            flex-wrap: wrap; 
+            gap: 15px;
         }
-
-        .header h1 { font-size: 22px; text-transform: uppercase; letter-spacing: 2px; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-
-        /* SWITCH DE TEMA MECÁNICO */
-        .btn-tema { 
+        .header h1 { margin: 0; font-size: 22px; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
+        .botones-nav { display: flex; gap: 10px; flex-wrap: wrap; align-items: center;}
+        
+        .btn-nav, .btn-tema { 
             background: var(--btn-premium); 
             color: var(--text-main); 
-            border: 1px solid var(--border-glass); 
             padding: 10px 20px; 
             border-radius: 50px; 
+            text-decoration: none; 
             font-weight: bold; 
+            font-size: 13px; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: 0.3s; 
+            box-shadow: 3px 3px 6px rgba(0,0,0,0.2), -3px -3px 6px rgba(255,255,255,0.1); 
             cursor: pointer; 
-            box-shadow: 3px 3px 6px rgba(0,0,0,0.2), -3px -3px 6px rgba(255,255,255,0.5);
-            transition: 0.2s;
+            border: 1px solid var(--border-glass);
         }
-        .btn-tema:active { box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2); }
+        .btn-nav:hover, .btn-tema:hover { transform: translateY(-2px); filter: brightness(1.2); }
+        .btn-nav:active, .btn-tema:active { box-shadow: var(--inner-shadow); transform: translateY(0); }
+        
+        .btn-logout { background: transparent; color: #e74c3c; padding: 10px 20px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 13px; transition: 0.3s; border: 2px solid #e74c3c; text-transform: uppercase; letter-spacing: 1px;}
+        .btn-logout:hover { background: #e74c3c; color: white;}
 
-        /* PESTAÑAS METÁLICAS */
+        /* SISTEMA DE PESTAÑAS (TABS METÁLICOS) */
         .tabs-container { 
             display: flex; 
             gap: 10px; 
             margin-bottom: -2px; 
             padding: 0 10px;
             flex-wrap: wrap;
+            position: relative;
+            z-index: 2;
         }
         .tab-btn { 
             background: var(--btn-premium); 
             border: 1px solid var(--border-glass); 
-            padding: 12px 25px; 
-            border-radius: 12px 12px 0 0; 
+            padding: 15px 25px; 
+            border-radius: 15px 15px 0 0; 
             cursor: pointer; 
+            font-size: 14px; 
             font-weight: bold; 
             color: var(--text-main); 
-            transition: 0.3s;
-            box-shadow: var(--card-shadow);
+            transition: 0.3s; 
+            outline: none; 
+            flex-grow: 1; 
+            text-align: center; 
+            white-space: nowrap;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
+        .tab-btn:hover { filter: brightness(1.1); }
         .tab-btn.active { 
             background: var(--tab-active); 
             color: white; 
-            border-bottom: 2px solid var(--tab-active);
+            border-bottom: none;
             transform: translateY(-5px);
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
         }
 
-        /* TARJETAS DE VIDRIO (GLASSMORFISM) */
+        /* TARJETAS DE VIDRIO ESMERILADO (GLASSMORPHISM) */
         .tab-content { 
             display: none; 
             background: var(--panel-glass); 
@@ -110,209 +137,376 @@
             padding: 30px; 
             box-shadow: var(--card-shadow);
             animation: slideUp 0.4s ease;
+            position: relative;
+            z-index: 1;
         }
-        @keyframes slideUp { from {opacity:0; transform: translateY(20px);} to {opacity:1; transform: translateY(0);} }
+        @keyframes slideUp { from {opacity: 0; transform: translateY(15px);} to {opacity: 1; transform: translateY(0);} }
 
-        .tarjeta-config {
-            background: rgba(255,255,255,0.05);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid var(--border-glass);
+        /* ESTRUCTURA DE GRID INTERNA */
+        .grid-configuracion { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+        
+        .tarjeta { 
+            background: rgba(255,255,255,0.02); 
+            padding: 25px; 
+            border-radius: 12px; 
+            border: 1px solid var(--border-glass); 
+            border-top-width: 4px; /* Permite que el color inline resalte */
+            border-top-style: solid;
+            box-sizing: border-box; 
             box-shadow: inset 0 0 15px rgba(0,0,0,0.05);
         }
+        .tarjeta-full { width: 100%; border-top: 4px solid #005CAB; }
 
-        /* TABLAS Y BOTONES */
-        .table-responsive { 
-            background: var(--panel-glass); 
-            border-radius: 12px; 
-            overflow: hidden; 
-            border: 1px solid var(--border-glass);
+        /* FORMULARIOS, INPUTS Y CAJAS INTERNAS */
+        label { font-weight: bold; font-size: 12px; margin-bottom: 5px; display: block; text-transform: uppercase; letter-spacing: 1px;}
+        input, select { 
+            width: 100%; 
+            padding: 12px 15px; 
+            margin-bottom: 15px; 
+            border: 1px solid var(--border-glass); 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-size: 14px; 
+            transition: 0.3s; 
+            background: var(--input-bg); 
+            color: var(--text-main);
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.05);
         }
-        table { width: 100%; border-collapse: collapse; color: var(--text-main); }
-        th { background: rgba(0,0,0,0.1); padding: 15px; text-align: left; text-transform: uppercase; font-size: 11px; letter-spacing: 1px;}
-        td { padding: 15px; border-bottom: 1px solid var(--border-glass); }
+        input:focus, select:focus { border-color: var(--tab-active); outline: none; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1), 0 0 8px rgba(0, 92, 171, 0.4);}
+        
+        /* Cajas de formulario con relieve invertido (Neumorfismo) */
+        .formulario-caja { 
+            background: transparent; 
+            padding: 20px; 
+            border-radius: 12px; 
+            border: 1px solid var(--border-glass); 
+            margin-top: 15px; 
+            box-shadow: var(--inner-shadow);
+        }
 
+        .form-row { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 10px;}
+        .form-col { flex: 1; min-width: 200px; }
+
+        /* BOTONES DE ACCIÓN FÍSICOS */
         .btn-accion { 
             padding: 12px 20px; 
-            border-radius: 8px; 
             border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
             font-weight: bold; 
             color: white; 
-            cursor: pointer; 
+            width: 100%; 
+            font-size: 13px; 
             text-transform: uppercase;
             letter-spacing: 1px;
             transition: 0.3s;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
+        .btn-accion:hover { filter: brightness(1.1); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.3);}
+        .btn-accion:active { transform: translateY(0); box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);}
+        
         .btn-verde { background: linear-gradient(145deg, #27ae60, #2ecc71); }
         .btn-azul { background: linear-gradient(145deg, #2980b9, #3498db); }
-        .btn-rojo { background: linear-gradient(145deg, #c0392b, #e74c3c); }
+        .btn-morado { background: linear-gradient(145deg, #8e44ad, #9b59b6); }
+        .btn-rojo { background: linear-gradient(145deg, #c0392b, #e74c3c); width: auto; padding: 8px 15px; font-size: 11px;}
+        .btn-export { background: linear-gradient(145deg, #27ae60, #2ecc71); width: auto; text-decoration: none; display: inline-block; text-align: center;}
 
-        input, select { 
-            background: var(--panel-glass); 
-            border: 1px solid var(--border-glass); 
-            color: var(--text-main); 
-            padding: 12px; 
-            border-radius: 8px; 
+        /* TABLAS RESPONSIVAS DE CRISTAL */
+        .table-responsive { 
             width: 100%; 
-            margin-bottom: 15px;
-            box-sizing: border-box;
+            overflow-x: auto; 
+            background: transparent; 
+            border-radius: 12px; 
+            border: 1px solid var(--border-glass); 
+            box-shadow: var(--inner-shadow);
+            margin-top: 15px;
         }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 600px; color: var(--text-main);}
+        th, td { border-bottom: 1px solid var(--border-glass); padding: 15px; text-align: left; }
+        th { background: rgba(0,0,0,0.05); font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 1px;}
+        tr:hover { background-color: rgba(255,255,255,0.05); }
+        
+        .agotado { background: rgba(231, 76, 60, 0.1); color: #e74c3c; }
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; color: white; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
 
+        /* Adapta a celulares */
         @media (max-width: 768px) {
-            .tab-btn { flex: 1 1 45%; border-radius: 8px; margin-bottom: 5px; }
-            .header h1 { font-size: 16px; }
+            body { padding: 10px; }
+            .header { padding: 15px; justify-content: center;}
+            .header h1 { font-size: 18px; text-align: center;}
+            .botones-nav { width: 100%; justify-content: center;}
+            .btn-nav, .btn-logout, .btn-tema { width: 100%; text-align: center; box-sizing: border-box;}
+            .tab-btn { flex-basis: 40%; font-size: 12px; padding: 12px 10px; border-radius: 8px; margin-bottom: 5px;}
+            .tab-btn.active { transform: translateY(-2px); border-bottom: 2px solid var(--tab-active);}
+            .form-row { flex-direction: column; gap: 0; }
+            .tab-content { padding: 20px 15px;}
         }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1 id="estacion-title">SISTEMA GE: {{ nombre_estacion }}</h1>
+        <h1 style="margin: 0;">Panel: {{ nombre_estacion }}</h1>
         <div class="botones-nav">
-            <button id="btn-toggle-tema" class="btn-tema" onclick="toggleTema()">🌙 MODO OSCURO</button>
-            <a href="/logout_admin" class="btn-logout" style="color: #e74c3c; text-decoration: none; margin-left: 15px; font-weight: bold;">SALIR</a>
+            <button id="btn-toggle-tema" class="btn-tema" onclick="toggleTema()">🌙 Oscuro</button>
+            <a href="/iniciar_terminal" class="btn-nav" target="_blank">💻 Terminal</a>
+            <a href="/iniciar_ruleta" class="btn-nav" target="_blank">🎡 Ruleta</a>
+            <a href="/logout_admin" class="btn-logout">🚪 Salir</a>
         </div>
     </div>
 
     <div class="tabs-container">
-        <button class="tab-btn" id="btn-Configuracion" onclick="openTab('Configuracion')">SISTEMA</button>
-        <button class="tab-btn" id="btn-Premios" onclick="openTab('Premios')">RECOMPENSAS</button>
-        <button class="tab-btn" id="btn-Personal" onclick="openTab('Personal')">OPERADORES</button>
-        <button class="tab-btn" id="btn-Historial" onclick="openTab('Historial')">REGISTROS</button>
+        <button class="tab-btn" id="btn-Configuracion" onclick="openTab('Configuracion')">⚙️ Configuración</button>
+        <button class="tab-btn" id="btn-Premios" onclick="openTab('Premios')">🎁 Premios</button>
+        <button class="tab-btn" id="btn-Personal" onclick="openTab('Personal')">👤 Personal</button>
+        <button class="tab-btn" id="btn-Historial" onclick="openTab('Historial')">📊 Historial</button>
     </div>
 
     <div id="Configuracion" class="tab-content">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-            <div class="tarjeta-config">
-                <h3 style="color: #e67e22;">📡 ACCESO RULETA</h3>
-                <form action="/admin/configurar_ruleta" method="POST">
-                    <input type="text" name="ruleta_user" value="{{ estacion['ruleta_user'] or '' }}" placeholder="Usuario Tablet">
-                    <input type="password" name="ruleta_pass" value="{{ estacion['ruleta_pass'] or '' }}" placeholder="Contraseña">
-                    <button type="submit" class="btn-accion btn-verde" style="width: 100%;">GUARDAR ENLACE</button>
+        <div class="grid-configuracion">
+            
+            <div class="tarjeta" style="border-top-color: #e67e22;">
+                <h2 style="color: #e67e22; margin-top: 0; font-size: 18px;">🔐 Acceso Tablet</h2>
+                <form action="/admin/configurar_ruleta" method="POST" class="formulario-caja">
+                    <label style="color: #e67e22;">Usuario de Tablet:</label>
+                    <input type="text" name="ruleta_user" value="{{ estacion['ruleta_user'] or '' }}" required>
+                    <label style="color: #e67e22;">Contraseña:</label>
+                    <input type="text" name="ruleta_pass" value="{{ estacion['ruleta_pass'] or '' }}" required>
+                    <button type="submit" class="btn-accion btn-verde">💾 Guardar Acceso</button>
                 </form>
             </div>
-            <div class="tarjeta-config">
-                <h3 style="color: #3498db;">✉️ CORREO ELECTRÓNICO</h3>
-                <form action="/admin/configurar_correo" method="POST">
-                    <input type="email" name="correo" value="{{ estacion['correo_emisor'] or '' }}" placeholder="Gmail de la Estación">
-                    <input type="password" name="password_correo" value="{{ estacion['password_correo'] or '' }}" placeholder="Clave de Aplicación">
-                    <button type="submit" class="btn-accion btn-azul" style="width: 100%;">VINCULAR CORREO</button>
+
+            <div class="tarjeta" style="border-top-color: #2980b9;">
+                <h2 style="color: #2980b9; margin-top: 0; font-size: 18px;">✉️ Correo de Envíos</h2>
+                <form action="/admin/configurar_correo" method="POST" class="formulario-caja">
+                    <label style="color: #2980b9;">Cuenta de Gmail:</label>
+                    <input type="email" name="correo" value="{{ estacion['correo_emisor'] or '' }}" required>
+                    <label style="color: #2980b9;">Clave Aplicación (16 dígitos):</label>
+                    <input type="password" name="password_correo" value="{{ estacion['password_correo'] or '' }}" required>
+                    <button type="submit" class="btn-accion btn-azul">💾 Guardar Correo</button>
                 </form>
             </div>
-            <div class="tarjeta-config">
-                <h3 style="color: #8e44ad;">🎨 IDENTIDAD VISUAL</h3>
-                <form action="/admin/configurar_estilo" method="POST">
+
+            <div class="tarjeta" style="border-top-color: #8e44ad;">
+                <h2 style="color: #8e44ad; margin-top: 0; font-size: 18px;">🎨 Diseño de Ruleta</h2>
+                <form action="/admin/configurar_estilo" method="POST" class="formulario-caja">
+                    <label style="color: #8e44ad;">Tema Visual ({{ estacion['bandera'] }}):</label>
                     <select name="estilo_ruleta">
                         {% if estacion['bandera'] == 'YPF' %}
-                            <option value="YPF_CLASICO" {% if estacion['estilo_ruleta'] == 'YPF_CLASICO' %}selected{% endif %}>YPF: ALUMINIO CLÁSICO</option>
-                            <option value="YPF_MODERNO" {% if estacion['estilo_ruleta'] == 'YPF_MODERNO' %}selected{% endif %}>YPF: CARBONO Y VIDRIO</option>
-                            <option value="YPF_LED" {% if estacion['estilo_ruleta'] == 'YPF_LED' %}selected{% endif %}>YPF: NEÓN PREMIUM</option>
+                            <option value="YPF_CLASICO" {% if estacion['estilo_ruleta'] == 'YPF_CLASICO' %}selected{% endif %}>YPF: Clásico (Azul/Amarillo)</option>
+                            <option value="YPF_MODERNO" {% if estacion['estilo_ruleta'] == 'YPF_MODERNO' %}selected{% endif %}>YPF: Moderno (Vidrio/Plata)</option>
+                            <option value="YPF_LED" {% if estacion['estilo_ruleta'] == 'YPF_LED' %}selected{% endif %}>YPF: Premium (Luces LED)</option>
                         {% elif estacion['bandera'] == 'AXION' %}
-                            <option value="AXION_CLASICO" {% if estacion['estilo_ruleta'] == 'AXION_CLASICO' %}selected{% endif %}>AXION: METAL VIOLETA</option>
-                            <option value="AXION_MODERNO" {% if estacion['estilo_ruleta'] == 'AXION_MODERNO' %}selected{% endif %}>AXION: TITANIO Y VIDRIO</option>
-                            <option value="AXION_LED" {% if estacion['estilo_ruleta'] == 'AXION_LED' %}selected{% endif %}>AXION: LED ORO</option>
+                            <option value="AXION_CLASICO" {% if estacion['estilo_ruleta'] == 'AXION_CLASICO' %}selected{% endif %}>Axion: Clásico (Violeta/Rojo)</option>
+                            <option value="AXION_MODERNO" {% if estacion['estilo_ruleta'] == 'AXION_MODERNO' %}selected{% endif %}>Axion: Moderno (Vidrio/Plata)</option>
+                            <option value="AXION_LED" {% if estacion['estilo_ruleta'] == 'AXION_LED' %}selected{% endif %}>Axion: Premium (LED Oro)</option>
+                        {% else %}
+                            <option value="YPF_CLASICO" {% if estacion['estilo_ruleta'] == 'YPF_CLASICO' %}selected{% endif %}>Clásico (Por defecto)</option>
                         {% endif %}
                     </select>
-                    <button type="submit" class="btn-accion btn-morado" style="width: 100%; background: #8e44ad;">ACTUALIZAR PIEL</button>
+                    <button type="submit" class="btn-accion btn-morado">💾 Aplicar Diseño</button>
                 </form>
             </div>
+
+            <div class="tarjeta" style="border-top-color: #16a085;">
+                <h2 style="color: #16a085; margin-top: 0; font-size: 18px;">⚙️ Límite Operativo</h2>
+                <form action="/admin/configurar_giros" method="POST" class="formulario-caja">
+                    <label style="color: #16a085;">Giros Totales por Día (0 = Ilimitado):</label>
+                    <input type="number" name="limite_giros" value="{{ estacion['limite_giros'] or 0 }}" min="0" required>
+                    <button type="submit" class="btn-accion" style="background: linear-gradient(145deg, #16a085, #1abc9c);">💾 Guardar Límite</button>
+                </form>
+            </div>
+
         </div>
     </div>
 
     <div id="Premios" class="tab-content">
-        <h2 style="margin-top:0;">📦 ALMACÉN DE PREMIOS</h2>
-        <div class="table-responsive">
-            <table>
-                <thead>
-                    <tr><th>Producto</th><th>Frecuencia</th><th>Límite</th><th>Probabilidad</th><th>Acción</th></tr>
-                </thead>
-                <tbody>
-                    {% for p in premios %}
-                    <tr class="{% if p['estado'] == 'AGOTADO HOY' %}agotado{% endif %}">
-                        <td><strong>{{ p['nombre'] }}</strong></td>
-                        <td>{{ p['dificultad'] }}</td>
-                        <td>{{ p['entregados_hoy'] }} / {{ p['limite_diario'] if p['limite_diario'] > 0 else '∞' }}</td>
-                        <td style="color: #27ae60;">{{ p['probabilidad_porcentaje'] }}%</td>
-                        <td>
-                            <form action="/admin/borrar_premio/{{ p['id'] }}" method="POST">
-                                <button type="submit" class="btn-accion btn-rojo" style="padding: 5px 10px; font-size: 10px;">ELIMINAR</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="tarjeta tarjeta-full">
+            <h2 style="color: #005CAB; margin-top: 0;">🎁 Configurar Premios</h2>
+            
+            <form action="/admin/agregar_premio" method="POST" class="formulario-caja" style="margin-bottom: 20px;">
+                <div class="form-row">
+                    <div class="form-col" style="flex: 2;">
+                        <label>Nombre del Premio</label>
+                        <input type="text" name="nombre" placeholder="Ej: Tanque Lleno" required>
+                    </div>
+                    <div class="form-col">
+                        <label>Límite Diario (0 = Infinito)</label>
+                        <input type="number" name="limite_diario" value="0" min="0">
+                    </div>
+                    <div class="form-col">
+                        <label>Dificultad de Salida</label>
+                        <select name="dificultad" required>
+                            <option value="Consuelo">Sale Siempre (Consuelo)</option>
+                            <option value="Frecuente">Fácil (Frecuente)</option>
+                            <option value="Normal" selected>Normal</option>
+                            <option value="Raro">Difícil (Raro)</option>
+                            <option value="Imposible">Premio Mayor (Casi Imposible)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Sector de Canje</label>
+                        <select name="sector"> 
+                            <option value="PLAYA">Playa</option> 
+                            <option value="FULL">Full</option> 
+                            <option value="NINGUNO">Ninguno (No es canjeable)</option>
+                        </select>
+                    </div>
+                    <div class="form-col" style="flex: 2;">
+                        <label>URL de Imagen (Opcional)</label>
+                        <input type="text" name="imagen_url" placeholder="https://...">
+                    </div>
+                </div>
+                <button type="submit" class="btn-accion btn-azul" style="max-width: 250px;">+ Agregar Premio</button>
+            </form>
+            
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>Premio</th><th>Dificultad</th><th>Límite Hoy</th><th>% Chance Actual</th><th>Acción</th></tr></thead>
+                    <tbody>
+                        {% for p in premios %}
+                        <tr class="{% if p['estado'] == 'AGOTADO HOY' %}agotado{% endif %}">
+                            <td><strong style="font-size: 15px;">{{ p['nombre'] }}</strong><br><span style="color: var(--text-muted); font-size:11px; text-transform: uppercase;">{{ p['sector'] }}</span></td>
+                            <td>{{ p['dificultad'] }}</td>
+                            <td style="text-align: center; font-weight: bold; font-size: 15px;">
+                                {% if p['limite_diario'] > 0 %}{{ p['entregados_hoy'] }} / {{ p['limite_diario'] }}{% else %}∞{% endif %}
+                            </td>
+                            <td style="font-weight: bold; color: {% if p['estado'] == 'AGOTADO HOY' %}#e74c3c{% else %}#27ae60{% endif %}; font-size: 16px;">
+                                {% if p['estado'] == 'AGOTADO HOY' %}Agotado{% else %}{{ p['probabilidad_porcentaje'] }}%{% endif %}
+                            </td>
+                            <td>
+                                <form action="/admin/borrar_premio/{{ p['id'] }}" method="POST" style="margin: 0;">
+                                    <button type="submit" class="btn-accion btn-rojo">Borrar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <div id="Personal" class="tab-content">
-        <h2>👥 OPERADORES AUTORIZADOS</h2>
-        <div class="table-responsive">
-            <table>
-                <thead><tr><th>Nombre</th><th>Sector</th><th>Código PIN</th></tr></thead>
-                <tbody>
-                    {% for v in vendedores %}
-                    <tr>
-                        <td>{{ v['nombre'] }}</td>
-                        <td>{{ v['sector'] }}</td>
-                        <td>****</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="tarjeta tarjeta-full" style="border-top-color: #8e44ad;">
+            <h2 style="color: #8e44ad; margin-top: 0;">👤 Gestión de Personal</h2>
+            
+            <form action="/admin/agregar_vendedor" method="POST" class="formulario-caja" style="margin-bottom: 20px;">
+                <div class="form-row">
+                    <div class="form-col" style="flex: 2;">
+                        <label style="color:#8e44ad;">Nombre del Vendedor</label>
+                        <input type="text" name="nombre" placeholder="Nombre y Apellido" required>
+                    </div>
+                    <div class="form-col">
+                        <label style="color:#8e44ad;">PIN Secreto</label>
+                        <input type="password" name="pin" placeholder="****" required>
+                    </div>
+                    <div class="form-col">
+                        <label style="color:#8e44ad;">Sector</label>
+                        <select name="sector"> 
+                            <option value="PLAYA">Playa</option> 
+                            <option value="FULL">Full</option> 
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-accion btn-verde" style="max-width: 250px;">+ Cargar Vendedor</button>
+            </form>
+
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>Nombre</th><th>Sector</th><th>PIN de Acceso</th><th>Acción</th></tr></thead>
+                    <tbody>
+                        {% for v in vendedores %}
+                        <tr>
+                            <td><strong style="font-size: 15px;">{{ v['nombre'] }}</strong></td>
+                            <td><span class="badge" style="background: linear-gradient(145deg, #8e44ad, #9b59b6);">{{ v['sector'] }}</span></td>
+                            <td style="font-family: monospace; color: var(--text-muted); font-size: 16px; letter-spacing: 2px;">****</td>
+                            <td>
+                                <form action="/admin/borrar_vendedor/{{ v['id'] }}" method="POST" style="margin: 0;" onsubmit="return confirm('¿Seguro que deseas borrar este vendedor?');">
+                                    <button type="submit" class="btn-accion btn-rojo">Borrar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">No hay vendedores registrados aún.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <div id="Historial" class="tab-content">
-        <div style="display:flex; justify-content: space-between; align-items:center;">
-            <h2>📊 BITÁCORA DE TRANSACCIONES</h2>
-            <a href="/admin/exportar_excel" class="btn-accion btn-verde" style="text-decoration:none;">EXPORTAR XLS</a>
-        </div>
-        <div class="table-responsive">
-            <table>
-                <thead><tr><th>Fecha</th><th>Cliente</th><th>Premio</th><th>Token</th><th>Estado</th></tr></thead>
-                <tbody>
-                    {% for c in clientes %}
-                    <tr>
-                        <td>{{ (c['fecha'] | string)[:16] }}</td>
-                        <td>{{ c['nombre'] }}</td>
-                        <td>{{ c['premio'] }}</td>
-                        <td style="font-family: monospace; letter-spacing: 1px;">{{ c['token'] }}</td>
-                        <td>{{ c['estado'] }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="tarjeta tarjeta-full" style="border-top-color: #27ae60;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                <h2 style="color: #27ae60; margin: 0;">📊 Historial de Participantes</h2>
+                <a href="/admin/exportar_excel" class="btn-accion btn-export">⬇ Descargar Excel (.xlsx)</a>
+            </div>
+            
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>Fecha</th><th>Cliente</th><th>Premio</th><th>Token</th><th>Estado / Entregó</th></tr></thead>
+                    <tbody>
+                        {% for c in clientes %}
+                        <tr>
+                            <td style="white-space: nowrap; color: var(--text-muted);">{{ (c['fecha'] | string)[:16] }}</td>
+                            <td><strong style="font-size: 15px;">{{ c['nombre'] }}</strong><br><a href="mailto:{{ c['email'] }}" style="color: #3498db; text-decoration: none; font-size: 12px;">{{ c['email'] }}</a></td>
+                            <td><strong style="font-size: 14px;">{{ c['premio'] }}</strong></td>
+                            <td style="font-family: monospace; font-size: 15px; letter-spacing: 2px; font-weight: bold;">{{ c['token'] }}</td>
+                            <td>
+                                {% if c['estado'] == 'CANJEADO' %}
+                                    <span style="color: #27ae60; font-weight: bold; font-size: 13px;">✔ CANJEADO</span><br>
+                                    <small style="color:var(--text-main); font-weight: bold;">👤 {{ c['vendedor_canje'] }}</small>
+                                {% else %}
+                                    <span style="color: #f39c12; font-weight: bold; font-size: 13px;">⏳ PENDIENTE</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
+        // 1. Lógica del Modo Oscuro
         function toggleTema() {
             document.body.classList.toggle('dark-mode');
             const isDark = document.body.classList.contains('dark-mode');
-            localStorage.setItem('temaGePremium', isDark ? 'dark' : 'light');
-            document.getElementById('btn-toggle-tema').innerText = isDark ? '☀️ MODO CLARO' : '🌙 MODO OSCURO';
+            localStorage.setItem('temaGe', isDark ? 'dark' : 'light');
+            document.getElementById('btn-toggle-tema').innerText = isDark ? '☀️ Claro' : '🌙 Oscuro';
         }
 
+        // 2. Lógica de Pestañas
         function openTab(tabName) {
             let contents = document.getElementsByClassName("tab-content");
-            for (let i = 0; i < contents.length; i++) contents[i].style.display = "none";
-            
+            for (let i = 0; i < contents.length; i++) {
+                contents[i].style.display = "none";
+            }
             let btns = document.getElementsByClassName("tab-btn");
-            for (let i = 0; i < btns.length; i++) btns[i].classList.remove("active");
-            
+            for (let i = 0; i < btns.length; i++) {
+                btns[i].classList.remove("active");
+            }
             document.getElementById(tabName).style.display = "block";
             document.getElementById("btn-" + tabName).classList.add("active");
-            localStorage.setItem("tabGePremium", tabName);
+            localStorage.setItem("tabActivaGe", tabName);
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            if (localStorage.getItem('temaGePremium') === 'dark') {
+        // 3. Inicialización al Cargar
+        document.addEventListener("DOMContentLoaded", function() {
+            // Cargar Tema
+            if (localStorage.getItem('temaGe') === 'dark') {
                 document.body.classList.add('dark-mode');
-                document.getElementById('btn-toggle-tema').innerText = '☀️ MODO CLARO';
+                document.getElementById('btn-toggle-tema').innerText = '☀️ Claro';
             }
-            openTab(localStorage.getItem("tabGePremium") || "Configuracion");
+            
+            // Cargar Pestaña
+            let activeTab = localStorage.getItem("tabActivaGe") || "Configuracion";
+            openTab(activeTab);
         });
     </script>
 </body>
