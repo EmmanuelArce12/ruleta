@@ -23,8 +23,22 @@
         .btn-accion { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; color: #333; font-weight: bold;}
         .badge-ypf { background: #005CAB; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;}
         .badge-axion { background: #5d2a8e; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;}
+        
+        .nombre-container { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .btn-editar { background: none; border: none; cursor: pointer; font-size: 16px; padding: 2px 5px; border-radius: 4px; transition: 0.2s; }
+        .btn-editar:hover { background: #f0f0f0; }
+        
         @media (max-width: 600px) { body { padding: 10px; } h1 { font-size: 20px; } .form-crear button { width: 100%; } }
     </style>
+    <script>
+        function editarNombre(id, nombreActual) {
+            let nuevo = prompt("Editar nombre de la estación:", nombreActual);
+            if (nuevo && nuevo.trim() !== "" && nuevo !== nombreActual) {
+                document.getElementById('edit-nombre-' + id).value = nuevo.trim();
+                document.getElementById('edit-form-' + id).submit();
+            }
+        }
+    </script>
 </head>
 <body>
     <div class="header">
@@ -64,7 +78,15 @@
                                 <span class="badge-ypf">YPF</span>
                             {% endif %}
                         </td>
-                        <td><strong>{{ e['nombre'] }}</strong></td>
+                        <td>
+                            <div class="nombre-container">
+                                <strong>{{ e['nombre'] }}</strong>
+                                <button onclick="editarNombre({{ e['id'] }}, '{{ e['nombre'] }}')" class="btn-editar" title="Editar Nombre">✏️</button>
+                            </div>
+                            <form id="edit-form-{{ e['id'] }}" action="/superadmin/editar_estacion/{{ e['id'] }}" method="POST" style="display: none;">
+                                <input type="hidden" name="nuevo_nombre" id="edit-nombre-{{ e['id'] }}">
+                            </form>
+                        </td>
                         <td>{{ e['admin_user'] }}</td>
                         <td>
                             <div class="acciones">
