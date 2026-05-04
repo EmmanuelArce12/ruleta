@@ -55,8 +55,7 @@ def enviar_email(destinatario, nombre_cliente, premio, token, estacion_id):
         cuerpo = f"Hola {nombre_cliente},\n\n¡Gracias por participar en nuestra ruleta!\nHas ganado: {premio}\nTu código de canje es: {token}\n\n¡Te esperamos en {nombre_estacion}!"
         msg.attach(MIMEText(cuerpo, 'plain'))
         
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
         clave_limpia = pass_origen.replace(" ", "") if pass_origen else ""
         server.login(correo_origen, clave_limpia)
         server.send_message(msg)
