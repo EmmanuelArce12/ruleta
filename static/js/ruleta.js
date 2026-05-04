@@ -151,6 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         const btnSubmit = formulario.querySelector("button[type='submit']");
         btnSubmit.disabled = true;
+        btnSubmit.innerText = "⏳ Procesando..."; // Le avisamos al usuario que estamos trabajando
 
         const datos = {
             nombre: document.getElementById("nombre").value,
@@ -166,8 +167,21 @@ document.addEventListener("DOMContentLoaded", () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datos)
         }).then(() => {
-            alert("¡Revisa tu correo para ver tu código de canje!");
-            window.location.reload(); 
+            // Reemplazamos todo el formulario por un mensaje elegante en pantalla
+            formulario.innerHTML = `
+                <div style="background: #eafaf1; padding: 20px; border-radius: 8px; border: 1px solid #27ae60; margin-top: 15px;">
+                    <h3 style="color: #27ae60; margin-top: 0; margin-bottom: 10px;">¡Datos guardados con éxito! ✅</h3>
+                    <p style="font-size: 15px; color: #333; margin-bottom: 20px;">
+                        Revisa tu correo electrónico <strong>(y la carpeta de SPAM)</strong>. Ahí te enviamos tu código de canje.
+                    </p>
+                    <button onclick="window.location.reload()" class="btn-primario" style="width: 100%; font-size: 16px; padding: 12px;">Finalizar y Girar de Nuevo</button>
+                </div>
+            `;
+        }).catch(() => {
+            // Por si se cae el internet justo en ese momento
+            btnSubmit.disabled = false;
+            btnSubmit.innerText = "Reclamar Premio";
+            textoPremio.innerHTML += `<br><span style="color:red; font-size:14px;">Error de conexión. Intenta de nuevo.</span>`;
         });
     });
 
