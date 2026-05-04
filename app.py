@@ -365,6 +365,22 @@ def exportar_excel():
     salida = BytesIO(); wb.save(salida); salida.seek(0)
     return Response(salida.getvalue(), mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers={"Content-Disposition":"attachment;filename=historial_clientes_ge.xlsx"})
 
+@app.route('/admin/reenviar_correo/<token>', methods=['POST'])
+def reenviar_correo(token):
+    if 'estacion_id' not in session: return redirect('/login')
+    
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute("SELECT * FROM canjes WHERE token = %s AND estacion_id = %s", (token, session['estacion_id']))
+    canje = c.fetchone()
+    conn.close()
+    
+    if canje:
+        hilo_correo = threading.Thread(target=enviar_email, args=(canje['email'], canje['nombre'], canje['premio'], canje['token'], session['estacion_id']))
+        hilo_correo.start()
+        
+    return redirect('/admin')
+
 # ==========================================
 # 4. RULETA
 # ==========================================
@@ -412,27 +428,11 @@ def registrar(estacion_id):
     conn.commit(); conn.close()
     
     if d['sector'] != 'NINGUNO': 
-        # Magia pura: Enviamos el correo en segundo plano para que la web no tenga LAG.
         hilo_correo = threading.Thread(target=enviar_email, args=(d['email'], d['nombre'], d['premio'], t, estacion_id))
         hilo_correo.start()
         
     return jsonify({"status": "ok", "token": t})
-    @app.route('/admin/reenviar_correo/<token>', methods=['POST'])
-def reenviar_correo(token):
-    if 'estacion_id' not in session: return redirect('/login')
-    
-    conn = get_db()
-    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    c.execute("SELECT * FROM canjes WHERE token = %s AND estacion_id = %s", (token, session['estacion_id']))
-    canje = c.fetchone()
-    conn.close()
-    
-    if canje:
-        # Reutilizamos el hilo para enviarlo sin congelar la página
-        hilo_correo = threading.Thread(target=enviar_email, args=(canje['email'], canje['nombre'], canje['premio'], canje['token'], session['estacion_id']))
-        hilo_correo.start()
-        
-    return redirect('/admin')
+
 # ==========================================
 # 5. TERMINAL
 # ==========================================
