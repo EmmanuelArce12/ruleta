@@ -462,6 +462,12 @@
                                     <small style="color:var(--text-main); font-weight: bold;">👤 {{ c['vendedor_canje'] }}</small>
                                 {% else %}
                                     <span style="color: #f39c12; font-weight: bold; font-size: 13px;">⏳ PENDIENTE</span>
+                                    
+                                    <!-- NUEVO BOTÓN DE REENVIAR CORREO -->
+                                    <form action="/admin/reenviar_correo/{{ c['token'] }}" method="POST" style="margin-top: 8px;">
+                                        <button type="submit" class="btn-accion btn-azul" style="padding: 6px 10px; font-size: 10px; width: auto; letter-spacing: 0px;" onclick="this.innerText='Enviando...'">✉️ REENVIAR</button>
+                                    </form>
+
                                 {% endif %}
                             </td>
                         </tr>
