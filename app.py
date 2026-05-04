@@ -7,6 +7,7 @@ import random
 import string
 import openpyxl
 import os
+import threading
 from dotenv import load_dotenv
 from datetime import date
 from io import BytesIO
@@ -409,9 +410,13 @@ def registrar(estacion_id):
     conn = get_db(); c = conn.cursor()
     c.execute('INSERT INTO canjes (estacion_id, nombre, dni, email, telefono, premio, token, sector) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)', (estacion_id, d['nombre'], d['dni'], d['email'], d['telefono'], d['premio'], t, d['sector']))
     conn.commit(); conn.close()
-    if d['sector'] != 'NINGUNO': enviar_email(d['email'], d['nombre'], d['premio'], t, estacion_id)
+    
+    if d['sector'] != 'NINGUNO': 
+        # Magia pura: Enviamos el correo en segundo plano para que la web no tenga LAG.
+        hilo_correo = threading.Thread(target=enviar_email, args=(d['email'], d['nombre'], d['premio'], t, estacion_id))
+        hilo_correo.start()
+        
     return jsonify({"status": "ok", "token": t})
-
 # ==========================================
 # 5. TERMINAL
 # ==========================================
