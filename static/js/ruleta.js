@@ -64,7 +64,11 @@ document.addEventListener("DOMContentLoaded", () => {
         btnGirar.disabled = true;
 
         fetch(`/girar/${ESTACION_ID}`, { method: 'POST' })
-            .then(res => res.json())
+            .then(res => {
+                // Validación para atrapar errores de servidor antes de leer el JSON
+                if (!res.ok) throw new Error("Fallo en la respuesta del servidor");
+                return res.json();
+            })
             .then(premio => {
                 premioGanado = premio;
                 
@@ -104,46 +108,53 @@ document.addEventListener("DOMContentLoaded", () => {
                         imgPremio.style.display = "none";
                     }
 
-                    if (premio.sector === "NINGUNO") {
-                        textoPremio.innerHTML = `<strong>${premio.nombre}</strong><br><span style="font-size:16px;">¡Suerte para la próxima!</span>`;
-                        formulario.classList.add("oculto");
-                        btnCerrarModal.classList.remove("oculto");
-                    } else {
-                        // --- NUEVO CONFETI UNIFICADO: Lluvia Lateral con Desbloqueo ---
-                        // Forzamos a que dure un poco más para mayor suspenso (4 segundos)
-                        var duration = 4000;
-                        var end = Date.now() + duration;
-                        
-                        // Leemos dinámicamente los colores corporativos de la estación
-                        let divColores = document.getElementById('colores-marca');
-                        let colorConfeti = divColores ? [divColores.getAttribute('data-color1'), '#ffffff'] : ['#F1C40F', '#005CAB', '#ffffff'];
-                        
-                        (function frame() {
-                          confetti({
-                            particleCount: 5,
-                            angle: 60,
-                            spread: 55,
-                            origin: { x: 0 }, // Lado Izquierdo
-                            colors: colorConfeti,
-                            zIndex: 90, // <--- LA CLAVE: z-index 90 está por DEBAJO de tu modal (que tiene 100). No bloquea nada.
-                            disableForReducedMotion: true
-                          });
-                          confetti({
-                            particleCount: 5,
-                            angle: 120,
-                            spread: 55,
-                            origin: { x: 1 }, // Lado Derecho
-                            colors: colorConfeti,
-                            zIndex: 90 // <--- LA CLAVE
-                          });
-                        
-                          if (Date.now() < end) {
-                            requestAnimationFrame(frame);
-                          }
-                        }());
-                        // ------------------------------------------------------------
+                    // --- BLOQUE TRY...CATCH PARA EVITAR QUE SE CONGELE EL TEXTO ---
+                    try {
+                        if (premio.sector === "NINGUNO") {
+                            textoPremio.innerHTML = `<strong>${premio.nombre}</strong><br><span style="font-size:16px;">¡Suerte para la próxima!</span>`;
+                            formulario.classList.add("oculto");
+                            btnCerrarModal.classList.remove("oculto");
+                        } else {
+                            textoPremio.innerHTML = `¡Ganaste:<br><strong style="color:${colorPrimario};">${premio.nombre}</strong>!`;
+                            formulario.classList.remove("oculto");
+                            btnCerrarModal.classList.add("oculto");
+
+                            // Verificamos si la librería de confeti cargó correctamente
+                            if (typeof confetti === "function") {
+                                var duration = 4000;
+                                var end = Date.now() + duration;
+                                
+                                let divColores = document.getElementById('colores-marca');
+                                let colorConfeti = divColores ? [divColores.getAttribute('data-color1'), '#ffffff'] : ['#F1C40F', '#005CAB', '#ffffff'];
+                                
+                                (function frame() {
+                                  confetti({
+                                    particleCount: 5, angle: 60, spread: 55, origin: { x: 0 },
+                                    colors: colorConfeti, zIndex: 90, disableForReducedMotion: true
+                                  });
+                                  confetti({
+                                    particleCount: 5, angle: 120, spread: 55, origin: { x: 1 },
+                                    colors: colorConfeti, zIndex: 90
+                                  });
+                                  if (Date.now() < end) requestAnimationFrame(frame);
+                                }());
+                            } else {
+                                console.warn("Animación de confeti omitida (librería no cargada).");
+                            }
+                        }
+                    } catch (err) {
+                        console.error("Error al mostrar el cartel de premio:", err);
+                        textoPremio.innerHTML = `<strong>${premio.nombre}</strong>`;
+                        formulario.classList.remove("oculto");
+                        btnCerrarModal.classList.add("oculto");
                     }
+
                 }, 5000); 
+            })
+            .catch(error => {
+                console.error("Error al comunicarse con el servidor:", error);
+                alert("Hubo un error de conexión al girar la ruleta. Por favor, revisa tu internet y vuelve a intentarlo.");
+                btnGirar.disabled = false;
             });
     });
 
