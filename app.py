@@ -33,36 +33,147 @@ def get_db():
     return psycopg2.connect(DATABASE_URL)
 
 def enviar_email(destinatario, nombre_cliente, premio, token, estacion_id):
+
+    print("===================================")
+    print("INICIANDO ENVIO EMAIL")
+    print("DESTINATARIO:", destinatario)
+
     conn = get_db()
-    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    c.execute("SELECT nombre, correo_emisor, password_correo FROM estaciones WHERE id = %s", (estacion_id,))
+
+    c = conn.cursor(
+        cursor_factory=psycopg2.extras.RealDictCursor
+    )
+
+    c.execute("""
+        SELECT nombre, correo_emisor, password_correo
+        FROM estaciones
+        WHERE id = %s
+    """, (estacion_id,))
+
     estacion = c.fetchone()
+
     conn.close()
+
+    if not estacion:
+        print("❌ ESTACION NO ENCONTRADA")
+        return False
 
     nombre_estacion = estacion['nombre']
     correo_origen = estacion['correo_emisor']
     pass_origen = estacion['password_correo']
 
+    # FALLBACK GLOBAL
     if not correo_origen or not pass_origen:
+
+        print("⚠️ USANDO CORREO GLOBAL")
+
         correo_origen = MI_CORREO_GLOBAL
         pass_origen = MI_PASSWORD_GLOBAL
 
+    print("📧 CORREO ORIGEN:", correo_origen)
+
     try:
+
+        # =========================
+        # CREAR MENSAJE
+        # =========================
         msg = MIMEMultipart()
+
         msg['From'] = correo_origen
         msg['To'] = destinatario
-        msg['Subject'] = f"¡Felicitaciones {nombre_cliente}! Ganaste un premio en {nombre_estacion}"
-        cuerpo = f"Hola {nombre_cliente},\n\n¡Gracias por participar en nuestra ruleta!\nHas ganado: {premio}\nTu código de canje es: {token}\n\n¡Te esperamos en {nombre_estacion}!"
+
+        msg['Subject'] = (
+            f"¡Felicitaciones {nombre_cliente}! "
+            f"Ganaste un premio en {nombre_estacion}"
+        )
+
+        cuerpo = f"""
+Hola {nombre_cliente},
+
+¡Gracias por participar en nuestra ruleta!
+
+Has ganado:
+
+{premio}
+
+Tu código de canje es:
+
+{token}
+
+¡Te esperamos en {nombre_estacion}!
+"""
+
         msg.attach(MIMEText(cuerpo, 'plain'))
-        
-        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-        clave_limpia = pass_origen.replace(" ", "") if pass_origen else ""
-        server.login(correo_origen, clave_limpia)
+
+        # =========================
+        # CONEXIÓN SMTP
+        # =========================
+        print("📡 CONECTANDO SMTP...")
+
+        server = smtplib.SMTP(
+            'smtp.gmail.com',
+            587,
+            timeout=30
+        )
+
+        print("✅ SMTP CONECTADO")
+
+        # DEBUG SMTP
+        server.set_debuglevel(1)
+
+        # SALUDO
+        server.ehlo()
+
+        print("🔒 INICIANDO STARTTLS...")
+
+        # TLS
+        server.starttls()
+
+        print("✅ TLS OK")
+
+        # NUEVO EHLO
+        server.ehlo()
+
+        # LIMPIAR ESPACIOS
+        clave_limpia = (
+            pass_origen.replace(" ", "")
+            if pass_origen else ""
+        )
+
+        print("🔑 LOGIN...")
+
+        # LOGIN
+        server.login(
+            correo_origen,
+            clave_limpia
+        )
+
+        print("✅ LOGIN EXITOSO")
+
+        print("📤 ENVIANDO MENSAJE...")
+
+        # ENVIAR
         server.send_message(msg)
+
+        print("✅ EMAIL ENVIADO")
+
+        # CERRAR
         server.quit()
+
+        print("✅ SMTP CERRADO")
+
+        print("===================================")
+
         return True
+
     except Exception as e:
-        print(f"Error correo: {e}")
+
+        print("🔥 ERROR EN EMAIL 🔥")
+        print(type(e))
+        print(e)
+
+        print("===================================")
+
         return False
 
 def generar_token():
@@ -427,8 +538,13 @@ def registrar(estacion_id):
     conn.commit(); conn.close()
     
     if d['sector'] != 'NINGUNO': 
-        hilo_correo = threading.Thread(target=enviar_email, args=(d['email'], d['nombre'], d['premio'], t, estacion_id))
-        hilo_correo.start()
+        enviar_email(
+    d['email'],
+    d['nombre'],
+    d['premio'],
+    t,
+    estacion_id
+)
         
     return jsonify({"status": "ok", "token": t})
 
