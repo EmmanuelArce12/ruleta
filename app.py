@@ -32,6 +32,8 @@ MI_CORREO_GLOBAL = "echeverriaehijosaforadores@gmail.com"
 def get_db():
     return psycopg2.connect(DATABASE_URL)
 
+import ssl
+
 def enviar_email(destinatario, nombre_cliente, premio, token, estacion_id):
 
     print("===================================")
@@ -39,10 +41,7 @@ def enviar_email(destinatario, nombre_cliente, premio, token, estacion_id):
     print("DESTINATARIO:", destinatario)
 
     conn = get_db()
-
-    c = conn.cursor(
-        cursor_factory=psycopg2.extras.RealDictCursor
-    )
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
     c.execute("""
         SELECT nombre, correo_emisor, password_correo
@@ -51,128 +50,79 @@ def enviar_email(destinatario, nombre_cliente, premio, token, estacion_id):
     """, (estacion_id,))
 
     estacion = c.fetchone()
-
     conn.close()
 
-    if not estacion:
-        print("❌ ESTACION NO ENCONTRADA")
-        return False
-
     nombre_estacion = estacion['nombre']
+
     correo_origen = estacion['correo_emisor']
     pass_origen = estacion['password_correo']
 
-    # FALLBACK GLOBAL
     if not correo_origen or not pass_origen:
-
-        print("⚠️ USANDO CORREO GLOBAL")
-
         correo_origen = MI_CORREO_GLOBAL
         pass_origen = MI_PASSWORD_GLOBAL
+
+    clave_limpia = pass_origen.replace(" ", "").strip()
 
     print("📧 CORREO ORIGEN:", correo_origen)
 
     try:
 
-        # =========================
-        # CREAR MENSAJE
-        # =========================
         msg = MIMEMultipart()
-
         msg['From'] = correo_origen
         msg['To'] = destinatario
-
-        msg['Subject'] = (
-            f"¡Felicitaciones {nombre_cliente}! "
-            f"Ganaste un premio en {nombre_estacion}"
-        )
+        msg['Subject'] = f"¡Felicitaciones {nombre_cliente}!"
 
         cuerpo = f"""
 Hola {nombre_cliente},
 
-¡Gracias por participar en nuestra ruleta!
+¡Gracias por participar!
 
-Has ganado:
+Premio: {premio}
 
-{premio}
-
-Tu código de canje es:
-
+Código:
 {token}
 
-¡Te esperamos en {nombre_estacion}!
+{nombre_estacion}
 """
 
         msg.attach(MIMEText(cuerpo, 'plain'))
 
-        # =========================
-        # CONEXIÓN SMTP
-        # =========================
-        print("📡 CONECTANDO SMTP...")
+        print("📡 CONECTANDO SMTP SSL...")
 
-        server = smtplib.SMTP(
+        context = ssl.create_default_context()
+
+        with smtplib.SMTP_SSL(
             'smtp.gmail.com',
-            587,
-            timeout=30
-        )
+            465,
+            context=context,
+            timeout=20
+        ) as server:
 
-        print("✅ SMTP CONECTADO")
+            print("✅ SMTP CONECTADO")
 
-        # DEBUG SMTP
-        server.set_debuglevel(1)
+            print("🔐 LOGUEANDO...")
 
-        # SALUDO
-        server.ehlo()
+            server.login(correo_origen, clave_limpia)
 
-        print("🔒 INICIANDO STARTTLS...")
+            print("✅ LOGIN OK")
 
-        # TLS
-        server.starttls()
+            print("📨 ENVIANDO...")
 
-        print("✅ TLS OK")
+            server.sendmail(
+                correo_origen,
+                destinatario,
+                msg.as_string()
+            )
 
-        # NUEVO EHLO
-        server.ehlo()
-
-        # LIMPIAR ESPACIOS
-        clave_limpia = (
-            pass_origen.replace(" ", "")
-            if pass_origen else ""
-        )
-
-        print("🔑 LOGIN...")
-
-        # LOGIN
-        server.login(
-            correo_origen,
-            clave_limpia
-        )
-
-        print("✅ LOGIN EXITOSO")
-
-        print("📤 ENVIANDO MENSAJE...")
-
-        # ENVIAR
-        server.send_message(msg)
-
-        print("✅ EMAIL ENVIADO")
-
-        # CERRAR
-        server.quit()
-
-        print("✅ SMTP CERRADO")
-
-        print("===================================")
+            print("✅ EMAIL ENVIADO")
 
         return True
 
     except Exception as e:
 
-        print("🔥 ERROR EN EMAIL 🔥")
-        print(type(e))
-        print(e)
-
-        print("===================================")
+        print("❌ ERROR EMAIL:")
+        print(type(e).__name__)
+        print(str(e))
 
         return False
 
