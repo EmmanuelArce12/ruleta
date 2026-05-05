@@ -91,13 +91,15 @@ Código:
 
         context = ssl.create_default_context()
 
-        with smtplib.SMTP_SSL(
-            'smtp.gmail.com',
-            465,
-            context=context,
-            timeout=20
-        ) as server:
+        smtp_server = "74.125.133.108"
 
+        server = smtplib.SMTP_SSL(
+            smtp_server,
+            465,
+            timeout=20
+        )
+        
+        server.ehlo()
             print("✅ SMTP CONECTADO")
 
             print("🔐 LOGUEANDO...")
