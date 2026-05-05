@@ -8,13 +8,15 @@ import string
 import openpyxl
 import os
 import threading
+import ssl
+
 from dotenv import load_dotenv
 from datetime import date
 from io import BytesIO
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-load_dotenv() 
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -27,13 +29,17 @@ MI_PASSWORD_GLOBAL = os.environ.get('PASSWORD_CORREO')
 
 SUPERADMIN_USER = os.environ.get('USUARIO_SUPERADMIN', 'dueño')
 SUPERADMIN_PASS = os.environ.get('CLAVE_SUPERADMIN', 'admin123')
+
 MI_CORREO_GLOBAL = "echeverriaehijosaforadores@gmail.com"
+
 
 def get_db():
     return psycopg2.connect(DATABASE_URL)
 
-import ssl
 
+# ==========================================
+# ENVÍO DE EMAIL
+# ==========================================
 def enviar_email(destinatario, nombre_cliente, premio, token, estacion_id):
 
     print("===================================")
@@ -57,10 +63,12 @@ def enviar_email(destinatario, nombre_cliente, premio, token, estacion_id):
     correo_origen = estacion['correo_emisor']
     pass_origen = estacion['password_correo']
 
+    # Si no hay correo configurado usa el global
     if not correo_origen or not pass_origen:
         correo_origen = MI_CORREO_GLOBAL
         pass_origen = MI_PASSWORD_GLOBAL
 
+    # Limpia espacios
     clave_limpia = pass_origen.replace(" ", "").strip()
 
     print("📧 CORREO ORIGEN:", correo_origen)
@@ -87,36 +95,51 @@ Código:
 
         msg.attach(MIMEText(cuerpo, 'plain'))
 
-        print("📡 CONECTANDO SMTP SSL...")
+        print("📡 CONECTANDO SMTP...")
+
+        # IMPORTANTE:
+        # Render FREE bloquea SMTP saliente.
+        # Esto probablemente falle igual en FREE.
+        # Pero el código está correcto.
 
         context = ssl.create_default_context()
 
-        smtp_server = "74.125.133.108"
-
-        server = smtplib.SMTP_SSL(
-            smtp_server,
-            465,
+        server = smtplib.SMTP(
+            "smtp.gmail.com",
+            587,
             timeout=20
         )
-        
+
         server.ehlo()
-            print("✅ SMTP CONECTADO")
 
-            print("🔐 LOGUEANDO...")
+        print("🔐 INICIANDO TLS...")
 
-            server.login(correo_origen, clave_limpia)
+        server.starttls(context=context)
 
-            print("✅ LOGIN OK")
+        server.ehlo()
 
-            print("📨 ENVIANDO...")
+        print("✅ SMTP CONECTADO")
 
-            server.sendmail(
-                correo_origen,
-                destinatario,
-                msg.as_string()
-            )
+        print("🔐 LOGUEANDO...")
 
-            print("✅ EMAIL ENVIADO")
+        server.login(
+            correo_origen,
+            clave_limpia
+        )
+
+        print("✅ LOGIN OK")
+
+        print("📨 ENVIANDO...")
+
+        server.sendmail(
+            correo_origen,
+            destinatario,
+            msg.as_string()
+        )
+
+        print("✅ EMAIL ENVIADO")
+
+        server.quit()
 
         return True
 
@@ -128,74 +151,210 @@ Código:
 
         return False
 
+
 def generar_token():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
-# --- EL CEREBRO DE LA RULETA ---
+
+# ==========================================
+# CEREBRO RULETA
+# ==========================================
 def seleccionar_premio_inteligente(estacion_id):
+
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    
+
     hoy = date.today().strftime('%Y-%m-%d')
-    
-    # NUEVO: Control de límite de giros diarios
-    c.execute("SELECT limite_giros FROM estaciones WHERE id = %s", (estacion_id,))
+
+    c.execute(
+        "SELECT limite_giros FROM estaciones WHERE id = %s",
+        (estacion_id,)
+    )
+
     est = c.fetchone()
+
     limite_giros = est['limite_giros'] if est and est['limite_giros'] else 0
-    
+
     if limite_giros > 0:
-        c.execute("SELECT COUNT(*) as total FROM canjes WHERE estacion_id = %s AND DATE(fecha) = %s", (estacion_id, hoy))
+
+        c.execute("""
+            SELECT COUNT(*) as total
+            FROM canjes
+            WHERE estacion_id = %s
+            AND DATE(fecha) = %s
+        """, (estacion_id, hoy))
+
         total_hoy = c.fetchone()['total']
+
         if total_hoy >= limite_giros:
             conn.close()
-            return {"nombre": "Cupo Diario Lleno", "sector": "NINGUNO", "imagen_url": ""}
 
-    c.execute("SELECT * FROM premios WHERE estacion_id = %s", (estacion_id,))
+            return {
+                "nombre": "Cupo Diario Lleno",
+                "sector": "NINGUNO",
+                "imagen_url": ""
+            }
+
+    c.execute(
+        "SELECT * FROM premios WHERE estacion_id = %s",
+        (estacion_id,)
+    )
+
     premios_db = c.fetchall()
-    
-    c.execute("SELECT premio, COUNT(*) as cant FROM canjes WHERE estacion_id = %s AND DATE(fecha) = %s GROUP BY premio", (estacion_id, hoy))
+
+    c.execute("""
+        SELECT premio, COUNT(*) as cant
+        FROM canjes
+        WHERE estacion_id = %s
+        AND DATE(fecha) = %s
+        GROUP BY premio
+    """, (estacion_id, hoy))
+
     canjes_hoy = c.fetchall()
-    entregados_hoy = {row['premio']: row['cant'] for row in canjes_hoy}
-    
+
+    entregados_hoy = {
+        row['premio']: row['cant']
+        for row in canjes_hoy
+    }
+
     premios_validos = []
     pesos = []
+
     for p in premios_db:
+
         limite = p['limite_diario'] if p['limite_diario'] else 0
+
         entregados = entregados_hoy.get(p['nombre'], 0)
-        if limite > 0 and entregados >= limite: continue
+
+        if limite > 0 and entregados >= limite:
+            continue
+
         premios_validos.append(p)
         pesos.append(p['peso'])
+
     conn.close()
-    
-    if not premios_validos: return {"nombre": "Sigue intentando", "sector": "NINGUNO", "imagen_url": ""}
-    premio_ganador = random.choices(premios_validos, weights=pesos, k=1)[0]
+
+    if not premios_validos:
+
+        return {
+            "nombre": "Sigue intentando",
+            "sector": "NINGUNO",
+            "imagen_url": ""
+        }
+
+    premio_ganador = random.choices(
+        premios_validos,
+        weights=pesos,
+        k=1
+    )[0]
+
     return dict(premio_ganador)
 
+
+# ==========================================
+# INIT DB
+# ==========================================
 def init_db():
+
     try:
+
         conn = get_db()
-        conn.autocommit = True 
+        conn.autocommit = True
+
         c = conn.cursor()
-        
-        c.execute('''CREATE TABLE IF NOT EXISTS estaciones (id SERIAL PRIMARY KEY, nombre TEXT NOT NULL, admin_user TEXT UNIQUE NOT NULL, admin_pass TEXT NOT NULL, ruleta_user TEXT UNIQUE, ruleta_pass TEXT)''')
-        c.execute('''CREATE TABLE IF NOT EXISTS canjes (id SERIAL PRIMARY KEY, estacion_id INTEGER, nombre TEXT, dni TEXT, email TEXT, telefono TEXT, premio TEXT, token TEXT, sector TEXT, estado TEXT DEFAULT 'PENDIENTE', vendedor_canje TEXT, fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(estacion_id) REFERENCES estaciones(id))''')
-        c.execute('''CREATE TABLE IF NOT EXISTS premios (id SERIAL PRIMARY KEY, estacion_id INTEGER, nombre TEXT NOT NULL, tipo TEXT NOT NULL, dificultad TEXT NOT NULL, peso INTEGER NOT NULL, sector TEXT NOT NULL, imagen_url TEXT, limite_diario INTEGER DEFAULT 0, FOREIGN KEY(estacion_id) REFERENCES estaciones(id))''')
-        c.execute('''CREATE TABLE IF NOT EXISTS vendedores (id SERIAL PRIMARY KEY, estacion_id INTEGER, nombre TEXT NOT NULL, pin TEXT NOT NULL, sector TEXT NOT NULL, FOREIGN KEY(estacion_id) REFERENCES estaciones(id))''')
-        
-        c.execute("ALTER TABLE estaciones ADD COLUMN IF NOT EXISTS correo_emisor TEXT")
-        c.execute("ALTER TABLE estaciones ADD COLUMN IF NOT EXISTS password_correo TEXT")
-        c.execute("ALTER TABLE estaciones ADD COLUMN IF NOT EXISTS bandera TEXT DEFAULT 'YPF'")
-        c.execute("ALTER TABLE estaciones ADD COLUMN IF NOT EXISTS estilo_ruleta TEXT DEFAULT 'YPF_CLASICO'")
-        
-        # NUEVA COLUMNA: Límite de giros diarios
-        c.execute("ALTER TABLE estaciones ADD COLUMN IF NOT EXISTS limite_giros INTEGER DEFAULT 0")
+
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS estaciones (
+                id SERIAL PRIMARY KEY,
+                nombre TEXT NOT NULL,
+                admin_user TEXT UNIQUE NOT NULL,
+                admin_pass TEXT NOT NULL,
+                ruleta_user TEXT UNIQUE,
+                ruleta_pass TEXT
+            )
+        ''')
+
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS canjes (
+                id SERIAL PRIMARY KEY,
+                estacion_id INTEGER,
+                nombre TEXT,
+                dni TEXT,
+                email TEXT,
+                telefono TEXT,
+                premio TEXT,
+                token TEXT,
+                sector TEXT,
+                estado TEXT DEFAULT 'PENDIENTE',
+                vendedor_canje TEXT,
+                fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(estacion_id) REFERENCES estaciones(id)
+            )
+        ''')
+
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS premios (
+                id SERIAL PRIMARY KEY,
+                estacion_id INTEGER,
+                nombre TEXT NOT NULL,
+                tipo TEXT NOT NULL,
+                dificultad TEXT NOT NULL,
+                peso INTEGER NOT NULL,
+                sector TEXT NOT NULL,
+                imagen_url TEXT,
+                limite_diario INTEGER DEFAULT 0,
+                FOREIGN KEY(estacion_id) REFERENCES estaciones(id)
+            )
+        ''')
+
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS vendedores (
+                id SERIAL PRIMARY KEY,
+                estacion_id INTEGER,
+                nombre TEXT NOT NULL,
+                pin TEXT NOT NULL,
+                sector TEXT NOT NULL,
+                FOREIGN KEY(estacion_id) REFERENCES estaciones(id)
+            )
+        ''')
+
+        c.execute("""
+            ALTER TABLE estaciones
+            ADD COLUMN IF NOT EXISTS correo_emisor TEXT
+        """)
+
+        c.execute("""
+            ALTER TABLE estaciones
+            ADD COLUMN IF NOT EXISTS password_correo TEXT
+        """)
+
+        c.execute("""
+            ALTER TABLE estaciones
+            ADD COLUMN IF NOT EXISTS bandera TEXT DEFAULT 'YPF'
+        """)
+
+        c.execute("""
+            ALTER TABLE estaciones
+            ADD COLUMN IF NOT EXISTS estilo_ruleta TEXT DEFAULT 'YPF_CLASICO'
+        """)
+
+        c.execute("""
+            ALTER TABLE estaciones
+            ADD COLUMN IF NOT EXISTS limite_giros INTEGER DEFAULT 0
+        """)
 
         conn.close()
+
         print("✅ BASE DE DATOS CONECTADA Y LISTA")
+
     except Exception as e:
-        print("🔥 ERROR FATAL AL INICIAR LA BASE DE DATOS 🔥", e)
+
+        print("🔥 ERROR FATAL AL INICIAR LA BASE DE DATOS 🔥")
+        print(e)
+
 
 init_db()
+
 
 # ==========================================
 # 1. LOGIN UNIFICADO E INICIO
