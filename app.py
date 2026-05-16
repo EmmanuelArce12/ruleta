@@ -27,8 +27,13 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'super_clave_secreta_ge')
 DATABASE_URL = os.environ.get('DATABASE_URL')
 MI_PASSWORD_GLOBAL = os.environ.get('PASSWORD_CORREO')
 
-SUPERADMIN_USER = os.environ.get('USUARIO_SUPERADMIN', 'dueño')
-SUPERADMIN_PASS = os.environ.get('CLAVE_SUPERADMIN', 'admin123')
+SUPERADMIN_USER = os.environ.get('USUARIO_SUPERADMIN')
+SUPERADMIN_PASS = os.environ.get('CLAVE_SUPERADMIN')
+
+if not SUPERADMIN_USER or not SUPERADMIN_PASS:
+    raise RuntimeError(
+        "Faltan USUARIO_SUPERADMIN y/o CLAVE_SUPERADMIN en las variables de entorno."
+    )
 
 MI_CORREO_GLOBAL = "echeverriaehijosaforadores@gmail.com"
 
