@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruleta React - Grupo GE</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/react_ruleta.css') }}">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        window.RULETA_CONFIG = {
+            estacionId: {{ estacion_id }},
+            nombreEstacion: {{ nombre_estacion|tojson }},
+            estiloRuleta: {{ estilo_ruleta|tojson }},
+            colorPrimario: "{% if 'AXION' in estilo_ruleta %}#5d2a8e{% else %}#005CAB{% endif %}",
+            colorAcento: "{% if 'AXION' in estilo_ruleta %}#ed1c24{% else %}#F1C40F{% endif %}"
+        };
+    </script>
+</head>
+<body class="{{ estilo_ruleta }}">
+    <a class="logout-react" href="/logout_ruleta">Cerrar Sesion</a>
+    <div id="ruleta-react-root"></div>
+    <script type="text/babel" src="{{ url_for('static', filename='js/react_ruleta.jsx') }}"></script>
+</body>
+</html>

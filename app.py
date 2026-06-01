@@ -500,6 +500,7 @@ def panel_admin():
     conn.close()
     return render_template('administrador.html', clientes=clientes, premios=premios, vendedores=vendedores, estacion=estacion, nombre_estacion=session['estacion_nombre'])
 
+
 @app.route('/admin/configurar_giros', methods=['POST'])
 def configurar_giros():
     if 'estacion_id' not in session: return redirect('/login')
@@ -633,7 +634,19 @@ def ver_ruleta():
     c.execute("SELECT estilo_ruleta FROM estaciones WHERE id = %s", (session['ruleta_auth_id'],))
     est = c.fetchone(); conn.close()
     estilo_actual = est['estilo_ruleta'] if est and est['estilo_ruleta'] else 'YPF_CLASICO'
-    return render_template('index.html', estacion_id=session['ruleta_auth_id'], nombre_estacion=session['ruleta_auth_nombre'], estilo_ruleta=estilo_actual)
+    return render_template('react_ruleta.html', estacion_id=session['ruleta_auth_id'], nombre_estacion=session['ruleta_auth_nombre'], estilo_ruleta=estilo_actual)
+
+@app.route('/ruleta_react')
+def ver_ruleta_react():
+    estacion_id = session.get('ruleta_auth_id') or session.get('estacion_id')
+    nombre_estacion = session.get('ruleta_auth_nombre') or session.get('estacion_nombre')
+    if not estacion_id: return redirect('/iniciar_ruleta')
+    conn = get_db(); c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute("SELECT nombre, estilo_ruleta FROM estaciones WHERE id = %s", (estacion_id,))
+    est = c.fetchone(); conn.close()
+    estilo_actual = est['estilo_ruleta'] if est and est['estilo_ruleta'] else 'YPF_CLASICO'
+    nombre_actual = est['nombre'] if est and est['nombre'] else nombre_estacion
+    return render_template('react_ruleta.html', estacion_id=estacion_id, nombre_estacion=nombre_actual, estilo_ruleta=estilo_actual)
 
 @app.route('/api/premios/<int:estacion_id>')
 def api_premios(estacion_id):

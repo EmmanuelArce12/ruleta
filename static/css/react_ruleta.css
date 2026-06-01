@@ -1,0 +1,690 @@
+:root {
+    --brand: #00d4ff;
+    --accent: #ffe600;
+    --deep: #130026;
+    --glow: #ff2bd6;
+    --ink: #ffffff;
+    --muted: rgba(255, 255, 255, 0.78);
+    --danger: #ff3b6b;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    color: var(--ink);
+    overflow-x: hidden;
+    background:
+        radial-gradient(circle at 18% 12%, rgba(255, 43, 214, 0.48), transparent 20%),
+        radial-gradient(circle at 80% 10%, rgba(0, 212, 255, 0.42), transparent 18%),
+        radial-gradient(circle at 50% 80%, rgba(255, 230, 0, 0.2), transparent 28%),
+        linear-gradient(140deg, #07010f 0%, #19002e 46%, #05010d 100%);
+}
+
+body::before,
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+body::before {
+    background:
+        linear-gradient(110deg, transparent 0 18%, rgba(255, 255, 255, 0.15) 19%, transparent 29%),
+        linear-gradient(250deg, transparent 0 16%, rgba(255, 230, 0, 0.18) 17%, transparent 28%);
+    mix-blend-mode: screen;
+    opacity: 0.38;
+}
+
+body::after {
+    background-image:
+        radial-gradient(circle, rgba(255,255,255,0.85) 0 1px, transparent 2px),
+        radial-gradient(circle, rgba(255,43,214,0.75) 0 1px, transparent 2px),
+        radial-gradient(circle, rgba(0,212,255,0.8) 0 1px, transparent 2px);
+    background-size: 90px 90px, 130px 130px, 170px 170px;
+    animation: starDrift 9s linear infinite;
+    opacity: 0.65;
+}
+
+body.FIESTA_MUNDIAL {
+    background:
+        linear-gradient(180deg, rgba(3, 12, 32, 0.1), rgba(3, 12, 32, 0.78)),
+        url("../img/fondo_mundial.jpg") center / cover no-repeat fixed,
+        #03122d;
+}
+
+body.FIESTA_MUNDIAL::before {
+    background:
+        radial-gradient(circle at 16% 16%, rgba(250, 204, 21, 0.32), transparent 18%),
+        radial-gradient(circle at 80% 18%, rgba(14, 165, 233, 0.28), transparent 20%),
+        linear-gradient(110deg, transparent 0 16%, rgba(255, 255, 255, 0.18) 17%, transparent 27%);
+    opacity: 0.58;
+}
+
+body.FIESTA_MUNDIAL::after {
+    background-image:
+        radial-gradient(circle, rgba(250,204,21,0.95) 0 2px, transparent 3px),
+        radial-gradient(circle, rgba(34,197,94,0.9) 0 2px, transparent 3px),
+        radial-gradient(circle, rgba(14,165,233,0.9) 0 2px, transparent 3px),
+        radial-gradient(circle, rgba(215,25,32,0.85) 0 2px, transparent 3px);
+    background-size: 82px 82px, 118px 118px, 156px 156px, 202px 202px;
+    animation: starDrift 10s linear infinite;
+    opacity: 0.74;
+}
+
+.theme-FIESTA_MUNDIAL .casino-kicker {
+    color: #facc15;
+    border-color: rgba(250, 204, 21, 0.7);
+    background: rgba(3, 18, 45, 0.68);
+}
+
+.theme-FIESTA_MUNDIAL .brand-title h1 {
+    -webkit-text-stroke-color: #facc15;
+    text-shadow:
+        0 4px 0 #006b2d,
+        0 0 24px #0ea5e9,
+        0 0 42px #22c55e;
+}
+
+.theme-FIESTA_MUNDIAL .wheel-card::after {
+    background:
+        radial-gradient(ellipse at center, rgba(250, 204, 21, 0.58), transparent 62%),
+        linear-gradient(90deg, #006b2d, #005baa, #d71920);
+    border-color: rgba(250, 204, 21, 0.84);
+}
+
+.theme-FIESTA_MUNDIAL .wheel-glow {
+    background:
+        radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 11%, transparent 12%),
+        conic-gradient(from 0deg, #006b2d, #00a651, #005baa, #00a0df, #facc15, #d71920, #006b2d);
+}
+
+.theme-FIESTA_MUNDIAL .react-wheel {
+    border-color: #facc15;
+    box-shadow:
+        0 0 0 clamp(12px, 2vw, 22px) rgba(0, 107, 45, 0.78),
+        0 0 0 clamp(18px, 3vw, 34px) rgba(14, 165, 233, 0.52),
+        0 0 48px rgba(250, 204, 21, 0.72),
+        0 35px 70px rgba(0, 0, 0, 0.6),
+        inset 0 0 0 12px rgba(255, 255, 255, 0.34);
+}
+
+.theme-FIESTA_MUNDIAL .wheel-hub {
+    background:
+        radial-gradient(circle at 50% 38%, #ffffff, #005baa 58%, #003b18);
+    color: #facc15;
+    border-color: #facc15;
+    text-shadow: 0 3px 0 #003b18, 0 0 12px #ffffff;
+}
+
+.theme-FIESTA_MUNDIAL .spin-button {
+    background:
+        linear-gradient(#facc15, #f97316 52%, #d71920),
+        radial-gradient(circle, #fff, transparent);
+    text-shadow: 0 3px 0 #8a1a06, 0 0 12px rgba(255,255,255,0.8);
+    box-shadow:
+        0 0 0 6px #ffffff,
+        0 0 0 10px rgba(0, 107, 45, 0.72),
+        0 0 34px #facc15,
+        0 18px 30px rgba(0, 0, 0, 0.5),
+        inset 0 5px 0 rgba(255,255,255,0.38);
+}
+
+.logout-react {
+    position: fixed;
+    right: 14px;
+    bottom: 14px;
+    z-index: 20;
+    color: white;
+    background: rgba(10, 3, 24, 0.78);
+    text-decoration: none;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    backdrop-filter: blur(10px);
+}
+
+.react-shell {
+    position: relative;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: clamp(14px, 2.6vw, 32px);
+    isolation: isolate;
+}
+
+.casino-particles {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.casino-particles span {
+    position: absolute;
+    left: calc((var(--p) * 37) % 100 * 1%);
+    top: calc((var(--p) * 19) % 100 * 1%);
+    width: 8px;
+    height: 14px;
+    border-radius: 3px;
+    background: hsl(calc(var(--p) * 43deg), 100%, 58%);
+    box-shadow: 0 0 12px currentColor;
+    transform: rotate(calc(var(--p) * 21deg));
+    animation: floatConfetti calc(4.5s + (var(--p) % 5) * 0.7s) ease-in-out infinite;
+    opacity: 0.88;
+}
+
+.stage {
+    position: relative;
+    z-index: 2;
+    width: min(100%, 980px);
+    display: grid;
+    justify-items: center;
+    gap: clamp(10px, 1.8vh, 18px);
+}
+
+.stage::after {
+    content: "";
+    width: min(72vw, 640px);
+    height: 86px;
+    margin-top: -18px;
+    border-radius: 50%;
+    background:
+        radial-gradient(ellipse at center, rgba(0, 212, 255, 0.34), transparent 62%),
+        linear-gradient(90deg, rgba(255, 43, 214, 0.25), rgba(255, 230, 0, 0.22), rgba(0, 212, 255, 0.25));
+    filter: blur(4px);
+}
+
+.brand-title {
+    text-align: center;
+    text-shadow: 0 0 18px rgba(0, 212, 255, 0.55);
+}
+
+.casino-kicker {
+    display: inline-block;
+    margin-bottom: 7px;
+    padding: 6px 12px;
+    border: 1px solid rgba(255, 230, 0, 0.5);
+    border-radius: 999px;
+    color: var(--accent);
+    background: rgba(255, 230, 0, 0.09);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.brand-title h1 {
+    margin: 0;
+    font-size: clamp(34px, 6vw, 72px);
+    line-height: 0.95;
+    color: #ffffff;
+    letter-spacing: 0;
+    -webkit-text-stroke: 2px color-mix(in srgb, var(--brand) 70%, #ffffff);
+    text-shadow:
+        0 4px 0 var(--glow),
+        0 0 24px var(--brand),
+        0 0 42px var(--glow);
+}
+
+.brand-title p {
+    margin: 12px 0 0;
+    color: var(--muted);
+    font-size: clamp(15px, 2vw, 19px);
+    font-weight: 700;
+}
+
+.wheel-card {
+    width: min(90vw, 56vh, 650px);
+    aspect-ratio: 1;
+    position: relative;
+    display: grid;
+    place-items: center;
+    isolation: isolate;
+    perspective: 1000px;
+    filter: drop-shadow(0 34px 42px rgba(0, 0, 0, 0.58));
+}
+
+.wheel-card::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -11%;
+    width: 72%;
+    height: 18%;
+    translate: -50% 0;
+    border-radius: 50%;
+    background:
+        radial-gradient(ellipse at center, rgba(255, 43, 214, 0.65), transparent 65%),
+        linear-gradient(90deg, #091a50, #31004f, #091a50);
+    border: 5px solid rgba(255, 43, 214, 0.74);
+    box-shadow:
+        0 0 24px var(--glow),
+        inset 0 0 24px rgba(0, 212, 255, 0.5);
+    z-index: -2;
+}
+
+.wheel-glow {
+    position: absolute;
+    inset: -8%;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 11%, transparent 12%),
+        conic-gradient(from 0deg, #ff2bd6, #00d4ff, #ffe600, #34ff6d, #ff5a1f, #7c3aed, #ff2bd6);
+    filter: blur(26px);
+    opacity: 0.64;
+    animation: glowPulse 2s ease-in-out infinite;
+    z-index: -3;
+}
+
+.wheel-shine {
+    position: absolute;
+    inset: 8%;
+    border-radius: 50%;
+    background: linear-gradient(110deg, transparent 4%, rgba(255,255,255,0.34) 24%, transparent 39%);
+    mix-blend-mode: screen;
+    animation: shineSweep 3.2s ease-in-out infinite;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.bulb-ring {
+    position: absolute;
+    inset: -6%;
+    border-radius: 50%;
+    z-index: 4;
+    pointer-events: none;
+    animation: ringGlow 3.4s linear infinite;
+}
+
+.bulb-ring span {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: clamp(12px, 2.4vw, 22px);
+    height: clamp(12px, 2.4vw, 22px);
+    border-radius: 50%;
+    background: var(--bulb-color);
+    box-shadow:
+        0 0 10px var(--bulb-color),
+        0 0 25px var(--bulb-color),
+        0 0 40px var(--bulb-color),
+        inset 0 2px 4px rgba(255, 255, 255, 0.94);
+    offset-path: circle(50% at 50% 50%);
+    offset-distance: calc(var(--bulb-index) * 3.125%);
+    offset-rotate: 0deg;
+    animation: bulbBlink 1s ease-in-out infinite;
+    animation-delay: calc(var(--bulb-index) * -0.06s);
+}
+
+.is-spinning .bulb-ring span {
+    animation-duration: 0.42s;
+}
+
+.wheel-pointer {
+    position: absolute;
+    top: -1%;
+    left: 50%;
+    translate: -50% 0;
+    width: clamp(58px, 9vw, 90px);
+    height: clamp(76px, 11vw, 116px);
+    border-radius: 999px 999px 16px 16px;
+    background:
+        radial-gradient(circle at 50% 28%, #ffffff 0 19%, var(--accent) 20% 31%, transparent 32%),
+        linear-gradient(180deg, #ff3b6b, #ff8a00 58%, #fff2a5);
+    clip-path: polygon(50% 100%, 8% 30%, 24% 0, 76% 0, 92% 30%);
+    box-shadow:
+        0 0 16px #fff,
+        0 0 28px var(--accent),
+        0 12px 22px rgba(0, 0, 0, 0.45);
+    z-index: 7;
+}
+
+.react-wheel {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: clamp(8px, 1.6vw, 16px) solid #ffb000;
+    background: white;
+    box-shadow:
+        0 0 0 clamp(12px, 2vw, 22px) rgba(255, 43, 214, 0.78),
+        0 0 0 clamp(18px, 3vw, 34px) rgba(0, 212, 255, 0.58),
+        0 0 48px var(--glow),
+        0 35px 70px rgba(0, 0, 0, 0.58),
+        inset 0 0 0 12px rgba(255, 255, 255, 0.34);
+    transition: transform 4.9s cubic-bezier(0.08, 0.82, 0.11, 1.03);
+    transform-style: preserve-3d;
+}
+
+.is-spinning .react-wheel {
+    filter: saturate(1.2) brightness(1.06);
+}
+
+.wheel-hub {
+    position: absolute;
+    width: clamp(96px, 17vw, 154px);
+    height: clamp(96px, 17vw, 154px);
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 50% 38%, #5c1078, #23003a 68%),
+        linear-gradient(145deg, var(--glow), var(--brand));
+    border: clamp(7px, 1.4vw, 13px) solid var(--accent);
+    display: grid;
+    place-items: center;
+    color: #fff35e;
+    font-weight: 900;
+    font-size: clamp(24px, 4vw, 40px);
+    text-shadow: 0 3px 0 #5d176b, 0 0 12px #fff;
+    box-shadow:
+        0 0 0 8px rgba(255, 43, 214, 0.5),
+        0 0 26px var(--accent),
+        inset 0 0 24px rgba(255, 255, 255, 0.25);
+    z-index: 5;
+}
+
+.spin-button {
+    position: relative;
+    z-index: 6;
+    width: min(360px, 82vw);
+    border: 0;
+    border-radius: 999px;
+    padding: clamp(16px, 2.6vw, 24px) 28px;
+    background:
+        linear-gradient(#69ff2a, #16b900 52%, #0b7600),
+        radial-gradient(circle, #fff, transparent);
+    color: #ffffff;
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-shadow: 0 3px 0 #087000, 0 0 12px rgba(255,255,255,0.8);
+    box-shadow:
+        0 0 0 6px #ffb000,
+        0 0 0 10px rgba(255, 43, 214, 0.72),
+        0 0 34px #34ff6d,
+        0 18px 30px rgba(0, 0, 0, 0.5),
+        inset 0 5px 0 rgba(255,255,255,0.38);
+    transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.spin-button::before,
+.spin-button::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 58px;
+    height: 34px;
+    background:
+        linear-gradient(90deg, transparent 0 22%, #ff2bd6 23% 34%, transparent 35% 53%, #ffe600 54% 66%, transparent 67%),
+        linear-gradient(110deg, transparent 0 48%, #00d4ff 49% 58%, transparent 59%);
+    filter: drop-shadow(0 0 8px currentColor);
+}
+
+.spin-button::before {
+    right: calc(100% + 14px);
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.spin-button::after {
+    left: calc(100% + 14px);
+    transform: translateY(-50%);
+}
+
+.spin-button:not(:disabled):hover {
+    filter: brightness(1.12) saturate(1.2);
+    transform: translateY(-3px) scale(1.02);
+}
+
+.spin-button:active {
+    transform: translateY(2px) scale(0.98);
+}
+
+.spin-button:disabled {
+    opacity: 0.76;
+    cursor: wait;
+}
+
+.error {
+    color: #fff;
+    background: rgba(255, 59, 107, 0.2);
+    border: 1px solid rgba(255, 59, 107, 0.45);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-weight: 900;
+}
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background:
+        radial-gradient(circle at 50% 34%, rgba(255, 43, 214, 0.34), transparent 28%),
+        rgba(4, 1, 11, 0.84);
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    z-index: 30;
+    backdrop-filter: blur(8px);
+}
+
+.win-burst {
+    position: fixed;
+    inset: 0;
+    background:
+        repeating-conic-gradient(from 0deg, rgba(255,230,0,0.38) 0 8deg, transparent 8deg 18deg),
+        radial-gradient(circle, rgba(255,255,255,0.45), transparent 28%);
+    animation: burstSpin 6s linear infinite;
+    opacity: 0.65;
+    pointer-events: none;
+}
+
+.result-modal {
+    position: relative;
+    width: min(94vw, 520px);
+    max-height: 92vh;
+    overflow-y: auto;
+    background:
+        linear-gradient(180deg, rgba(53, 0, 84, 0.94), rgba(12, 2, 24, 0.96)),
+        radial-gradient(circle at 50% 0, rgba(255, 230, 0, 0.2), transparent 32%);
+    border: 4px solid var(--accent);
+    border-radius: 24px;
+    padding: clamp(24px, 5vw, 38px);
+    text-align: center;
+    box-shadow:
+        0 0 0 7px rgba(255, 43, 214, 0.74),
+        0 0 42px var(--glow),
+        0 28px 90px rgba(0, 0, 0, 0.62);
+    animation: prizePop 0.42s cubic-bezier(0.18, 0.9, 0.24, 1.24);
+}
+
+.result-modal h2 {
+    margin: 0 0 10px;
+    color: #ffffff;
+    font-size: clamp(34px, 8vw, 58px);
+    line-height: 1;
+    -webkit-text-stroke: 2px #ff2b86;
+    text-shadow:
+        0 4px 0 #7a004a,
+        0 0 22px var(--accent),
+        0 0 42px var(--glow);
+}
+
+.winner-sticker {
+    width: 108px;
+    height: 108px;
+    margin: 10px auto;
+    border-radius: 30px;
+    display: grid;
+    place-items: center;
+    font-size: 58px;
+    background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,0.9), transparent 22%),
+        linear-gradient(145deg, #ffe600, #ff7a00 45%, #ff2bd6);
+    box-shadow:
+        0 0 0 5px #fff,
+        0 0 26px var(--accent),
+        0 12px 22px rgba(0,0,0,0.35);
+    animation: stickerBounce 1.1s ease-in-out infinite;
+}
+
+.result-modal img {
+    max-width: 150px;
+    max-height: 150px;
+    object-fit: contain;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 0 18px var(--accent));
+}
+
+.result-name {
+    margin: 12px 0;
+    font-size: clamp(26px, 6vw, 42px);
+    font-weight: 900;
+    color: var(--accent);
+    text-shadow: 0 3px 0 #8a3900, 0 0 18px var(--accent);
+}
+
+.result-modal p {
+    color: var(--muted);
+}
+
+.claim-form {
+    display: grid;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.claim-form input {
+    width: 100%;
+    border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 15px;
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    outline: none;
+}
+
+.claim-form input::placeholder {
+    color: rgba(255,255,255,0.68);
+}
+
+.claim-form button,
+.modal-action {
+    border: 0;
+    border-radius: 999px;
+    padding: 15px;
+    background: linear-gradient(#ffe600, #ff8a00);
+    color: #2c003c;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 0 18px var(--accent);
+}
+
+.success-box {
+    margin-top: 18px;
+    padding: 16px;
+    border: 1px solid rgba(52, 255, 109, 0.42);
+    border-radius: 12px;
+    background: rgba(52, 255, 109, 0.14);
+    color: #b8ffc8;
+    font-weight: 800;
+}
+
+@media (max-width: 760px) {
+    .react-shell {
+        align-items: start;
+        padding: 16px 12px 78px;
+    }
+
+    .stage {
+        gap: 14px;
+    }
+
+    .brand-title h1 {
+        font-size: clamp(32px, 11vw, 52px);
+        -webkit-text-stroke-width: 1px;
+    }
+
+    .wheel-card {
+        width: min(91vw, 48vh, 440px);
+    }
+
+    .spin-button::before,
+    .spin-button::after {
+        display: none;
+    }
+
+    .logout-react {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 420px) {
+    .casino-kicker,
+    .brand-title p {
+        display: none;
+    }
+
+    .wheel-card {
+        width: min(92vw, 50vh, 390px);
+    }
+
+    .spin-button {
+        width: min(310px, 82vw);
+    }
+}
+
+@keyframes glowPulse {
+    0%, 100% { opacity: 0.48; scale: 0.98; }
+    50% { opacity: 0.8; scale: 1.03; }
+}
+
+@keyframes shineSweep {
+    0%, 26% { rotate: -18deg; opacity: 0; }
+    42% { opacity: 0.55; }
+    72%, 100% { rotate: 24deg; opacity: 0; }
+}
+
+@keyframes bulbBlink {
+    0%, 100% { opacity: 0.55; scale: 0.82; }
+    45% { opacity: 1; scale: 1.16; }
+}
+
+@keyframes ringGlow {
+    from { filter: hue-rotate(0deg); }
+    to { filter: hue-rotate(360deg); }
+}
+
+@keyframes prizePop {
+    from { opacity: 0; transform: translateY(28px) scale(0.86) rotate(-2deg); }
+    to { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+
+@keyframes stickerBounce {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50% { transform: translateY(-8px) rotate(3deg); }
+}
+
+@keyframes burstSpin {
+    from { transform: rotate(0deg) scale(1.4); }
+    to { transform: rotate(360deg) scale(1.4); }
+}
+
+@keyframes starDrift {
+    from { background-position: 0 0, 0 0, 0 0; }
+    to { background-position: 90px 90px, -130px 130px, 170px -170px; }
+}
+
+@keyframes floatConfetti {
+    0%, 100% { translate: 0 0; rotate: 0deg; }
+    50% { translate: 14px 28px; rotate: 28deg; }
+}

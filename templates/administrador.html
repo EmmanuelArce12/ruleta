@@ -187,6 +187,165 @@
         .form-row { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 10px;}
         .form-col { flex: 1; min-width: 200px; }
 
+        .selector-ruleta-layout {
+            display: grid;
+            grid-template-columns: minmax(190px, 1fr) 180px;
+            gap: 18px;
+            align-items: center;
+        }
+
+        .mini-ruleta-preview {
+            --preview-brand: #005cab;
+            --preview-accent: #f4cf22;
+            --preview-deep: #06366f;
+            --preview-glow: #ff2bd6;
+            position: relative;
+            min-height: 210px;
+            border-radius: 12px;
+            padding: 16px;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 50% 38%, rgba(255,255,255,0.22), transparent 30%),
+                radial-gradient(circle at 20% 10%, rgba(255,43,214,0.35), transparent 24%),
+                linear-gradient(145deg, #090018, var(--preview-deep));
+            border: 1px solid var(--border-glass);
+            box-shadow: var(--inner-shadow), 0 0 24px color-mix(in srgb, var(--preview-glow) 45%, transparent);
+        }
+
+        .mini-ruleta-preview::before {
+            content: "";
+            position: absolute;
+            inset: 15px;
+            border-radius: 50%;
+            background: conic-gradient(#ff3131, #f4cf22, #00d4ff, #22c55e, #a855f7, #fff, #f97316, #ff3131);
+            filter: blur(14px);
+            opacity: 0.7;
+            animation: pulsoPreview 2.4s ease-in-out infinite;
+        }
+
+        .mini-ruleta-preview::after {
+            content: "";
+            position: absolute;
+            width: 160px;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            background:
+                radial-gradient(circle at 50% 0%, #ff3131 0 5px, transparent 6px),
+                radial-gradient(circle at 85% 15%, #f4cf22 0 5px, transparent 6px),
+                radial-gradient(circle at 100% 50%, #00d4ff 0 5px, transparent 6px),
+                radial-gradient(circle at 85% 85%, #22c55e 0 5px, transparent 6px),
+                radial-gradient(circle at 50% 100%, #ffffff 0 5px, transparent 6px),
+                radial-gradient(circle at 15% 85%, #a855f7 0 5px, transparent 6px),
+                radial-gradient(circle at 0% 50%, #fb7185 0 5px, transparent 6px),
+                radial-gradient(circle at 15% 15%, #f97316 0 5px, transparent 6px);
+            filter: drop-shadow(0 0 8px var(--preview-accent));
+            animation: pulsoPreview 1.6s ease-in-out infinite reverse;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .preview-pointer {
+            position: absolute;
+            top: 18px;
+            left: 50%;
+            translate: -50% 0;
+            width: 0;
+            height: 0;
+            border-left: 14px solid transparent;
+            border-right: 14px solid transparent;
+            border-top: 30px solid var(--preview-accent);
+            z-index: 3;
+            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3));
+        }
+
+        .preview-wheel {
+            width: 138px;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            position: relative;
+            background:
+                radial-gradient(circle, #fff 0 17%, transparent 18%),
+                repeating-conic-gradient(from -18deg, #ff2bd6 0 22deg, #00d4ff 22deg 44deg, #ffe600 44deg 66deg, #22c55e 66deg 88deg, #f97316 88deg 110deg, #a855f7 110deg 132deg, #ff3131 132deg 154deg, #fff 154deg 176deg);
+            border: 8px solid #ffb000;
+            box-shadow:
+                0 0 0 7px var(--preview-glow),
+                0 16px 32px rgba(0,0,0,0.38),
+                0 0 28px var(--preview-accent),
+                inset 0 0 0 7px rgba(255,255,255,0.24);
+            animation: giroPreview 5.8s cubic-bezier(0.28, 0.8, 0.18, 1) infinite;
+            z-index: 2;
+        }
+
+        .preview-wheel::after {
+            content: attr(data-center);
+            position: absolute;
+            inset: 38%;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: white;
+            color: var(--preview-brand);
+            border: 4px solid var(--preview-accent);
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .premium-sticker-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 10px 0 14px;
+        }
+
+        .premium-sticker {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(145deg, #ffe600, #ff7a00 44%, #ff2bd6);
+            box-shadow: 0 0 0 2px #fff, 0 0 16px var(--preview-accent);
+            font-size: 21px;
+            filter: saturate(1.25);
+        }
+
+        .preview-label {
+            position: absolute;
+            left: 14px;
+            right: 14px;
+            bottom: 12px;
+            display: grid;
+            gap: 2px;
+            text-align: center;
+            z-index: 3;
+        }
+
+        .preview-label strong {
+            color: var(--preview-brand);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .preview-label span {
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+
+        @keyframes giroPreview {
+            0% { transform: rotate(0deg); }
+            55% { transform: rotate(520deg); }
+            78% { transform: rotate(500deg); }
+            100% { transform: rotate(720deg); }
+        }
+
+        @keyframes pulsoPreview {
+            0%, 100% { opacity: 0.34; transform: scale(0.95); }
+            50% { opacity: 0.58; transform: scale(1.03); }
+        }
+
         /* BOTONES DE ACCIÓN FÍSICOS */
         .btn-accion { 
             padding: 12px 20px; 
@@ -240,6 +399,8 @@
             .tab-btn.active { transform: translateY(-2px); border-bottom: 2px solid var(--tab-active);}
             .form-row { flex-direction: column; gap: 0; }
             .tab-content { padding: 20px 15px;}
+            .selector-ruleta-layout { grid-template-columns: 1fr; }
+            .mini-ruleta-preview { min-height: 190px; }
         }
     </style>
 </head>
@@ -251,6 +412,7 @@
             <button id="btn-toggle-tema" class="btn-tema" onclick="toggleTema()">🌙 Oscuro</button>
             <a href="/iniciar_terminal" class="btn-nav" target="_blank">💻 Terminal</a>
             <a href="/iniciar_ruleta" class="btn-nav" target="_blank">🎡 Ruleta</a>
+            <a href="/ruleta_react" class="btn-nav" target="_blank">React</a>
             <a href="/logout_admin" class="btn-logout">🚪 Salir</a>
         </div>
     </div>
@@ -290,20 +452,37 @@
             <div class="tarjeta" style="border-top-color: #8e44ad;">
                 <h2 style="color: #8e44ad; margin-top: 0; font-size: 18px;">🎨 Diseño de Ruleta</h2>
                 <form action="/admin/configurar_estilo" method="POST" class="formulario-caja">
-                    <label style="color: #8e44ad;">Tema Visual ({{ estacion['bandera'] }}):</label>
-                    <select name="estilo_ruleta">
-                        {% if estacion['bandera'] == 'YPF' %}
-                            <option value="YPF_CLASICO" {% if estacion['estilo_ruleta'] == 'YPF_CLASICO' %}selected{% endif %}>YPF: Clásico (Azul/Amarillo)</option>
-                            <option value="YPF_MODERNO" {% if estacion['estilo_ruleta'] == 'YPF_MODERNO' %}selected{% endif %}>YPF: Moderno (Vidrio/Plata)</option>
-                            <option value="YPF_LED" {% if estacion['estilo_ruleta'] == 'YPF_LED' %}selected{% endif %}>YPF: Premium (Luces LED)</option>
-                        {% elif estacion['bandera'] == 'AXION' %}
-                            <option value="AXION_CLASICO" {% if estacion['estilo_ruleta'] == 'AXION_CLASICO' %}selected{% endif %}>Axion: Clásico (Violeta/Rojo)</option>
-                            <option value="AXION_MODERNO" {% if estacion['estilo_ruleta'] == 'AXION_MODERNO' %}selected{% endif %}>Axion: Moderno (Vidrio/Plata)</option>
-                            <option value="AXION_LED" {% if estacion['estilo_ruleta'] == 'AXION_LED' %}selected{% endif %}>Axion: Premium (LED Oro)</option>
-                        {% else %}
-                            <option value="YPF_CLASICO" {% if estacion['estilo_ruleta'] == 'YPF_CLASICO' %}selected{% endif %}>Clásico (Por defecto)</option>
-                        {% endif %}
-                    </select>
+                    <div class="selector-ruleta-layout">
+                        <div>
+                            <label style="color: #8e44ad;">Tema Visual ({{ estacion['bandera'] }}):</label>
+                            <select name="estilo_ruleta" id="select-estilo-ruleta">
+                                {% if estacion['bandera'] == 'YPF' %}
+                                    <option value="YPF_RUTA" {% if estacion['estilo_ruleta'] in ['YPF_RUTA', 'YPF_CLASICO', 'YPF_MODERNO'] %}selected{% endif %}>YPF Ruta Realista</option>
+                                    <option value="YPF_FULL" {% if estacion['estilo_ruleta'] in ['YPF_FULL', 'YPF_LED'] %}selected{% endif %}>YPF Full Neon</option>
+                                {% elif estacion['bandera'] == 'AXION' %}
+                                    <option value="AXION_BOXES" {% if estacion['estilo_ruleta'] in ['AXION_BOXES', 'AXION_CLASICO', 'AXION_MODERNO'] %}selected{% endif %}>AXION Boxes Racing</option>
+                                    <option value="AXION_NOCHE" {% if estacion['estilo_ruleta'] in ['AXION_NOCHE', 'AXION_LED'] %}selected{% endif %}>AXION Noche Premium</option>
+                                {% else %}
+                                    <option value="YPF_RUTA" {% if estacion['estilo_ruleta'] in ['YPF_RUTA', 'YPF_CLASICO', 'YPF_MODERNO'] %}selected{% endif %}>YPF Ruta Realista</option>
+                                    <option value="YPF_FULL" {% if estacion['estilo_ruleta'] in ['YPF_FULL', 'YPF_LED'] %}selected{% endif %}>YPF Full Neon</option>
+                                    <option value="AXION_BOXES" {% if estacion['estilo_ruleta'] in ['AXION_BOXES', 'AXION_CLASICO', 'AXION_MODERNO'] %}selected{% endif %}>AXION Boxes Racing</option>
+                                    <option value="AXION_NOCHE" {% if estacion['estilo_ruleta'] in ['AXION_NOCHE', 'AXION_LED'] %}selected{% endif %}>AXION Noche Premium</option>
+                                {% endif %}
+                                <option value="FIESTA_MUNDIAL" {% if estacion['estilo_ruleta'] == 'FIESTA_MUNDIAL' %}selected{% endif %}>Estilo Fiesta Mundial</option>
+                            </select>
+                            <p id="texto-preview-ruleta" style="color: var(--text-muted); font-size: 12px; line-height: 1.45; margin: -5px 0 14px;"></p>
+                            <label style="color: #8e44ad;">Emojis como stickers premium:</label>
+                            <div class="premium-sticker-row" id="stickers-premium-admin"></div>
+                        </div>
+                        <div class="mini-ruleta-preview" id="preview-ruleta-admin" aria-label="Vista previa animada de la ruleta">
+                            <div class="preview-pointer"></div>
+                            <div class="preview-wheel" id="preview-wheel-admin" data-center="YPF"></div>
+                            <div class="preview-label">
+                                <strong id="preview-title-admin">YPF Ruta</strong>
+                                <span id="preview-subtitle-admin">Ruta, premios y luces reales</span>
+                            </div>
+                        </div>
+                    </div>
                     <button type="submit" class="btn-accion btn-morado">💾 Aplicar Diseño</button>
                 </form>
             </div>
@@ -502,6 +681,101 @@
             localStorage.setItem("tabActivaGe", tabName);
         }
 
+        const previewsRuleta = {
+            YPF_RUTA: {
+                brand: "#00d4ff",
+                accent: "#ffe600",
+                deep: "#16002f",
+                glow: "#ff2bd6",
+                center: "YPF",
+                title: "Casino Neon",
+                subtitle: "Luces, jackpot y sectores vibrantes",
+                text: "Ruleta oscura con neon, bombillas multicolor, stickers y energia de casino arcade."
+            },
+            YPF_FULL: {
+                brand: "#ff2bd6",
+                accent: "#34ff6d",
+                deep: "#101042",
+                glow: "#00d4ff",
+                center: "FULL",
+                title: "Carnaval Pop",
+                subtitle: "Feria digital y colores vivos",
+                text: "Mas explosiva y colorida, ideal para promociones rapidas y pantalla de tablet."
+            },
+            AXION_BOXES: {
+                brand: "#7c3aed",
+                accent: "#ff1744",
+                deep: "#090018",
+                glow: "#ffe600",
+                center: "AX",
+                title: "Arcade Turbo",
+                subtitle: "Racing, neones y velocidad",
+                text: "Violeta, rojo intenso y amarillo jackpot con sensacion de tragamonedas moderna."
+            },
+            AXION_NOCHE: {
+                brand: "#ffe600",
+                accent: "#00ffa8",
+                deep: "#05010d",
+                glow: "#ff2bd6",
+                center: "AX",
+                title: "Jackpot Galaxy",
+                subtitle: "Casino oscuro premium",
+                text: "La variante mas cinematografica: fondo oscuro, brillos y contraste alto."
+            },
+            FIESTA_MUNDIAL: {
+                brand: "#0ea5e9",
+                accent: "#facc15",
+                deep: "#03122d",
+                glow: "#22c55e",
+                center: "GO",
+                title: "Fiesta Mundial",
+                subtitle: "Cancha, luces y confeti",
+                text: "Inspirado en el promo Satragno: fondo de estadio, verdes de cancha, azul intenso y energia de fiesta."
+            }
+        };
+
+        const aliasPreviewRuleta = {
+            YPF_CLASICO: "YPF_RUTA",
+            YPF_MODERNO: "YPF_RUTA",
+            YPF_LED: "YPF_FULL",
+            AXION_CLASICO: "AXION_BOXES",
+            AXION_MODERNO: "AXION_BOXES",
+            AXION_LED: "AXION_NOCHE"
+        };
+
+        function renderStickersPremium() {
+            const row = document.getElementById("stickers-premium-admin");
+            if (!row) return;
+            row.innerHTML = "";
+            ["🎁", "☕", "🍔", "⭐", "🏆"].forEach((emoji) => {
+                const span = document.createElement("span");
+                span.className = "premium-sticker";
+                span.textContent = emoji;
+                row.appendChild(span);
+            });
+        }
+
+        function actualizarPreviewRuleta() {
+            const select = document.getElementById("select-estilo-ruleta");
+            const preview = document.getElementById("preview-ruleta-admin");
+            const wheel = document.getElementById("preview-wheel-admin");
+            const title = document.getElementById("preview-title-admin");
+            const subtitle = document.getElementById("preview-subtitle-admin");
+            const text = document.getElementById("texto-preview-ruleta");
+            if (!select || !preview || !wheel || !title || !subtitle || !text) return;
+
+            const key = aliasPreviewRuleta[select.value] || select.value || "YPF_RUTA";
+            const data = previewsRuleta[key] || previewsRuleta.YPF_RUTA;
+            preview.style.setProperty("--preview-brand", data.brand);
+            preview.style.setProperty("--preview-accent", data.accent);
+            preview.style.setProperty("--preview-deep", data.deep);
+            preview.style.setProperty("--preview-glow", data.glow || "#ff2bd6");
+            wheel.dataset.center = data.center;
+            title.innerText = data.title;
+            subtitle.innerText = data.subtitle;
+            text.innerText = data.text;
+        }
+
         // 3. Inicialización al Cargar
         document.addEventListener("DOMContentLoaded", function() {
             // Cargar Tema
@@ -513,6 +787,13 @@
             // Cargar Pestaña
             let activeTab = localStorage.getItem("tabActivaGe") || "Configuracion";
             openTab(activeTab);
+
+            const selectRuleta = document.getElementById("select-estilo-ruleta");
+            if (selectRuleta) {
+                selectRuleta.addEventListener("change", actualizarPreviewRuleta);
+                actualizarPreviewRuleta();
+                renderStickersPremium();
+            }
         });
     </script>
 </body>
