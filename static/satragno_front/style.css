@@ -3779,3 +3779,274 @@ body.admin-body.mundial .admin-sidebar .tab.active {
         width: 74px;
     }
 }
+
+.oculto {
+    display: none !important;
+}
+
+.promo-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(0, 8, 20, .84);
+    backdrop-filter: blur(10px);
+    box-sizing: border-box;
+}
+
+.promo-modal-card {
+    width: min(94vw, 460px);
+    max-height: 92vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+    text-align: center;
+    color: white;
+    border-radius: 22px;
+    padding: clamp(20px, 4vw, 34px);
+    animation: promo-pop .28s ease-out;
+}
+
+.casino-modal-card {
+    background:
+        radial-gradient(circle at 50% 0, rgba(0, 217, 255, .22), transparent 32%),
+        linear-gradient(180deg, rgba(0, 27, 61, .96), rgba(0, 8, 20, .97));
+    border: 2px solid #00d9ff;
+    box-shadow: 0 0 34px rgba(0, 217, 255, .58), inset 0 0 24px rgba(255,255,255,.08);
+}
+
+.mundial-modal-card {
+    background:
+        radial-gradient(circle at 50% 0, rgba(255, 215, 0, .24), transparent 34%),
+        linear-gradient(180deg, rgba(0, 44, 22, .96), rgba(0, 12, 32, .97));
+    border: 2px solid #ffd700;
+    box-shadow: 0 0 34px rgba(255, 215, 0, .5), inset 0 0 24px rgba(255,255,255,.08);
+}
+
+.promo-modal-card h2 {
+    margin: 0 0 12px;
+    font-size: clamp(28px, 7vw, 44px);
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.casino-modal-card h2,
+.casino-modal-card .promo-prize-text strong {
+    color: #00d9ff;
+}
+
+.mundial-modal-card h2,
+.mundial-modal-card .promo-prize-text strong {
+    color: #ffd700;
+}
+
+.promo-prize-image {
+    display: none;
+    width: min(150px, 42vw);
+    max-height: 150px;
+    object-fit: contain;
+    margin: 0 auto 12px;
+    filter: drop-shadow(0 0 16px rgba(255,255,255,.5));
+}
+
+.promo-prize-text {
+    margin: 12px 0 18px;
+    font-size: clamp(21px, 5vw, 32px);
+    font-weight: 900;
+    line-height: 1.15;
+}
+
+.promo-prize-text span {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 16px;
+    color: rgba(255,255,255,.78);
+}
+
+.promo-claim-form {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.promo-claim-form p {
+    margin: 0 0 4px;
+    color: rgba(255,255,255,.82);
+    font-size: 14px;
+    line-height: 1.35;
+}
+
+.promo-claim-form input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid rgba(255,255,255,.24);
+    border-radius: 12px;
+    padding: 13px 14px;
+    color: white;
+    background: rgba(255,255,255,.12);
+    outline: none;
+    font-size: 15px;
+}
+
+.promo-claim-form input::placeholder {
+    color: rgba(255,255,255,.66);
+}
+
+.promo-claim-form button,
+.promo-modal-action,
+.promo-success button {
+    width: 100%;
+    border: 0;
+    border-radius: 14px;
+    padding: 14px 16px;
+    color: white;
+    font-size: 15px;
+    font-weight: 900;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 12px 24px rgba(0,0,0,.25);
+}
+
+.casino-modal-card .promo-claim-form button,
+.casino-modal-card .promo-modal-action,
+.casino-modal-card .promo-success button {
+    background: linear-gradient(180deg, #00d9ff, #005baa);
+}
+
+.mundial-modal-card .promo-claim-form button,
+.mundial-modal-card .promo-modal-action,
+.mundial-modal-card .promo-success button {
+    background: linear-gradient(180deg, #ffd700, #0b7a28);
+}
+
+.promo-claim-form button:disabled {
+    opacity: .72;
+    cursor: wait;
+}
+
+.promo-success {
+    border-radius: 16px;
+    padding: 16px;
+    background: rgba(34, 197, 94, .16);
+    border: 1px solid rgba(134, 239, 172, .42);
+}
+
+.promo-success h3 {
+    margin: 0 0 8px;
+    color: #86efac;
+    font-size: 22px;
+}
+
+.promo-success p {
+    color: rgba(255,255,255,.82);
+}
+
+.promo-error {
+    color: #ffb4b4;
+    font-size: 14px;
+}
+
+@keyframes promo-pop {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(.94);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (max-width: 900px), (max-height: 780px) {
+    .casino-screen {
+        padding: 14px 8px 24px;
+    }
+
+    .casino-title {
+        font-size: clamp(30px, 7vw, 50px);
+        letter-spacing: 1px;
+    }
+
+    .casino-subtitle {
+        font-size: clamp(18px, 4vw, 24px);
+        margin-bottom: 10px;
+    }
+
+    .wheel-area {
+        width: min(88vw, 58vh, 520px);
+        height: min(88vw, 58vh, 520px);
+    }
+
+    .casino-spin {
+        width: min(78vw, 300px);
+        height: auto;
+        min-height: 58px;
+        font-size: clamp(26px, 7vw, 38px);
+        margin-top: 16px;
+    }
+
+    .mundial-ruleta-screen {
+        padding: 14px 8px 26px;
+    }
+
+    .mundial-title {
+        font-size: clamp(30px, 7vw, 52px);
+        letter-spacing: 1px;
+    }
+
+    .mundial-subtitle {
+        font-size: clamp(18px, 4vw, 25px);
+    }
+
+    .mundial-wheel-area {
+        width: min(90vw, 60vh, 560px);
+        height: min(90vw, 60vh, 560px);
+    }
+
+    .mundial-spin {
+        width: min(82vw, 330px);
+        min-height: 58px;
+        height: auto;
+        font-size: clamp(20px, 5.8vw, 30px);
+        margin-top: 14px;
+    }
+}
+
+@media (max-width: 520px) {
+    .promo-modal {
+        align-items: flex-start;
+        padding: 12px;
+        overflow-y: auto;
+    }
+
+    .promo-modal-card {
+        margin: 8px 0;
+        padding: 18px 14px;
+        border-radius: 18px;
+    }
+
+    .promo-claim-form input {
+        padding: 11px 12px;
+        font-size: 14px;
+    }
+
+    .wheel-pointer {
+        border-left-width: 24px;
+        border-right-width: 24px;
+        border-top-width: 48px;
+    }
+
+    .mundial-pointer {
+        border-left-width: 24px;
+        border-right-width: 24px;
+        border-top-width: 48px;
+    }
+
+    .mundial-logo,
+    .mundial-ball,
+    .mundial-cup {
+        display: none;
+    }
+}

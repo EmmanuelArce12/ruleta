@@ -39,11 +39,32 @@
     <div id="resultado" class="mundial-result" style="display:none;"></div>
 </div>
 
+<div id="modal-premio" class="promo-modal oculto">
+    <div class="promo-modal-card mundial-modal-card">
+        <h2>Resultado Mundial</h2>
+        <img id="img-premio" src="" alt="Premio" class="promo-prize-image">
+        <p id="texto-premio" class="promo-prize-text">Calculando...</p>
+
+        <form id="formulario-datos" class="promo-claim-form">
+            <p>Completa tus datos para recibir el codigo de canje.</p>
+            <input type="text" id="nombre" placeholder="Nombre y Apellido" required>
+            <input type="number" id="dni" placeholder="DNI" required>
+            <input type="email" id="email" placeholder="Correo Electronico" required>
+            <input type="tel" id="telefono" placeholder="Telefono" required>
+            <button type="submit">Reclamar premio</button>
+        </form>
+
+        <button id="btn-cerrar-modal" class="promo-modal-action oculto">Finalizar</button>
+    </div>
+</div>
+
 <script>
+const ESTACION_ID = {{ estacion_id }};
 let prizes = [];
 let spinning = false;
 let currentRotation = 0;
 let velocidadRuleta = "{{ velocidad_ruleta }}";
+let premioGanado = null;
 
 const colors = [
     "#e52521",
@@ -160,10 +181,11 @@ function spinWheel() {
     if (spinning) return;
     spinning = true;
 
-    fetch("/satragno_girar")
+    fetch(`/girar/${ESTACION_ID}`, { method: "POST" })
     .then(res => res.json())
     .then(data => {
-        const index = prizes.findIndex(p => p.nombre === data.premio);
+        premioGanado = data;
+        const index = prizes.findIndex(p => p.nombre === data.nombre);
         const total = prizes.length;
         const anglePerPrize = 360 / total;
 
@@ -188,15 +210,83 @@ function spinWheel() {
         wheel.style.transform = `rotate(${currentRotation}deg)`;
 
         setTimeout(() => {
-            document.getElementById("resultado").style.display = "block";
-            document.getElementById("resultado").innerHTML =
-                `<span>RESULTADO</span><br>🏆 <b>${data.premio}</b><br>Codigo: <strong>${data.codigo}</strong>`;
+            mostrarModalPremio(data);
             spinning = false;
         }, duracionMs + 250);
+    })
+    .catch(() => {
+        spinning = false;
+        alert("Hubo un error de conexion al girar la ruleta.");
     });
 }
 
-fetch("/satragno_premios_json")
+function mostrarModalPremio(premio) {
+    const modal = document.getElementById("modal-premio");
+    const texto = document.getElementById("texto-premio");
+    const formulario = document.getElementById("formulario-datos");
+    const cerrar = document.getElementById("btn-cerrar-modal");
+    const imagen = document.getElementById("img-premio");
+
+    if (premio.imagen_url && premio.imagen_url.trim() !== "") {
+        imagen.src = premio.imagen_url;
+        imagen.style.display = "block";
+    } else {
+        imagen.style.display = "none";
+    }
+
+    modal.classList.remove("oculto");
+
+    if (premio.sector === "NINGUNO") {
+        texto.innerHTML = `<strong>${premio.nombre}</strong><br><span>Gracias por participar.</span>`;
+        formulario.classList.add("oculto");
+        cerrar.classList.remove("oculto");
+    } else {
+        texto.innerHTML = `Ganaste:<br><strong>${premio.nombre}</strong>`;
+        formulario.classList.remove("oculto");
+        cerrar.classList.add("oculto");
+    }
+}
+
+document.getElementById("formulario-datos").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const button = event.currentTarget.querySelector("button[type='submit']");
+    button.disabled = true;
+    button.innerText = "Procesando...";
+
+    const datos = {
+        nombre: document.getElementById("nombre").value,
+        dni: document.getElementById("dni").value,
+        email: document.getElementById("email").value,
+        telefono: document.getElementById("telefono").value,
+        premio: premioGanado.nombre,
+        sector: premioGanado.sector
+    };
+
+    fetch(`/registrar/${ESTACION_ID}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos)
+    })
+    .then((res) => {
+        if (!res.ok) throw new Error("No se pudo registrar.");
+        event.currentTarget.innerHTML = `
+            <div class="promo-success">
+                <h3>Datos guardados con exito</h3>
+                <p>Revisa tu correo electronico y la carpeta de spam para ver el codigo de canje.</p>
+                <button onclick="window.location.reload()" type="button">Finalizar</button>
+            </div>
+        `;
+    })
+    .catch(() => {
+        button.disabled = false;
+        button.innerText = "Reclamar premio";
+        document.getElementById("texto-premio").innerHTML += `<br><span class="promo-error">Error de conexion. Intenta de nuevo.</span>`;
+    });
+});
+
+document.getElementById("btn-cerrar-modal").addEventListener("click", () => window.location.reload());
+
+fetch(`/api/premios/${ESTACION_ID}`)
 .then(res => res.json())
 .then(data => {
     prizes = data;

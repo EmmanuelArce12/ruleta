@@ -635,9 +635,9 @@ def ver_ruleta():
     est = c.fetchone(); conn.close()
     estilo_actual = est['estilo_ruleta'] if est and est['estilo_ruleta'] else 'YPF_CLASICO'
     if estilo_actual == 'SATRAGNO_CARNAVAL':
-        return render_template('ruleta_satragno.html', tema='gamer', velocidad_ruleta='normal')
+        return render_template('ruleta_satragno.html', estacion_id=session['ruleta_auth_id'], tema='gamer', velocidad_ruleta='normal')
     if estilo_actual == 'SATRAGNO_MUNDIAL':
-        return render_template('ruleta_mundial.html', velocidad_ruleta='normal')
+        return render_template('ruleta_mundial.html', estacion_id=session['ruleta_auth_id'], velocidad_ruleta='normal')
     return render_template('index.html', estacion_id=session['ruleta_auth_id'], nombre_estacion=session['ruleta_auth_nombre'], estilo_ruleta=estilo_actual)
 
 @app.route('/ruleta_react')
@@ -656,13 +656,13 @@ def ver_ruleta_react():
 def ver_ruleta_satragno():
     estacion_id = session.get('ruleta_auth_id') or session.get('estacion_id')
     if not estacion_id: return redirect('/iniciar_ruleta')
-    return render_template('ruleta_satragno.html', tema='gamer', velocidad_ruleta='normal')
+    return render_template('ruleta_satragno.html', estacion_id=estacion_id, tema='gamer', velocidad_ruleta='normal')
 
 @app.route('/ruleta_mundial')
 def ver_ruleta_mundial():
     estacion_id = session.get('ruleta_auth_id') or session.get('estacion_id')
     if not estacion_id: return redirect('/iniciar_ruleta')
-    return render_template('ruleta_mundial.html', velocidad_ruleta='normal')
+    return render_template('ruleta_mundial.html', estacion_id=estacion_id, velocidad_ruleta='normal')
 
 @app.route('/satragno_premios_json')
 def satragno_premios_json():
@@ -675,17 +675,7 @@ def satragno_premios_json():
 def satragno_girar():
     estacion_id = session.get('ruleta_auth_id') or session.get('estacion_id')
     if not estacion_id: return jsonify({"error": "No autorizado"}), 401
-    premio = seleccionar_premio_inteligente(estacion_id)
-    token = generar_token()
-
-    conn = get_db(); c = conn.cursor()
-    c.execute(
-        'INSERT INTO canjes (estacion_id, nombre, dni, email, telefono, premio, token, sector) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
-        (estacion_id, 'Promo Satragno', '', '', '', premio['nombre'], token, premio.get('sector', 'NINGUNO'))
-    )
-    conn.commit(); conn.close()
-
-    return jsonify({"premio": premio['nombre'], "codigo": token})
+    return jsonify(seleccionar_premio_inteligente(estacion_id))
 
 @app.route('/api/premios/<int:estacion_id>')
 def api_premios(estacion_id):
