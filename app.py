@@ -634,7 +634,7 @@ def ver_ruleta():
     c.execute("SELECT estilo_ruleta FROM estaciones WHERE id = %s", (session['ruleta_auth_id'],))
     est = c.fetchone(); conn.close()
     estilo_actual = est['estilo_ruleta'] if est and est['estilo_ruleta'] else 'YPF_CLASICO'
-    return render_template('react_ruleta.html', estacion_id=session['ruleta_auth_id'], nombre_estacion=session['ruleta_auth_nombre'], estilo_ruleta=estilo_actual)
+    return render_template('index.html', estacion_id=session['ruleta_auth_id'], nombre_estacion=session['ruleta_auth_nombre'], estilo_ruleta=estilo_actual)
 
 @app.route('/ruleta_react')
 def ver_ruleta_react():
@@ -647,6 +647,35 @@ def ver_ruleta_react():
     estilo_actual = est['estilo_ruleta'] if est and est['estilo_ruleta'] else 'YPF_CLASICO'
     nombre_actual = est['nombre'] if est and est['nombre'] else nombre_estacion
     return render_template('react_ruleta.html', estacion_id=estacion_id, nombre_estacion=nombre_actual, estilo_ruleta=estilo_actual)
+
+@app.route('/ruleta_satragno')
+def ver_ruleta_satragno():
+    estacion_id = session.get('ruleta_auth_id') or session.get('estacion_id')
+    if not estacion_id: return redirect('/iniciar_ruleta')
+    return render_template('ruleta_satragno.html', tema='gamer', velocidad_ruleta='normal')
+
+@app.route('/satragno_premios_json')
+def satragno_premios_json():
+    estacion_id = session.get('ruleta_auth_id') or session.get('estacion_id')
+    if not estacion_id: return jsonify([])
+    premios = api_premios(estacion_id).get_json()
+    return jsonify(premios)
+
+@app.route('/satragno_girar')
+def satragno_girar():
+    estacion_id = session.get('ruleta_auth_id') or session.get('estacion_id')
+    if not estacion_id: return jsonify({"error": "No autorizado"}), 401
+    premio = seleccionar_premio_inteligente(estacion_id)
+    token = generar_token()
+
+    conn = get_db(); c = conn.cursor()
+    c.execute(
+        'INSERT INTO canjes (estacion_id, nombre, dni, email, telefono, premio, token, sector) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
+        (estacion_id, 'Promo Satragno', '', '', '', premio['nombre'], token, premio.get('sector', 'NINGUNO'))
+    )
+    conn.commit(); conn.close()
+
+    return jsonify({"premio": premio['nombre'], "codigo": token})
 
 @app.route('/api/premios/<int:estacion_id>')
 def api_premios(estacion_id):

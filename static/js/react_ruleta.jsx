@@ -47,16 +47,6 @@ const WHEEL_THEMES = {
         glow: "#ff2bd6",
         slices: ["#05010d", "#ff2bd6", "#00ffa8", "#ffe600", "#00d4ff", "#ff1744", "#7c3aed", "#ffffff"],
         sticker: "✹"
-    },
-    FIESTA_MUNDIAL: {
-        label: "Fiesta Mundial",
-        brand: "#0ea5e9",
-        accent: "#facc15",
-        deep: "#03122d",
-        glow: "#22c55e",
-        slices: ["#006b2d", "#00a651", "#005baa", "#00a0df", "#111827", "#facc15", "#d71920", "#ffffff"],
-        sticker: "*",
-        center: "GO"
     }
 };
 

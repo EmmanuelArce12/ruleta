@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruleta Satragno</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='satragno_front/style.css') }}">
+</head>
+<body class="casino-body tema-base tema-{{ tema }}">
+
+<div class="gamer-particles" aria-hidden="true">
+    {% for i in range(60) %}<span></span>{% endfor %}
+</div>
+
+<div class="casino-screen">
+    <h1 class="casino-title">GIRA Y GANA</h1>
+    <div class="casino-subtitle">Mucha suerte</div>
+
+    <div class="wheel-area">
+        <div class="wheel-pointer"></div>
+
+        <div class="light-ring">
+            <svg id="wheel" class="casino-wheel" viewBox="0 0 500 500">
+                <g id="segments"></g>
+                <circle cx="250" cy="250" r="70" fill="#003b9b" stroke="white" stroke-width="8"></circle>
+                <text x="250" y="266" text-anchor="middle" fill="white" font-size="42" font-weight="900">YPF</text>
+            </svg>
+        </div>
+    </div>
+
+    <button class="casino-spin" onclick="spinWheel()">GIRAR</button>
+
+    <div id="resultado" class="casino-result" style="display:none;"></div>
+
+    <br>
+    <a class="casino-back" href="/admin">Volver al panel</a>
+</div>
+
+<script>
+let prizes = [];
+let spinning = false;
+let currentRotation = 0;
+let velocidadRuleta = "{{ velocidad_ruleta }}";
+
+const colors = ["#f7b500", "#18a83a", "#0075c9", "#6b35a5", "#d71920", "#f26c00", "#003b70", "#00a7c8"];
+
+function polar(cx, cy, r, angle) {
+    let rad = (angle - 90) * Math.PI / 180;
+    return {
+        x: cx + r * Math.cos(rad),
+        y: cy + r * Math.sin(rad)
+    };
+}
+
+function slicePath(cx, cy, rOuter, rInner, start, end) {
+    let p1 = polar(cx, cy, rOuter, start);
+    let p2 = polar(cx, cy, rOuter, end);
+    let p3 = polar(cx, cy, rInner, end);
+    let p4 = polar(cx, cy, rInner, start);
+    let large = (end - start) > 180 ? 1 : 0;
+
+    return `
+        M ${p1.x} ${p1.y}
+        A ${rOuter} ${rOuter} 0 ${large} 1 ${p2.x} ${p2.y}
+        L ${p3.x} ${p3.y}
+        A ${rInner} ${rInner} 0 ${large} 0 ${p4.x} ${p4.y}
+        Z
+    `;
+}
+
+function getIcon(nombre) {
+    nombre = nombre.toLowerCase();
+    if (nombre.includes("cafe")) return "☕";
+    if (nombre.includes("aceite")) return "🛢️";
+    if (nombre.includes("lavado")) return "🚗";
+    if (nombre.includes("gas") || nombre.includes("gnc")) return "⛽";
+    if (nombre.includes("otra")) return "🔄";
+    if (nombre.includes("segui")) return "🔁";
+    if (nombre.includes("nada")) return "☹️";
+    return "🎁";
+}
+
+function drawWheel() {
+    const group = document.getElementById("segments");
+    group.innerHTML = "";
+
+    if (prizes.length === 0) {
+        prizes = [
+            {nombre: "Carga de gas"},
+            {nombre: "Cafe gratis"},
+            {nombre: "Lavado gratis"},
+            {nombre: "Aceite gratis"},
+            {nombre: "Segui participando"},
+            {nombre: "Otra vez"},
+            {nombre: "Premio especial"},
+            {nombre: "Nada por ahora"}
+        ];
+    }
+
+    const angle = 360 / prizes.length;
+
+    prizes.forEach((p, i) => {
+        let start = i * angle;
+        let end = start + angle;
+        let mid = start + angle / 2;
+
+        let path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", slicePath(250, 250, 220, 80, start, end));
+        path.setAttribute("fill", colors[i % colors.length]);
+        path.setAttribute("stroke", "white");
+        path.setAttribute("stroke-width", "2");
+        group.appendChild(path);
+
+        let pos = polar(250, 250, 145, mid);
+
+        let text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", pos.x);
+        text.setAttribute("y", pos.y);
+        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("fill", "white");
+        text.setAttribute("font-size", prizes.length > 8 ? "14" : "18");
+        text.setAttribute("font-weight", "900");
+        text.setAttribute("dominant-baseline", "middle");
+        text.setAttribute("transform", `rotate(${mid - 90}, ${pos.x}, ${pos.y})`);
+
+        let words = p.nombre.toUpperCase().split(" ").slice(0, 3);
+        words.forEach((w, idx) => {
+            let tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+            tspan.setAttribute("x", pos.x);
+            tspan.setAttribute("dy", idx === 0 ? "-12" : "20");
+            tspan.textContent = w;
+            text.appendChild(tspan);
+        });
+        group.appendChild(text);
+
+        let iconPos = polar(250, 250, 180, mid);
+        let icon = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        icon.setAttribute("x", iconPos.x);
+        icon.setAttribute("y", iconPos.y);
+        icon.setAttribute("text-anchor", "middle");
+        icon.setAttribute("font-size", "28");
+        icon.setAttribute("dominant-baseline", "middle");
+        icon.setAttribute("transform", `rotate(${mid - 90}, ${iconPos.x}, ${iconPos.y})`);
+        icon.textContent = getIcon(p.nombre);
+        group.appendChild(icon);
+    });
+}
+
+function spinWheel() {
+    if (spinning) return;
+    spinning = true;
+
+    fetch("/satragno_girar")
+    .then(res => res.json())
+    .then(data => {
+        const index = prizes.findIndex(p => p.nombre === data.premio);
+        const total = prizes.length;
+        const anglePerPrize = 360 / total;
+
+        let selectedIndex = index >= 0 ? index : 0;
+        let targetAngle = 360 - (selectedIndex * anglePerPrize + anglePerPrize / 2);
+
+        currentRotation += 360 * 6 + targetAngle;
+
+        let duracion = "4s";
+        let duracionMs = 4000;
+        if (velocidadRuleta === "lenta") {
+            duracion = "6s";
+            duracionMs = 6000;
+        }
+        if (velocidadRuleta === "rapida") {
+            duracion = "2.5s";
+            duracionMs = 2500;
+        }
+
+        document.getElementById("wheel").style.transition = `transform ${duracion} cubic-bezier(.12,.75,.22,1)`;
+        document.getElementById("wheel").style.transform = `rotate(${currentRotation}deg)`;
+
+        setTimeout(() => {
+            document.getElementById("resultado").style.display = "block";
+            document.getElementById("resultado").innerHTML =
+                `<span>RESULTADO</span><br>🎉 <b>${data.premio}</b><br>Codigo: <strong>${data.codigo}</strong>`;
+            spinning = false;
+        }, duracionMs + 250);
+    });
+}
+
+fetch("/satragno_premios_json")
+.then(res => res.json())
+.then(data => {
+    prizes = data;
+    drawWheel();
+});
+</script>
+
+</body>
+</html>
