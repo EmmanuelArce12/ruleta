@@ -634,6 +634,10 @@ def ver_ruleta():
     c.execute("SELECT estilo_ruleta FROM estaciones WHERE id = %s", (session['ruleta_auth_id'],))
     est = c.fetchone(); conn.close()
     estilo_actual = est['estilo_ruleta'] if est and est['estilo_ruleta'] else 'YPF_CLASICO'
+    if estilo_actual == 'SATRAGNO_CARNAVAL':
+        return render_template('ruleta_satragno.html', tema='gamer', velocidad_ruleta='normal')
+    if estilo_actual == 'SATRAGNO_MUNDIAL':
+        return render_template('ruleta_mundial.html', velocidad_ruleta='normal')
     return render_template('index.html', estacion_id=session['ruleta_auth_id'], nombre_estacion=session['ruleta_auth_nombre'], estilo_ruleta=estilo_actual)
 
 @app.route('/ruleta_react')
@@ -653,6 +657,12 @@ def ver_ruleta_satragno():
     estacion_id = session.get('ruleta_auth_id') or session.get('estacion_id')
     if not estacion_id: return redirect('/iniciar_ruleta')
     return render_template('ruleta_satragno.html', tema='gamer', velocidad_ruleta='normal')
+
+@app.route('/ruleta_mundial')
+def ver_ruleta_mundial():
+    estacion_id = session.get('ruleta_auth_id') or session.get('estacion_id')
+    if not estacion_id: return redirect('/iniciar_ruleta')
+    return render_template('ruleta_mundial.html', velocidad_ruleta='normal')
 
 @app.route('/satragno_premios_json')
 def satragno_premios_json():

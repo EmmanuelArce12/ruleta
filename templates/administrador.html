@@ -303,19 +303,11 @@
                         {% else %}
                             <option value="YPF_CLASICO" {% if estacion['estilo_ruleta'] == 'YPF_CLASICO' %}selected{% endif %}>Clásico (Por defecto)</option>
                         {% endif %}
+                        <option value="SATRAGNO_CARNAVAL" {% if estacion['estilo_ruleta'] == 'SATRAGNO_CARNAVAL' %}selected{% endif %}>Estilo Carnaval</option>
+                        <option value="SATRAGNO_MUNDIAL" {% if estacion['estilo_ruleta'] == 'SATRAGNO_MUNDIAL' %}selected{% endif %}>Estilo Mundial</option>
                     </select>
                     <button type="submit" class="btn-accion btn-morado">💾 Aplicar Diseño</button>
                 </form>
-            </div>
-
-            <div class="tarjeta" style="border-top-color: #0ea5e9;">
-                <h2 style="color: #0ea5e9; margin-top: 0; font-size: 18px;">🎡 Front Promo Satragno</h2>
-                <div class="formulario-caja">
-                    <p style="color: var(--text-muted); font-size: 13px; line-height: 1.5; margin-top: 0;">
-                        Front separado del selector YPF/Axion. Abre la ruleta promo con su diseño propio.
-                    </p>
-                    <a href="/ruleta_satragno" class="btn-accion btn-azul" target="_blank" style="display: block; text-decoration: none; text-align: center; box-sizing: border-box;">Abrir Front Satragno</a>
-                </div>
             </div>
 
             <div class="tarjeta" style="border-top-color: #16a085;">
