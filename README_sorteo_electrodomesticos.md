@@ -2,6 +2,11 @@
 
 Modulo independiente de la app principal. No modifica `app.py`; corre como otro proceso Flask y usa las credenciales admin ya existentes en la tabla `estaciones`. Para publicarlo sin abrir el puerto 5055, usar un proxy desde `/sorteo/` hacia el servicio interno.
 
+Tambien se puede publicar dentro del mismo Gunicorn de la ruleta usando `wsgi.py`, que monta:
+
+- app principal: `/`
+- sorteo electrodomesticos: `/sorteo`
+
 ## Ejecutar local
 
 ```powershell
@@ -12,6 +17,14 @@ python sorteo_electrodomesticos.py
 Admin local directo: `http://localhost:5055/admin`
 
 Admin publicado por proxy: `https://sorteo.grpecheverria.com/sorteo/admin`
+
+## Ejecutar junto con la ruleta
+
+```bash
+gunicorn -b 0.0.0.0:5000 wsgi:application
+```
+
+Si Docker estaba usando `app:app`, cambiarlo por `wsgi:application`.
 
 ## Variables nuevas
 
