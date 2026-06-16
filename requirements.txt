@@ -4,3 +4,4 @@ psycopg2-binary
 openpyxl
 gunicorn
 python-dotenv
+qrcode[pil]

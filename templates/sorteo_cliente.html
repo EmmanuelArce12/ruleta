@@ -1,0 +1,48 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorteo Electrodomesticos</title>
+    <style>
+        body { margin:0; min-height:100vh; font-family: Arial, sans-serif; background:#f2f6fb; color:#17202a; }
+        .hero { background:#005cab; color:white; padding:30px 18px; text-align:center; }
+        .hero h1 { margin:0 0 8px; font-size:28px; }
+        .wrap { width:min(720px, calc(100% - 28px)); margin:22px auto; background:white; border:1px solid #d7dee8; border-radius:8px; padding:20px; box-shadow:0 12px 30px rgba(16,42,67,.10); }
+        .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px; }
+        label { display:block; font-size:12px; text-transform:uppercase; font-weight:700; margin:8px 0 5px; }
+        input { width:100%; box-sizing:border-box; padding:12px; border:1px solid #c8d2df; border-radius:6px; font-size:16px; }
+        button { width:100%; margin-top:16px; padding:14px; border:0; border-radius:6px; background:#005cab; color:white; font-weight:700; font-size:16px; cursor:pointer; }
+        .ok, .error { padding:12px; border-radius:6px; margin-bottom:14px; }
+        .ok { background:#ecfdf3; color:#027a48; } .error { background:#fdecea; color:#b42318; }
+        .hint { color:#667085; font-size:13px; line-height:1.4; }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>Sorteo Electrodomesticos</h1>
+        <div>{{ estacion['nombre'] }}</div>
+    </div>
+    <main class="wrap">
+        {% if mensaje %}<div class="ok">{{ mensaje }}</div>{% endif %}
+        {% if error %}<div class="error">{{ error }}</div>{% endif %}
+        {% if detenido %}
+            <div class="error">El sorteo se encuentra cerrado.</div>
+        {% endif %}
+        <p class="hint">Completa los datos exactamente como figuran en el ticket. La hora debe incluir segundos, por ejemplo 14:35:09.</p>
+        <form method="POST">
+            <div class="grid">
+                <div><label>Fecha del ticket</label><input type="date" name="fecha_ticket" required></div>
+                <div><label>Hora exacta del ticket</label><input type="text" name="hora_ticket" placeholder="HH:MM:SS" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}" required></div>
+                <div><label>Numero de factura</label><input name="numero_factura" required></div>
+                <div><label>DNI</label><input name="dni" inputmode="numeric"></div>
+                <div><label>Nombre</label><input name="nombre" required></div>
+                <div><label>Apellido</label><input name="apellido" required></div>
+                <div><label>Telefono</label><input name="telefono" type="tel" required></div>
+                <div><label>Email</label><input name="email" type="email" required></div>
+            </div>
+            <button type="submit" {% if detenido %}disabled{% endif %}>Registrar cupon</button>
+        </form>
+    </main>
+</body>
+</html>
