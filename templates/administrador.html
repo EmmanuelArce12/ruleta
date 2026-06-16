@@ -251,7 +251,7 @@
             <button id="btn-toggle-tema" class="btn-tema" onclick="toggleTema()">🌙 Oscuro</button>
             <a href="/iniciar_terminal" class="btn-nav" target="_blank">💻 Terminal</a>
             <a href="/iniciar_ruleta" class="btn-nav" target="_blank">🎡 Ruleta</a>
-            <a href="#" class="btn-nav" target="_blank" onclick="this.href = window.location.protocol + '//' + window.location.hostname + ':5055/admin'">Sorteo Electrodomesticos</a>
+            <a href="/sorteo/admin" class="btn-nav" target="_blank">Sorteo Electrodomesticos</a>
             <a href="/logout_admin" class="btn-logout">🚪 Salir</a>
         </div>
     </div>
@@ -449,11 +449,11 @@
             <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-top: 0;">
                 Desde este panel podes abrir el administrador del sorteo para ver el QR imprimible, el historial de participantes, exportar Excel, forzar consulta, detener el sorteo e iniciar conteo.
             </p>
-            <a href="#" class="btn-accion btn-export" target="_blank" style="margin-right: 10px; background: linear-gradient(145deg, #f1c40f, #f39c12); color: #1f2933;" onclick="this.href = window.location.protocol + '//' + window.location.hostname + ':5055/admin'">
+            <a href="/sorteo/admin" class="btn-accion btn-export" target="_blank" style="margin-right: 10px; background: linear-gradient(145deg, #f1c40f, #f39c12); color: #1f2933;">
                 Abrir sorteo electrodomesticos
             </a>
             <p style="color: var(--text-muted); font-size: 12px; margin-top: 14px;">
-                Importante: el modulo independiente debe estar corriendo en el puerto 5055 para que este acceso abra correctamente.
+                Importante: el modulo independiente debe estar publicado internamente en la ruta /sorteo para que este acceso abra correctamente.
             </p>
         </div>
     </div>

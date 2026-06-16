@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -39,9 +39,9 @@
             <div>{{ nombre_estacion }} · Estado: <span class="status">{{ 'Detenido' if config['detenido'] else 'Activo' }}</span></div>
         </div>
         <div class="btn-row">
-            <a class="btn btn-alt" href="/admin/exportar-excel">Excel activo</a>
-            <a class="btn btn-alt" href="/admin/exportar-excel?todo=1">Excel completo</a>
-            <a class="btn btn-stop" href="/admin/logout">Salir</a>
+            <a class="btn btn-alt" href="{{ base_path }}/admin/exportar-excel">Excel activo</a>
+            <a class="btn btn-alt" href="{{ base_path }}/admin/exportar-excel?todo=1">Excel completo</a>
+            <a class="btn btn-stop" href="{{ base_path }}/admin/logout">Salir</a>
         </div>
     </header>
 
@@ -56,7 +56,7 @@
 
             <section>
                 <h2>Configuracion</h2>
-                <form action="/admin/config" method="POST">
+                <form action="{{ base_path }}/admin/config" method="POST">
                     <label>Litros minimos para aprobar</label>
                     <input type="number" name="minimo_litros" step="0.001" min="0" value="{{ config['minimo_litros'] or 0 }}">
                     <label>Consulta automatica cada tantas horas</label>
@@ -69,13 +69,13 @@
             <section>
                 <h2>Controles</h2>
                 <div class="btn-row">
-                    <form action="/admin/forzar-consulta" method="POST"><button class="btn-ok" type="submit">Forzar consulta</button></form>
+                    <form action="{{ base_path }}/admin/forzar-consulta" method="POST"><button class="btn-ok" type="submit">Forzar consulta</button></form>
                     {% if config['detenido'] %}
-                    <form action="/admin/reanudar" method="POST"><button type="submit">Reanudar</button></form>
+                    <form action="{{ base_path }}/admin/reanudar" method="POST"><button type="submit">Reanudar</button></form>
                     {% else %}
-                    <form action="/admin/detener" method="POST"><button class="btn-stop" type="submit">Detener</button></form>
+                    <form action="{{ base_path }}/admin/detener" method="POST"><button class="btn-stop" type="submit">Detener</button></form>
                     {% endif %}
-                    <form action="/admin/iniciar-conteo" method="POST" onsubmit="return confirm('Se archivara el listado activo y quedara limpio para el proximo conteo.');"><button class="btn-alt" type="submit">Iniciar conteo</button></form>
+                    <form action="{{ base_path }}/admin/iniciar-conteo" method="POST" onsubmit="return confirm('Se archivara el listado activo y quedara limpio para el proximo conteo.');"><button class="btn-alt" type="submit">Iniciar conteo</button></form>
                 </div>
                 <p class="hint">Ultima consulta: {{ config['ultima_consulta'] or 'sin consultas' }}.</p>
             </section>

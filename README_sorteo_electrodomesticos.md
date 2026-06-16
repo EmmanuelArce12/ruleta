@@ -1,6 +1,6 @@
-﻿# Sorteo Electrodomesticos
+# Sorteo Electrodomesticos
 
-Modulo independiente de la app principal. No modifica `app.py`; corre como otro proceso Flask y usa las credenciales admin ya existentes en la tabla `estaciones`.
+Modulo independiente de la app principal. No modifica `app.py`; corre como otro proceso Flask y usa las credenciales admin ya existentes en la tabla `estaciones`. Para publicarlo sin abrir el puerto 5055, usar un proxy desde `/sorteo/` hacia el servicio interno.
 
 ## Ejecutar local
 
@@ -9,13 +9,16 @@ pip install -r requirements.txt
 python sorteo_electrodomesticos.py
 ```
 
-Admin: `http://localhost:5055/admin`
+Admin local directo: `http://localhost:5055/admin`
+
+Admin publicado por proxy: `https://sorteo.grpecheverria.com/sorteo/admin`
 
 ## Variables nuevas
 
 - `SORTEO_SECRET_KEY`: clave de sesion del modulo.
 - `SORTEO_PORT`: puerto, por defecto `5055`.
 - `SORTEO_PUBLIC_BASE_URL`: URL publica base para que el QR apunte al dominio correcto.
+- `SORTEO_BASE_PATH`: prefijo publico del modulo, por defecto `/sorteo`.
 - `FACTURACION_DATABASE_URL`: conexion a la base de facturacion. Si no existe, usa `DATABASE_URL`.
 - `FACTURACION_SQL`: consulta parametrizada para validar tickets.
 

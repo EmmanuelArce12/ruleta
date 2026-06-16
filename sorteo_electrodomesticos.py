@@ -28,6 +28,7 @@ FACTURACION_DATABASE_URL = os.environ.get('FACTURACION_DATABASE_URL') or DATABAS
 FACTURACION_SQL = os.environ.get('FACTURACION_SQL')
 PUBLIC_BASE_URL = os.environ.get('SORTEO_PUBLIC_BASE_URL', '').rstrip('/')
 SYNC_INTERVAL_MINUTES = int(os.environ.get('SORTEO_SYNC_INTERVAL_MINUTES', '240'))
+SORTEO_BASE_PATH = os.environ.get('SORTEO_BASE_PATH', '/sorteo').rstrip('/')
 
 
 def get_db():
@@ -112,8 +113,13 @@ def admin_required():
     return 'sorteo_estacion_id' in session
 
 
+def sorteo_path(path=''):
+    if not path.startswith('/'):
+        path = '/' + path
+    return f'{SORTEO_BASE_PATH}{path}' if SORTEO_BASE_PATH else path
+
 def public_url(estacion_id):
-    path = url_for('cliente_sorteo', estacion_id=estacion_id)
+    path = sorteo_path(f'/{estacion_id}')
     if PUBLIC_BASE_URL:
         return f'{PUBLIC_BASE_URL}{path}'
     return request.host_url.rstrip('/') + path
@@ -232,11 +238,13 @@ def scheduler_loop():
 
 
 @app.route('/')
+@app.route('/sorteo')
 def root():
-    return redirect('/admin')
+    return redirect(sorteo_path('/admin'))
 
 
 @app.route('/admin/login', methods=['GET', 'POST'])
+@app.route('/sorteo/admin/login', methods=['GET', 'POST'])
 def login():
     error = None
     if request.method == 'POST':
@@ -251,21 +259,23 @@ def login():
             session['sorteo_estacion_id'] = estacion['id']
             session['sorteo_estacion_nombre'] = estacion['nombre']
             ensure_config(estacion['id'])
-            return redirect('/admin')
+            return redirect(sorteo_path('/admin'))
         error = 'Credenciales incorrectas.'
     return render_template('sorteo_login.html', error=error)
 
 
 @app.route('/admin/logout')
+@app.route('/sorteo/admin/logout')
 def logout():
     session.clear()
-    return redirect('/admin/login')
+    return redirect(sorteo_path('/admin/login'))
 
 
 @app.route('/admin')
+@app.route('/sorteo/admin')
 def admin():
     if not admin_required():
-        return redirect('/admin/login')
+        return redirect(sorteo_path('/admin/login'))
     eid = session['sorteo_estacion_id']
     ensure_config(eid)
     conn = get_db()
@@ -280,13 +290,14 @@ def admin():
     url = public_url(eid)
     return render_template('sorteo_admin.html', nombre_estacion=session['sorteo_estacion_nombre'], config=config,
                            participantes=participantes, conteos=conteos, public_url=url, qr=qr_data_url(url),
-                           facturacion_configurada=bool(FACTURACION_SQL))
+                           facturacion_configurada=bool(FACTURACION_SQL), base_path=SORTEO_BASE_PATH)
 
 
 @app.route('/admin/config', methods=['POST'])
+@app.route('/sorteo/admin/config', methods=['POST'])
 def configurar():
     if not admin_required():
-        return redirect('/admin/login')
+        return redirect(sorteo_path('/admin/login'))
     eid = session['sorteo_estacion_id']
     minimo_litros = request.form.get('minimo_litros') or 0
     intervalo_horas = request.form.get('intervalo_horas') or 4
@@ -299,45 +310,49 @@ def configurar():
     ''', (minimo_litros, intervalo_horas, eid))
     conn.commit()
     conn.close()
-    return redirect('/admin')
+    return redirect(sorteo_path('/admin'))
 
 
 @app.route('/admin/forzar-consulta', methods=['POST'])
+@app.route('/sorteo/admin/forzar-consulta', methods=['POST'])
 def forzar_consulta():
     if not admin_required():
-        return redirect('/admin/login')
+        return redirect(sorteo_path('/admin/login'))
     validar_pendientes(session['sorteo_estacion_id'])
-    return redirect('/admin')
+    return redirect(sorteo_path('/admin'))
 
 
 @app.route('/admin/detener', methods=['POST'])
+@app.route('/sorteo/admin/detener', methods=['POST'])
 def detener():
     if not admin_required():
-        return redirect('/admin/login')
+        return redirect(sorteo_path('/admin/login'))
     conn = get_db()
     c = conn.cursor()
     c.execute('UPDATE sorteo_config SET detenido = TRUE, actualizado_en = CURRENT_TIMESTAMP WHERE estacion_id = %s', (session['sorteo_estacion_id'],))
     conn.commit()
     conn.close()
-    return redirect('/admin')
+    return redirect(sorteo_path('/admin'))
 
 
 @app.route('/admin/reanudar', methods=['POST'])
+@app.route('/sorteo/admin/reanudar', methods=['POST'])
 def reanudar():
     if not admin_required():
-        return redirect('/admin/login')
+        return redirect(sorteo_path('/admin/login'))
     conn = get_db()
     c = conn.cursor()
     c.execute('UPDATE sorteo_config SET detenido = FALSE, actualizado_en = CURRENT_TIMESTAMP WHERE estacion_id = %s', (session['sorteo_estacion_id'],))
     conn.commit()
     conn.close()
-    return redirect('/admin')
+    return redirect(sorteo_path('/admin'))
 
 
 @app.route('/admin/iniciar-conteo', methods=['POST'])
+@app.route('/sorteo/admin/iniciar-conteo', methods=['POST'])
 def iniciar_conteo():
     if not admin_required():
-        return redirect('/admin/login')
+        return redirect(sorteo_path('/admin/login'))
     eid = session['sorteo_estacion_id']
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -356,13 +371,14 @@ def iniciar_conteo():
     c.execute('UPDATE sorteo_participantes SET conteo_id = %s WHERE estacion_id = %s AND conteo_id IS NULL', (conteo_id, eid))
     conn.commit()
     conn.close()
-    return redirect('/admin')
+    return redirect(sorteo_path('/admin'))
 
 
 @app.route('/admin/exportar-excel')
+@app.route('/sorteo/admin/exportar-excel')
 def exportar_excel():
     if not admin_required():
-        return redirect('/admin/login')
+        return redirect(sorteo_path('/admin/login'))
     eid = session['sorteo_estacion_id']
     incluir_archivados = request.args.get('todo') == '1'
     conn = get_db()
@@ -388,6 +404,7 @@ def exportar_excel():
 
 
 @app.route('/sorteo/<int:estacion_id>', methods=['GET', 'POST'])
+@app.route('/participar/<int:estacion_id>', methods=['GET', 'POST'])
 def cliente_sorteo(estacion_id):
     ensure_config(estacion_id)
     conn = get_db()
