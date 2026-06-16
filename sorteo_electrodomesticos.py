@@ -393,7 +393,7 @@ def exportar_excel():
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = 'Sorteo Electrodomesticos'
-    ws.append(['Registro', 'Estado', 'Hora ticket', 'Factura', 'Combustible', 'Litros', 'Pago App YPF', 'Nombre', 'Apellido', 'DNI', 'Telefono', 'Email', 'Detalle', 'Consultado', 'Conteo'])
+    ws.append(['Registro', 'Estado', 'Hora ticket', 'Registro interno', 'Combustible', 'Litros', 'Pago App YPF', 'Nombre', 'Apellido', 'DNI', 'Telefono', 'Email', 'Detalle', 'Consultado', 'Conteo'])
     for r in rows:
         ws.append([str(r['creado_en'])[:19], r['estado'], str(r['ticket_hora'])[:19], r['numero_factura'], r['combustible'], r['litros'], r['pago_app_ypf'], r['nombre'], r['apellido'], r['dni'], r['telefono'], r['email'], r['detalle_validacion'], str(r['consulta_at'])[:19] if r['consulta_at'] else '', r['conteo_id']])
     salida = BytesIO()
@@ -427,18 +427,19 @@ def cliente_sorteo(estacion_id):
         else:
             try:
                 ticket_hora = parse_ticket_time(request.form['fecha_ticket'], request.form['hora_ticket'])
+                registro_interno = f'AUTO-{estacion_id}-{time.time_ns()}'
                 c.execute('''
                     INSERT INTO sorteo_participantes
                     (estacion_id, ticket_hora, numero_factura, nombre, apellido, dni, telefono, email)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                ''', (estacion_id, ticket_hora, request.form['numero_factura'].strip(), request.form['nombre'].strip(),
+                ''', (estacion_id, ticket_hora, registro_interno, request.form['nombre'].strip(),
                       request.form['apellido'].strip(), request.form.get('dni', '').strip(), request.form['telefono'].strip(),
                       request.form['email'].strip().lower()))
                 conn.commit()
                 mensaje = 'Tu cupon quedo registrado como pendiente. Cuando se valide el ticket, participas si cumple las condiciones.'
             except psycopg2.errors.UniqueViolation:
                 conn.rollback()
-                error = 'Ese numero de factura ya fue registrado para este sorteo.'
+                error = 'No pudimos registrar el cupon. Por favor intenta nuevamente.'
             except ValueError:
                 error = 'La hora debe incluir segundos y tener formato HH:MM:SS.'
     conn.close()
