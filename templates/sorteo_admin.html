@@ -49,7 +49,14 @@
         <div class="grid">
             <section>
                 <h2>QR para clientes</h2>
-                {% if qr %}<img class="qr" src="{{ qr }}" alt="QR sorteo">{% else %}<p class="hint">Instala qrcode[pil] para generar el QR automatico.</p>{% endif %}
+                {% if qr %}
+                    <img class="qr" src="{{ qr }}" alt="QR sorteo">
+                    <div class="btn-row" style="margin-top: 10px;">
+                        <a class="btn" href="{{ qr }}" download="qr-sorteo-electrodomesticos.png">Descargar QR</a>
+                    </div>
+                {% else %}
+                    <p class="hint">Instala qrcode[pil] para generar el QR automatico.</p>
+                {% endif %}
                 <p><a href="{{ public_url }}" target="_blank">{{ public_url }}</a></p>
                 <p class="hint">Este enlace abre el formulario publico del cliente para esta estacion.</p>
             </section>

@@ -16,6 +16,9 @@
         .ok, .error { padding:12px; border-radius:6px; margin-bottom:14px; }
         .ok { background:#ecfdf3; color:#027a48; } .error { background:#fdecea; color:#b42318; }
         .hint { color:#667085; font-size:13px; line-height:1.4; }
+        .thanks { text-align:center; padding:24px 8px; }
+        .thanks h2 { color:#027a48; font-size:26px; margin:0 0 10px; }
+        .thanks p { color:#344054; line-height:1.5; margin:0 auto; max-width:520px; }
     </style>
 </head>
 <body>
@@ -24,7 +27,12 @@
         <div>{{ estacion['nombre'] }}</div>
     </div>
     <main class="wrap">
-        {% if mensaje %}<div class="ok">{{ mensaje }}</div>{% endif %}
+        {% if mensaje %}
+        <div class="thanks">
+            <h2>Gracias por participar</h2>
+            <p>{{ mensaje }}</p>
+        </div>
+        {% else %}
         {% if error %}<div class="error">{{ error }}</div>{% endif %}
         {% if detenido %}
             <div class="error">El sorteo se encuentra cerrado.</div>
@@ -43,6 +51,7 @@
             </div>
             <button type="submit" {% if detenido %}disabled{% endif %}>Registrar cupon</button>
         </form>
+        {% endif %}
     </main>
 </body>
 </html>

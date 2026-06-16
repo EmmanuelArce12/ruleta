@@ -403,6 +403,7 @@ def exportar_excel():
                     headers={'Content-Disposition': 'attachment;filename=sorteo_electrodomesticos.xlsx'})
 
 
+@app.route('/<int:estacion_id>', methods=['GET', 'POST'])
 @app.route('/sorteo/<int:estacion_id>', methods=['GET', 'POST'])
 @app.route('/participar/<int:estacion_id>', methods=['GET', 'POST'])
 def cliente_sorteo(estacion_id):
