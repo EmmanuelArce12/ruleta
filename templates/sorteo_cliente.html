@@ -215,7 +215,76 @@
     </style>
 </head>
 <body>
-    <div id="sorteo-root"></div>
+    <div id="sorteo-root">
+        <div class="page">
+            <header class="hero">
+                <div class="brand">{{ estacion['nombre'] }}</div>
+                <h1>Sorteo Electrodomesticos</h1>
+                <p>Registrá tu cupón y quedá participando una vez que el ticket sea validado.</p>
+            </header>
+            {% if mensaje %}
+            <main class="shell">
+                <section class="panel">
+                    <div class="thanks">
+                        <div class="check">✓</div>
+                        <h2>Gracias por participar</h2>
+                        <p>{{ mensaje }}</p>
+                    </div>
+                </section>
+            </main>
+            {% else %}
+            <main class="shell">
+                <section class="panel">
+                    <div class="panel-head">
+                        <div class="step">1</div>
+                        <div>
+                            <h2>Completá tus datos</h2>
+                            <p>Usá la hora exacta del ticket, incluyendo los segundos.</p>
+                        </div>
+                    </div>
+                    <div class="content">
+                        {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+                        {% if detenido %}<div class="alert error">El sorteo se encuentra cerrado.</div>{% endif %}
+                        <p class="hint">Ejemplo de hora válida: 14:35:09. Estos datos quedan pendientes en administración hasta la validación.</p>
+                        <form method="POST">
+                            <div class="grid">
+                                <div class="field">
+                                    <label>Fecha del ticket</label>
+                                    <input type="date" name="fecha_ticket" required>
+                                </div>
+                                <div class="field">
+                                    <label>Hora exacta</label>
+                                    <input type="text" name="hora_ticket" placeholder="HH:MM:SS" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}" inputmode="numeric" required>
+                                </div>
+                                <div class="field">
+                                    <label>Nombre</label>
+                                    <input name="nombre" autocomplete="given-name" required>
+                                </div>
+                                <div class="field">
+                                    <label>Apellido</label>
+                                    <input name="apellido" autocomplete="family-name" required>
+                                </div>
+                                <div class="field">
+                                    <label>Teléfono</label>
+                                    <input name="telefono" type="tel" autocomplete="tel" required>
+                                </div>
+                                <div class="field">
+                                    <label>Correo electrónico</label>
+                                    <input name="email" type="email" autocomplete="email" required>
+                                </div>
+                                <div class="field full">
+                                    <label>DNI</label>
+                                    <input name="dni" inputmode="numeric" autocomplete="off">
+                                </div>
+                            </div>
+                            <button class="submit" type="submit" {% if detenido %}disabled{% endif %}>Enviar participación</button>
+                        </form>
+                    </div>
+                </section>
+            </main>
+            {% endif %}
+        </div>
+    </div>
 
     <script>
         window.SORTEO_DATA = {
