@@ -325,16 +325,13 @@ def consultar_facturacion(estacion_id, ticket_fecha, numero_factura):
 
 def classify_ticket_match(factura, minimo_litros):
     promo_lineas = int(factura.get('promo_lineas') or 0)
-    lineas_no_validas = int(factura.get('lineas_no_validas') or 0)
     combustible = factura.get('combustible')
     litros = decimal_to_float(factura.get('litros'))
     if promo_lineas <= 0 or combustible not in PROMO_COMBUSTIBLES:
         return 'DENEGADO', 'La factura no corresponde a un combustible participante.'
-    if lineas_no_validas > 0:
-        return 'DENEGADO', 'La factura incluye conceptos fuera de los combustibles permitidos.'
     if litros < float(minimo_litros or 0):
         return 'DENEGADO', f'Litros insuficientes: {litros:.3f} de minimo {float(minimo_litros or 0):.3f}.'
-    return 'APROBADO', 'Validado correctamente.'
+    return 'APROBADO', 'Validado correctamente por combustible participante, aunque la factura tenga otros conceptos.'
 
 
 def query_participantes(cursor, eid, archived=False):
