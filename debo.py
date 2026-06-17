@@ -75,9 +75,6 @@ def preview_sql(limit: int = 15) -> str:
 def ticket_lookup_sql(include_remitos: bool = False, same_day_only: bool = False) -> str:
     tco_condition = "1 = 1" if include_remitos else "f.TCO <> 'RE'"
     time_condition = "CAST(f.FEC AS DATETIME) >= ? AND CAST(f.FEC AS DATETIME) < ?" if same_day_only else "f.FEC = ?"
-    station_payment_match = """
-          AND RIGHT('00000' + LTRIM(RTRIM(p.fuel_station_id)), 5) = '__FUEL_STATION_ID__'
-    """
     return f"""
 WITH FacturaObjetivo AS (
     SELECT TOP (1)
@@ -87,11 +84,13 @@ WITH FacturaObjetivo AS (
         f.TCO,
         f.TIP,
         RTRIM(v.NomVen) AS vendedor,
-        pm.payment_type AS payment_type,
-        CAST(CASE WHEN pm.payment_type IS NOT NULL THEN 1 ELSE 0 END AS bit) AS pago_electronico,
+        pago.payment_origin AS payment_origin,
+        pago.payment_type AS payment_type,
+        pago.card_type AS card_type,
+        CAST(CASE WHEN pago.payment_origin IS NOT NULL THEN 1 ELSE 0 END AS bit) AS pago_electronico,
         CAST(
             CASE
-                WHEN pm.payment_type = 'YPF_ACCOUNT_MONEY' THEN 1
+                WHEN pago.payment_type = 'YPF_ACCOUNT_MONEY' THEN 1
                 ELSE 0
             END
         AS bit) AS pago_app_ypf
@@ -100,15 +99,24 @@ WITH FacturaObjetivo AS (
         ON f.OPE = v.CodVen
     OUTER APPLY (
         SELECT TOP (1)
-            p.payment_type
-        FROM dbo.A_MERCADOPAGO_META_YPF p
-        WHERE p.FEC = f.FEC
-__STATION_PAYMENT_MATCH__
-          AND ABS(CAST(f.TOT AS DECIMAL(18,2)) - CAST(p.total_payment_amount AS DECIMAL(18,2))) < 0.05
+            A.ORI AS payment_origin,
+            M.PAYMENT_TYPE AS payment_type,
+            M.CARD_TYPE AS card_type
+        FROM dbo.A_MERCADOPAGO A
+        LEFT JOIN dbo.AMAEFACT_EXT C
+            ON A.CAR = C.ID_COMPV2
+        LEFT JOIN dbo.A_MERCADOPAGO_META_YPF M
+            ON A.NTRANS = M.NTRANS
+        WHERE C.SUC = f.SUC
+          AND C.NCO = f.NCO
+          AND C.TIP = f.TIP
+          AND C.TCO = f.TCO
+          AND A.LUG = 1
+          AND A.EST = 1
         ORDER BY
-            CASE WHEN p.payment_type = 'YPF_ACCOUNT_MONEY' THEN 0 ELSE 1 END,
-            p.payment_type
-    ) pm
+            A.FEC DESC,
+            A.NTRANS DESC
+    ) pago
     WHERE f.ANU = ''
       AND f.LUG = 1
       AND {time_condition}
@@ -124,7 +132,9 @@ Lineas AS (
         fo.vendedor,
         fo.pago_app_ypf,
         fo.pago_electronico,
+        fo.payment_origin,
         fo.payment_type,
+        fo.card_type,
         fo.TCO AS tipo_comprobante,
         fo.TIP AS letra_fiscal,
         CASE
@@ -174,10 +184,13 @@ SELECT
     pago_electronico,
     CASE
         WHEN pago_app_ypf = 1 THEN 'App YPF'
+        WHEN pago_electronico = 1 AND payment_type = 'CREDIT_CARD' AND card_type IS NOT NULL THEN 'Tarjeta: ' + card_type
+        WHEN pago_electronico = 1 AND payment_origin = 'mp' THEN 'Mercado Pago'
         WHEN pago_electronico = 1 AND payment_type IS NOT NULL THEN 'Pago electronico: ' + payment_type
+        WHEN pago_electronico = 1 AND payment_origin IS NOT NULL THEN 'Pago electronico: ' + payment_origin
         ELSE 'Contado / no electronico'
     END AS medio_pago,
-    payment_type,
+    COALESCE(payment_type, payment_origin) AS payment_type,
     tipo_comprobante,
     letra_fiscal,
     SUM(es_promo) AS promo_lineas,
@@ -190,20 +203,16 @@ GROUP BY
     vendedor,
     pago_app_ypf,
     pago_electronico,
+    payment_origin,
     payment_type,
+    card_type,
     tipo_comprobante,
     letra_fiscal
 """
 
 
 def build_ticket_lookup_sql(station: dict, include_remitos: bool = False, same_day_only: bool = False) -> str:
-    sql = ticket_lookup_sql(include_remitos=include_remitos, same_day_only=same_day_only)
-    fuel_station_id = normalize_fuel_station_id(station.get("debo_fuel_station_id"))
-    if fuel_station_id:
-        station_payment_match = f"          AND RIGHT('00000' + LTRIM(RTRIM(p.fuel_station_id)), 5) = '{fuel_station_id}'"
-    else:
-        station_payment_match = "          AND RIGHT(LTRIM(RTRIM(p.fuel_station_id)), 3) = RIGHT('000' + CAST(f.SUC AS VARCHAR(10)), 3)"
-    return sql.replace("__STATION_PAYMENT_MATCH__", station_payment_match)
+    return ticket_lookup_sql(include_remitos=include_remitos, same_day_only=same_day_only)
 
 
 def station_debo_ready(station: dict | None) -> bool:
