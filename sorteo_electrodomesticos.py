@@ -526,9 +526,10 @@ def scheduler_loop():
                 FROM sorteo_config
                 WHERE activo = TRUE
                   AND detenido = FALSE
+                  AND CURRENT_TIMESTAMP >= date_trunc('day', CURRENT_TIMESTAMP) + INTERVAL '4 hours'
                   AND (
                     ultima_consulta IS NULL OR
-                    ultima_consulta <= CURRENT_TIMESTAMP - (intervalo_horas || ' hours')::interval
+                    ultima_consulta < date_trunc('day', CURRENT_TIMESTAMP) + INTERVAL '4 hours'
                   )
             ''')
             estaciones = c.fetchall()

@@ -134,13 +134,12 @@
             }
             function OverviewTab() {
                 const [minimoLitros, setMinimoLitros] = useState(String(data.config.minimoLitros ?? 0));
-                const [intervaloHoras, setIntervaloHoras] = useState(String(data.config.intervaloHoras ?? 4));
                 const [promocionDesde, setPromocionDesde] = useState(data.config.promocionDesde || '');
                 const [promocionHasta, setPromocionHasta] = useState(data.config.promocionHasta || '');
                 function saveConfig(ev) {
                     ev.preventDefault();
                     document.getElementById('config-minimo-litros').value = minimoLitros;
-                    document.getElementById('config-intervalo-horas').value = intervaloHoras;
+                    document.getElementById('config-intervalo-horas').value = '4';
                     document.getElementById('config-promocion-desde').value = promocionDesde;
                     document.getElementById('config-promocion-hasta').value = promocionHasta;
                     submitForm('config-form');
@@ -157,7 +156,7 @@
                             e('h3', null, 'Configuracion y promocion'),
                             e('form', { className: 'stack', onSubmit: saveConfig },
                                 e('div', { className: 'field' }, e('label', null, 'Litros minimos para aprobar'), e('input', { type: 'number', min: '0', step: '0.001', value: minimoLitros, onChange: ev => setMinimoLitros(ev.target.value) })),
-                                e('div', { className: 'field' }, e('label', null, 'Consulta automatica cada tantas horas'), e('input', { type: 'number', min: '1', value: intervaloHoras, onChange: ev => setIntervaloHoras(ev.target.value) })),
+                                e('div', { className: 'field' }, e('label', null, 'Consulta automatica programada'), e('input', { type: 'text', value: 'Todos los dias a las 04:00', readOnly: true })),
                                 e('div', { className: 'field' }, e('label', null, 'Promocion desde'), e('input', { type: 'date', value: promocionDesde, onChange: ev => setPromocionDesde(ev.target.value) })),
                                 e('div', { className: 'field' }, e('label', null, 'Promocion hasta'), e('input', { type: 'date', value: promocionHasta, onChange: ev => setPromocionHasta(ev.target.value) })),
                                 e('div', { className: 'inline-actions' },
