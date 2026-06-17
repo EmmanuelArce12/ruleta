@@ -88,9 +88,14 @@
     {% for p in dudosos %}
     <form id="aprobar-dudoso-{{ p['id'] }}" action="{{ base_path }}/admin/dudoso/{{ p['id'] }}/aprobar" method="POST" style="display:none;"></form>
     <form id="denegar-dudoso-{{ p['id'] }}" action="{{ base_path }}/admin/dudoso/{{ p['id'] }}/denegar" method="POST" style="display:none;"></form>
+    <form id="eliminar-participante-{{ p['id'] }}" action="{{ base_path }}/admin/participante/{{ p['id'] }}/eliminar" method="POST" style="display:none;"></form>
     {% endfor %}
     {% for p in denegados %}
     <form id="aprobar-denegado-{{ p['id'] }}" action="{{ base_path }}/admin/denegado/{{ p['id'] }}/aprobar" method="POST" style="display:none;"></form>
+    <form id="eliminar-participante-{{ p['id'] }}" action="{{ base_path }}/admin/participante/{{ p['id'] }}/eliminar" method="POST" style="display:none;"></form>
+    {% endfor %}
+    {% for p in aprobados %}
+    <form id="eliminar-participante-{{ p['id'] }}" action="{{ base_path }}/admin/participante/{{ p['id'] }}/eliminar" method="POST" style="display:none;"></form>
     {% endfor %}
 
     <script>
@@ -263,7 +268,7 @@
                 const [selectedIds, setSelectedIds] = useState({});
                 const [busy, setBusy] = useState(false);
                 const [errorText, setErrorText] = useState('');
-                const selectedItems = rows.filter(function (row) { return selectedIds[row.id] && row.edited; });
+                const selectedItems = rows.filter(function (row) { return selectedIds[row.id]; });
 
                 function updateRow(rowId, changes) {
                     setRows(function (current) {
@@ -272,7 +277,6 @@
                 }
 
                 function toggleSelect(row) {
-                    if (!row.edited) return;
                     setSelectedIds(function (current) {
                         const next = Object.assign({}, current);
                         if (next[row.id]) delete next[row.id];
@@ -329,7 +333,7 @@
                             key: 'seleccion',
                             label: 'Seleccion',
                             render: function (row) {
-                                return e('input', { type: 'checkbox', className: 'row-check', checked: !!selectedIds[row.id], disabled: !row.edited, onChange: function () { toggleSelect(row); }, title: row.edited ? 'Marcar para enviar a pendientes' : 'Primero edita la factura' });
+                                return e('input', { type: 'checkbox', className: 'row-check', checked: !!selectedIds[row.id], onChange: function () { toggleSelect(row); }, title: 'Marcar para enviar a pendientes' });
                             }
                         },
                         { key: 'acciones', label: 'Acciones', render: props.renderActions }
@@ -358,7 +362,7 @@
                         e('a', { className: 'btn btn-primary', href: exportHref('?estado=APROBADO'), title: 'Exporta una fila por cada participante aprobado.' }, 'Exportar aprobados'),
                         e('a', { className: 'btn btn-primary', href: exportHref('?estado=APROBADO&ponderado=1'), title: 'Exporta el padron del sorteo duplicando o triplicando filas segun las chances.' }, 'Exportar sorteo')
                     ),
-                    columns: [{ key: 'estado', label: 'Estado', render: function (row) { return e('span', { className: 'badge ' + row.estado }, row.estado); } }, { key: 'fecha', label: 'Fecha' }, { key: 'factura', label: 'Factura' }, { key: 'tipo', label: 'Tipo' }, { key: 'vendedor', label: 'Vendedor' }, { key: 'combustible', label: 'Combustible' }, { key: 'litros', label: 'Litros' }, { key: 'medioPago', label: 'Medio pago' }, { key: 'appYpf', label: 'App YPF' }, { key: 'chances', label: 'Chances' }, { key: 'cliente', label: 'Cliente' }, { key: 'telefono', label: 'Telefono' }, { key: 'email', label: 'Email' }, { key: 'detalle', label: 'Detalle' }]
+                    columns: [{ key: 'estado', label: 'Estado', render: function (row) { return e('span', { className: 'badge ' + row.estado }, row.estado); } }, { key: 'fecha', label: 'Fecha' }, { key: 'factura', label: 'Factura' }, { key: 'tipo', label: 'Tipo' }, { key: 'vendedor', label: 'Vendedor' }, { key: 'combustible', label: 'Combustible' }, { key: 'litros', label: 'Litros' }, { key: 'medioPago', label: 'Medio pago' }, { key: 'appYpf', label: 'App YPF' }, { key: 'chances', label: 'Chances' }, { key: 'cliente', label: 'Cliente' }, { key: 'telefono', label: 'Telefono' }, { key: 'email', label: 'Email' }, { key: 'detalle', label: 'Detalle' }, { key: 'acciones', label: 'Acciones', render: function (row) { return e('button', { type: 'button', className: 'btn btn-danger btn-xs', onClick: function () { if (window.confirm('Se eliminara este aprobado.')) submitForm('eliminar-participante-' + row.id); } }, 'Eliminar'); } }]
                 });
             };
 
@@ -370,7 +374,7 @@
                     emptyText: 'No hay denegados.',
                     exportButton: e('a', { className: 'btn btn-primary', href: exportHref('?estado=DENEGADO'), title: 'Exporta solo facturas rechazadas.' }, 'Exportar denegados'),
                     columns: [{ key: 'estado', label: 'Estado', render: function (row) { return e('span', { className: 'badge ' + row.estado }, row.estado); } }, { key: 'fecha', label: 'Fecha' }, { key: 'tipo', label: 'Tipo' }, { key: 'vendedor', label: 'Vendedor' }, { key: 'combustible', label: 'Combustible' }, { key: 'litros', label: 'Litros' }, { key: 'medioPago', label: 'Medio pago' }, { key: 'cliente', label: 'Cliente' }, { key: 'telefono', label: 'Telefono' }, { key: 'email', label: 'Email' }, { key: 'detalle', label: 'Detalle' }],
-                    renderActions: function (row) { return e('button', { type: 'button', className: 'btn btn-success btn-xs', onClick: function () { submitForm('aprobar-denegado-' + row.id); } }, 'Aprobar'); }
+                    renderActions: function (row) { return e('div', { className: 'inline-actions' }, e('button', { type: 'button', className: 'btn btn-success btn-xs', onClick: function () { submitForm('aprobar-denegado-' + row.id); } }, 'Aprobar'), e('button', { type: 'button', className: 'btn btn-danger btn-xs', onClick: function () { if (window.confirm('Se eliminara este denegado.')) submitForm('eliminar-participante-' + row.id); } }, 'Eliminar')); }
                 });
             };
 
@@ -407,7 +411,8 @@
                     renderActions: function (row) {
                         return e('div', { className: 'inline-actions' },
                             e('button', { type: 'button', className: 'btn btn-success', onClick: function () { submitForm('aprobar-dudoso-' + row.id); } }, 'Aprobar'),
-                            e('button', { type: 'button', className: 'btn btn-danger', onClick: function () { submitForm('denegar-dudoso-' + row.id); } }, 'Denegar')
+                            e('button', { type: 'button', className: 'btn btn-danger', onClick: function () { submitForm('denegar-dudoso-' + row.id); } }, 'Denegar'),
+                            e('button', { type: 'button', className: 'btn btn-danger', onClick: function () { if (window.confirm('Se eliminara este dudoso.')) submitForm('eliminar-participante-' + row.id); } }, 'Eliminar')
                         );
                     }
                 });

@@ -859,6 +859,26 @@ def reprocesar_facturas():
     return jsonify({'ok': True, 'actualizados': actualizados, 'errores': errores})
 
 
+@app.route('/admin/participante/<int:participante_id>/eliminar', methods=['POST'])
+@app.route('/sorteo/admin/participante/<int:participante_id>/eliminar', methods=['POST'])
+def eliminar_participante(participante_id):
+    if not admin_required():
+        return redirect(sorteo_path('/admin/login'))
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''
+        DELETE FROM sorteo_participantes
+        WHERE id = %s
+          AND estacion_id = %s
+          AND conteo_id IS NULL
+          AND estado IN ('APROBADO', 'DENEGADO', 'DUDOSO')
+    ''', (participante_id, session['sorteo_estacion_id']))
+    conn.commit()
+    conn.close()
+    return redirect(sorteo_path('/admin'))
+
+
 @app.route('/admin/exportar-excel')
 @app.route('/sorteo/admin/exportar-excel')
 def exportar_excel():
