@@ -12,6 +12,7 @@ import json
 import openpyxl
 import psycopg2
 import psycopg2.extras
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 try:
     import qrcode
@@ -24,6 +25,7 @@ from debo import SQLSERVER_DRIVER, station_debo_ready, validate_ticket_invoice_o
 load_dotenv()
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
 app.secret_key = os.environ.get('SORTEO_SECRET_KEY') or os.environ.get('FLASK_SECRET_KEY', 'clave_sorteo_electrodomesticos')
 DATABASE_URL = os.environ.get('DATABASE_URL')
 PUBLIC_BASE_URL = os.environ.get('SORTEO_PUBLIC_BASE_URL', '').rstrip('/')
@@ -189,7 +191,9 @@ def public_url(estacion_id):
     path = sorteo_path(f'/{estacion_id}')
     if PUBLIC_BASE_URL:
         return f'{PUBLIC_BASE_URL}{path}'
-    return request.host_url.rstrip('/') + path
+    forwarded_proto = (request.headers.get('X-Forwarded-Proto') or request.scheme or 'https').split(',')[0].strip()
+    forwarded_host = (request.headers.get('X-Forwarded-Host') or request.headers.get('Host') or request.host).split(',')[0].strip()
+    return f'{forwarded_proto}://{forwarded_host}{path}'
 
 
 def qr_data_url(text):
