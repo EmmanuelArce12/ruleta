@@ -5,14 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sorteo Electrodomesticos</title>
     <style>
-        :root { --blue:#005cab; --yellow:#f4c542; --ink:#17202a; --muted:#667085; --line:#d7dee8; --bg:#f4f7fb; --ok:#138a43; --bad:#c2410c; --wait:#a16207; }
+        :root { --blue:#005cab; --ink:#17202a; --muted:#667085; --line:#d7dee8; --bg:#f4f7fb; --ok:#138a43; --bad:#c2410c; --wait:#a16207; }
         body { margin:0; font-family: Arial, sans-serif; background:var(--bg); color:var(--ink); }
         header { background:#102a43; color:white; padding:18px 24px; display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap; }
         header h1 { margin:0; font-size:22px; }
-        main { padding:22px; max-width:1280px; margin:0 auto; }
-        .actions, .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; }
-        section { background:white; border:1px solid var(--line); border-radius:8px; padding:18px; margin-bottom:16px; }
+        main { padding:22px; max-width:1380px; margin:0 auto; }
+        .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; }
+        .stats { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:16px; }
+        section, .stat { background:white; border:1px solid var(--line); border-radius:8px; padding:18px; margin-bottom:16px; }
+        .stat strong { display:block; font-size:30px; margin-top:6px; }
         h2 { margin:0 0 14px; font-size:18px; color:var(--blue); }
+        h3 { margin:0 0 12px; font-size:16px; color:var(--ink); }
         label { display:block; font-size:12px; font-weight:700; text-transform:uppercase; margin:8px 0 5px; }
         input { width:100%; box-sizing:border-box; padding:10px; border:1px solid var(--line); border-radius:6px; }
         button, .btn { display:inline-block; border:0; border-radius:6px; padding:10px 13px; background:var(--blue); color:white; font-weight:700; cursor:pointer; text-decoration:none; font-size:14px; }
@@ -21,13 +24,15 @@
         .btn-ok { background:var(--ok); }
         .btn-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
         .qr { width:180px; max-width:100%; border:1px solid var(--line); padding:10px; border-radius:8px; background:white; }
-        .hint { color:var(--muted); font-size:13px; line-height:1.35; }
+        .hint { color:var(--muted); font-size:13px; line-height:1.45; }
         .table-wrap { overflow:auto; border:1px solid var(--line); border-radius:8px; }
-        table { width:100%; border-collapse:collapse; min-width:1050px; background:white; }
+        table { width:100%; border-collapse:collapse; min-width:1180px; background:white; }
         th, td { padding:10px; border-bottom:1px solid var(--line); text-align:left; font-size:13px; vertical-align:top; }
         th { background:#eef3f8; font-size:11px; text-transform:uppercase; }
         .badge { display:inline-block; padding:4px 8px; border-radius:999px; color:white; font-weight:700; font-size:11px; }
-        .PENDIENTE { background:var(--wait); } .APROBADO { background:var(--ok); } .DENEGADO { background:var(--bad); }
+        .PENDIENTE { background:var(--wait); }
+        .APROBADO { background:var(--ok); }
+        .DENEGADO { background:var(--bad); }
         .status { font-weight:700; color:{{ '#b42318' if config['detenido'] else '#138a43' }}; }
         @media (max-width: 760px) { main { padding:12px; } header { padding:14px; } }
     </style>
@@ -39,26 +44,42 @@
             <div>{{ nombre_estacion }} · Estado: <span class="status">{{ 'Detenido' if config['detenido'] else 'Activo' }}</span></div>
         </div>
         <div class="btn-row">
-            <a class="btn btn-alt" href="{{ base_path }}/admin/exportar-excel">Excel activo</a>
-            <a class="btn btn-alt" href="{{ base_path }}/admin/exportar-excel?todo=1">Excel completo</a>
+            <a class="btn btn-alt" href="{{ base_path }}/admin/exportar-excel?estado=APROBADO">Excel aprobados</a>
+            <a class="btn btn-alt" href="{{ base_path }}/admin/exportar-excel?estado=APROBADO&ponderado=1">Excel sorteo</a>
+            <a class="btn btn-alt" href="{{ base_path }}/admin/exportar-excel?estado=DENEGADO">Excel denegados</a>
             <a class="btn btn-stop" href="{{ base_path }}/admin/logout">Salir</a>
         </div>
     </header>
 
     <main>
+        <div class="stats">
+            <div class="stat">
+                <div>Pendientes</div>
+                <strong>{{ totales['pendientes'] }}</strong>
+            </div>
+            <div class="stat">
+                <div>Aprobados</div>
+                <strong>{{ totales['aprobados'] }}</strong>
+            </div>
+            <div class="stat">
+                <div>Denegados</div>
+                <strong>{{ totales['denegados'] }}</strong>
+            </div>
+        </div>
+
         <div class="grid">
             <section>
                 <h2>QR para clientes</h2>
                 {% if qr %}
                     <img class="qr" src="{{ qr }}" alt="QR sorteo">
-                    <div class="btn-row" style="margin-top: 10px;">
+                    <div class="btn-row" style="margin-top:10px;">
                         <a class="btn" href="{{ qr }}" download="qr-sorteo-electrodomesticos.png">Descargar QR</a>
                     </div>
                 {% else %}
                     <p class="hint">Instala qrcode[pil] para generar el QR automatico.</p>
                 {% endif %}
                 <p><a href="{{ public_url }}" target="_blank">{{ public_url }}</a></p>
-                <p class="hint">Este enlace abre el formulario publico del cliente para esta estacion.</p>
+                <p class="hint">El cliente debe cargar fecha, hora exacta con segundos y numero de factura.</p>
             </section>
 
             <section>
@@ -70,15 +91,15 @@
                     <input type="number" name="intervalo_horas" min="1" value="{{ config['intervalo_horas'] or 4 }}">
                     <button type="submit">Guardar</button>
                 </form>
-                <p class="hint">La conexión DEBO se administra desde superusuario. Esta estación apunta a: <strong>{{ estacion['debo_host'] or 'sin configurar' }}</strong>.</p>
-                <p class="hint">Driver esperado en servidor: {{ sqlserver_driver }}. Conexión cargada: {{ 'si' if facturacion_configurada else 'no' }}.</p>
+                <p class="hint">DEBO configurado en superusuario: <strong>{{ estacion['debo_host'] or 'sin configurar' }}</strong>.</p>
+                <p class="hint">Remitos: {{ 'permitidos' if estacion['debo_allow_remitos'] else 'denegados' }}. Driver esperado: {{ sqlserver_driver }}.</p>
+                <p class="hint">Conexion cargada: {{ 'si' if facturacion_configurada else 'no' }}.</p>
             </section>
 
             <section>
                 <h2>Controles</h2>
                 <div class="btn-row">
                     <form action="{{ base_path }}/admin/forzar-consulta" method="POST"><button class="btn-ok" type="submit">Forzar consulta</button></form>
-                    <form action="{{ base_path }}/admin/consulta-directa" method="POST"><button type="submit">Consulta directa DEBO</button></form>
                     {% if config['detenido'] %}
                     <form action="{{ base_path }}/admin/reanudar" method="POST"><button type="submit">Reanudar</button></form>
                     {% else %}
@@ -87,30 +108,20 @@
                     <form action="{{ base_path }}/admin/iniciar-conteo" method="POST" onsubmit="return confirm('Se archivara el listado activo y quedara limpio para el proximo conteo.');"><button class="btn-alt" type="submit">Iniciar conteo</button></form>
                 </div>
                 <p class="hint">Ultima consulta: {{ config['ultima_consulta'] or 'sin consultas' }}.</p>
+                <p class="hint">Si falla la conexion o pyodbc, el ticket queda pendiente. Si no coincide fecha, hora, factura o combustible, queda denegado.</p>
             </section>
         </div>
 
         <section>
-            <h2>Muestra DEBO</h2>
-            {% if preview_error %}
-            <p class="hint" style="color:#b42318; font-weight:700;">{{ preview_error }}</p>
-            {% endif %}
+            <h2>Ranking de vendedores</h2>
             <div class="table-wrap">
-                <table style="min-width: 900px;">
-                    <thead><tr><th>Fecha hora</th><th>Factura</th><th>Vendedor</th><th>Combustible</th><th>Litros</th><th>Tipo</th><th>Letra</th></tr></thead>
+                <table style="min-width:480px;">
+                    <thead><tr><th>Vendedor</th><th>Facturas aprobadas</th></tr></thead>
                     <tbody>
-                        {% for row in preview_rows %}
-                        <tr>
-                            <td>{{ row['fecha_hora_ticket'] }}</td>
-                            <td>{{ row['numero_factura'] }}</td>
-                            <td>{{ row['vendedor'] }}</td>
-                            <td>{{ row['combustible'] }}</td>
-                            <td>{{ row['litros'] }}</td>
-                            <td>{{ row['tipo_comprobante'] }}</td>
-                            <td>{{ row['letra_fiscal'] }}</td>
-                        </tr>
+                        {% for row in seller_ranking %}
+                        <tr><td>{{ row['vendedor'] }}</td><td>{{ row['facturas_aprobadas'] }}</td></tr>
                         {% else %}
-                        <tr><td colspan="7">Usá "Consulta directa DEBO" para ver una muestra de tickets de playa de esta estación.</td></tr>
+                        <tr><td colspan="2">Todavia no hay facturas aprobadas.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -118,28 +129,87 @@
         </section>
 
         <section>
-            <h2>Participantes activos</h2>
+            <h2>Pendientes</h2>
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Registro</th><th>Estado</th><th>Hora ticket</th><th>Registro interno</th><th>Combustible</th><th>Litros</th><th>App YPF</th><th>Cliente</th><th>DNI</th><th>Telefono</th><th>Email</th><th>Detalle</th></tr></thead>
+                    <thead><tr><th>Registro</th><th>Fecha</th><th>Hora</th><th>Factura</th><th>Cliente</th><th>Telefono</th><th>Email</th><th>Detalle</th></tr></thead>
                     <tbody>
-                        {% for p in participantes %}
+                        {% for p in pendientes %}
+                        {% set fecha, hora = split_timestamp(p['ticket_hora']) %}
                         <tr>
                             <td>{{ p['creado_en'] }}</td>
-                            <td><span class="badge {{ p['estado'] }}">{{ p['estado'] }}</span></td>
-                            <td>{{ p['ticket_hora'] }}</td>
+                            <td>{{ fecha }}</td>
+                            <td>{{ hora }}</td>
                             <td>{{ p['numero_factura'] }}</td>
+                            <td><strong>{{ p['nombre'] }} {{ p['apellido'] }}</strong><br>{{ p['dni'] or '' }}</td>
+                            <td>{{ p['telefono'] }}</td>
+                            <td>{{ p['email'] }}</td>
+                            <td>{{ p['detalle_validacion'] or 'Esperando validacion.' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="8">No hay pendientes.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section>
+            <h2>Aprobados</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Estado</th><th>Fecha</th><th>Hora</th><th>Factura</th><th>Tipo</th><th>Vendedor</th><th>Combustible</th><th>Litros</th><th>App YPF</th><th>Chances</th><th>Cliente</th><th>Telefono</th><th>Email</th><th>Detalle</th></tr></thead>
+                    <tbody>
+                        {% for p in aprobados %}
+                        {% set fecha, hora = split_timestamp(p['ticket_hora']) %}
+                        <tr>
+                            <td><span class="badge {{ p['estado'] }}">{{ p['estado'] }}</span></td>
+                            <td>{{ fecha }}</td>
+                            <td>{{ hora }}</td>
+                            <td>{{ p['factura_real'] or p['numero_factura'] }}</td>
+                            <td>{{ p['tipo_comprobante'] or '' }} {{ p['letra_fiscal'] or '' }}</td>
+                            <td>{{ p['vendedor'] or '' }}</td>
                             <td>{{ p['combustible'] or '' }}</td>
                             <td>{{ p['litros'] or '' }}</td>
-                            <td>{{ 'Si' if p['pago_app_ypf'] else ('No' if p['pago_app_ypf'] == false else '') }}</td>
-                            <td><strong>{{ p['nombre'] }} {{ p['apellido'] }}</strong></td>
-                            <td>{{ p['dni'] or '' }}</td>
+                            <td>{{ yes_no_blank(p['pago_app_ypf']) }}</td>
+                            <td>{{ p['chances'] or '' }}</td>
+                            <td><strong>{{ p['nombre'] }} {{ p['apellido'] }}</strong><br>{{ p['dni'] or '' }}</td>
                             <td>{{ p['telefono'] }}</td>
                             <td>{{ p['email'] }}</td>
                             <td>{{ p['detalle_validacion'] or '' }}</td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="12">No hay participantes activos.</td></tr>
+                        <tr><td colspan="14">No hay aprobados.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section>
+            <h2>Denegados</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Estado</th><th>Fecha</th><th>Hora</th><th>Factura</th><th>Tipo</th><th>Vendedor</th><th>Combustible</th><th>Litros</th><th>Cliente</th><th>Telefono</th><th>Email</th><th>Detalle</th></tr></thead>
+                    <tbody>
+                        {% for p in denegados %}
+                        {% set fecha, hora = split_timestamp(p['ticket_hora']) %}
+                        <tr>
+                            <td><span class="badge {{ p['estado'] }}">{{ p['estado'] }}</span></td>
+                            <td>{{ fecha }}</td>
+                            <td>{{ hora }}</td>
+                            <td>{{ p['factura_real'] or p['numero_factura'] }}</td>
+                            <td>{{ p['tipo_comprobante'] or '' }} {{ p['letra_fiscal'] or '' }}</td>
+                            <td>{{ p['vendedor'] or '' }}</td>
+                            <td>{{ p['combustible'] or '' }}</td>
+                            <td>{{ p['litros'] or '' }}</td>
+                            <td><strong>{{ p['nombre'] }} {{ p['apellido'] }}</strong><br>{{ p['dni'] or '' }}</td>
+                            <td>{{ p['telefono'] }}</td>
+                            <td>{{ p['email'] }}</td>
+                            <td>{{ p['detalle_validacion'] or '' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="12">No hay denegados.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>

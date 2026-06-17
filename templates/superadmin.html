@@ -6,10 +6,9 @@
     <title>Panel Maestro - Grupo GE</title>
     <style>
         body { font-family: Arial, sans-serif; background: #1a1a2e; color: #fff; padding: 20px; margin: 0; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e94560; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;}
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e94560; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
         h1 { margin: 0; color: #e94560; font-size: 24px; }
-        .logout-btn { background: #e74c3c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; transition: 0.3s; white-space: nowrap;}
-        .logout-btn:hover { background: #c0392b; }
+        .logout-btn { background: #e74c3c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; }
         .card { background: #16213e; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         .form-crear { display: flex; gap: 10px; flex-wrap: wrap; }
         .form-crear input, .form-crear select { padding: 10px; border-radius: 4px; border: none; flex: 1; min-width: 180px; box-sizing: border-box; }
@@ -20,32 +19,31 @@
         th { background: #0f3460; color: #fff; }
         .acciones { display: flex; gap: 10px; flex-wrap: wrap; }
         .acciones input { padding: 6px; border: 1px solid #ccc; box-sizing: border-box; width: 120px; }
-        .btn-accion { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; color: #333; font-weight: bold;}
-        .badge-ypf { background: #005CAB; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;}
-        .badge-axion { background: #5d2a8e; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;}
-        
+        .btn-accion { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; color: #333; font-weight: bold; }
+        .badge-ypf { background: #005cab; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .badge-axion { background: #5d2a8e; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
         .nombre-container { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-        .btn-editar { background: none; border: none; cursor: pointer; font-size: 16px; padding: 2px 5px; border-radius: 4px; transition: 0.2s; }
-        .btn-editar:hover { background: #f0f0f0; }
+        .btn-editar { background: none; border: none; cursor: pointer; font-size: 16px; padding: 2px 5px; border-radius: 4px; }
         .debo-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:16px; }
         .debo-card { background:#0f172a; border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px; }
         .debo-card h3 { margin:0 0 12px; color:#f8fafc; font-size:18px; }
         .debo-form { display:grid; gap:10px; }
         .debo-form input { width:100%; }
         .debo-actions { display:flex; gap:8px; flex-wrap:wrap; }
+        .debo-check { display:flex; align-items:center; gap:8px; color:#cbd5e1; font-size:13px; }
+        .debo-check input { width:auto; }
         .status-chip { display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px; font-weight:bold; }
         .status-ok { background:#14532d; color:#dcfce7; }
         .status-off { background:#7f1d1d; color:#fee2e2; }
-        .preview-table { width:100%; border-collapse: collapse; background:#fff; color:#111827; min-width:900px; }
-        .preview-table th, .preview-table td { padding:10px; border-bottom:1px solid #e5e7eb; text-align:left; font-size:13px; }
-        .preview-table th { background:#e2e8f0; font-size:11px; text-transform:uppercase; }
         .preview-error { background:#7f1d1d; color:#fee2e2; padding:12px; border-radius:8px; margin-top:12px; }
-        
+        .status-dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-left:8px; vertical-align:middle; }
+        .status-dot.ok { background:#22c55e; }
+        .status-dot.off { background:#ef4444; }
         @media (max-width: 600px) { body { padding: 10px; } h1 { font-size: 20px; } .form-crear button { width: 100%; } }
     </style>
     <script>
         function editarNombre(id, nombreActual) {
-            let nuevo = prompt("Editar nombre de la estación:", nombreActual);
+            const nuevo = prompt("Editar nombre de la estacion:", nombreActual);
             if (nuevo && nuevo.trim() !== "" && nuevo !== nombreActual) {
                 document.getElementById('edit-nombre-' + id).value = nuevo.trim();
                 document.getElementById('edit-form-' + id).submit();
@@ -55,30 +53,30 @@
 </head>
 <body>
     <div class="header">
-        <h1>👑 Centro de Control Maestro</h1>
-        <a href="/logout_superadmin" class="logout-btn">🚪 Cerrar Sesión</a>
+        <h1>Centro de Control Maestro</h1>
+        <a href="/logout_superadmin" class="logout-btn">Cerrar sesion</a>
     </div>
 
     <div class="card">
-        <h2 style="margin-top: 0; font-size: 18px;">➕ Crear Nueva Estación</h2>
+        <h2 style="margin-top: 0; font-size: 18px;">Crear nueva estacion</h2>
         <form action="/superadmin/crear_estacion" method="POST" class="form-crear">
             <input type="text" name="nombre" placeholder="Nombre (Ej: YPF Centro)" required>
-            <input type="text" name="usuario" placeholder="Usuario Admin" required autocomplete="off">
-            <input type="password" name="password" placeholder="Contraseña Admin" required>
+            <input type="text" name="usuario" placeholder="Usuario admin" required autocomplete="off">
+            <input type="password" name="password" placeholder="Contrasena admin" required>
             <select name="bandera" required>
                 <option value="YPF">Bandera: YPF</option>
                 <option value="AXION">Bandera: AXION</option>
             </select>
-            <button type="submit">Crear Estación</button>
+            <button type="submit">Crear estacion</button>
         </form>
     </div>
 
     <div class="card" style="background: transparent; box-shadow: none; padding: 0;">
-        <h2 style="color: #fff; font-size: 18px;">Estaciones Activas</h2>
+        <h2 style="color: #fff; font-size: 18px;">Estaciones activas</h2>
         <div class="table-responsive">
             <table>
                 <thead>
-                    <tr><th>ID</th><th>Marca</th><th>Nombre</th><th>Usuario Admin</th><th>Acciones</th></tr>
+                    <tr><th>ID</th><th>Marca</th><th>Nombre</th><th>Usuario admin</th><th>Acciones</th></tr>
                 </thead>
                 <tbody>
                     {% for e in estaciones %}
@@ -94,7 +92,7 @@
                         <td>
                             <div class="nombre-container">
                                 <strong>{{ e['nombre'] }}</strong>
-                                <button onclick="editarNombre({{ e['id'] }}, '{{ e['nombre'] }}')" class="btn-editar" title="Editar Nombre">✏️</button>
+                                <button onclick="editarNombre({{ e['id'] }}, '{{ e['nombre'] }}')" class="btn-editar" title="Editar nombre">Editar</button>
                             </div>
                             <form id="edit-form-{{ e['id'] }}" action="/superadmin/editar_estacion/{{ e['id'] }}" method="POST" style="display: none;">
                                 <input type="hidden" name="nuevo_nombre" id="edit-nombre-{{ e['id'] }}">
@@ -104,10 +102,10 @@
                         <td>
                             <div class="acciones">
                                 <form action="/superadmin/blanquear_clave/{{ e['id'] }}" method="POST" style="margin: 0; display:flex; gap: 5px;">
-                                    <input type="password" name="nueva_clave" placeholder="Nueva Clave" required>
+                                    <input type="password" name="nueva_clave" placeholder="Nueva clave" required>
                                     <button type="submit" class="btn-accion" style="background: #f1c40f;">Resetear</button>
                                 </form>
-                                <form action="/superadmin/borrar_estacion/{{ e['id'] }}" method="POST" style="margin: 0;" onsubmit="return confirm('¿Seguro que deseas borrar esta estación y todos sus datos?');">
+                                <form action="/superadmin/borrar_estacion/{{ e['id'] }}" method="POST" style="margin: 0;" onsubmit="return confirm('Seguro que deseas borrar esta estacion y todos sus datos?');">
                                     <button type="submit" class="btn-accion" style="background: #e74c3c; color: white;">Borrar</button>
                                 </form>
                             </div>
@@ -120,13 +118,17 @@
     </div>
 
     <div class="card">
-        <h2 style="margin-top: 0; font-size: 18px;">Conexiones DEBO por estación</h2>
-        <p style="color:#cbd5e1; font-size:13px; line-height:1.5;">Acá se centralizan IP pública o privada, base, usuario y clave DEBO. El botón <strong>Probar conexión</strong> ejecuta una consulta de muestra de tickets de playa sin modificar nada.</p>
+        <h2 style="margin-top: 0; font-size: 18px;">Conexiones DEBO por estacion</h2>
+        <p style="color:#cbd5e1; font-size:13px; line-height:1.5;">Acá se centralizan IP, base, usuario y clave DEBO. El botón <strong>Probar conexión</strong> solo verifica lectura y devuelve estado verde o rojo.</p>
         <p style="color:#94a3b8; font-size:12px;">Driver esperado en el servidor: {{ sqlserver_driver }}</p>
         <div class="debo-grid">
             {% for e in estaciones %}
             <div class="debo-card" id="debo-{{ e['id'] }}">
-                <h3>{{ e['nombre'] }}</h3>
+                <h3>{{ e['nombre'] }}
+                    {% if preview_station and preview_station['id'] == e['id'] %}
+                    <span class="status-dot {{ 'ok' if preview_ok else 'off' }}"></span>
+                    {% endif %}
+                </h3>
                 <p style="margin-top:0;">
                     {% if e['debo_host'] and e['debo_user'] and (e['debo_password_encrypted'] or e['debo_password']) %}
                     <span class="status-chip status-ok">Configurado</span>
@@ -138,45 +140,28 @@
                     <input type="text" name="debo_host" value="{{ e['debo_host'] or '' }}" placeholder="IP DEBO, ej: 10.100.2.253">
                     <input type="text" name="debo_database" value="{{ e['debo_database'] or 'DEBO' }}" placeholder="Base, por defecto DEBO">
                     <input type="text" name="debo_user" value="{{ e['debo_user'] or '' }}" placeholder="Usuario DEBO">
-                    <input type="password" name="debo_password" placeholder="{% if e['debo_password_encrypted'] or e['debo_password'] %}Dejar vacío para conservar la clave actual{% else %}Clave DEBO{% endif %}">
+                    <input type="password" name="debo_password" placeholder="{% if e['debo_password_encrypted'] or e['debo_password'] %}Dejar vacio para conservar la clave actual{% else %}Clave DEBO{% endif %}">
+                    <label class="debo-check">
+                        <input type="checkbox" name="debo_allow_remitos" {% if e['debo_allow_remitos'] %}checked{% endif %}>
+                        Permitir remitos para esta estacion
+                    </label>
                     <div class="debo-actions">
                         <button type="submit" class="btn-accion" style="background:#22c55e;">Guardar DEBO</button>
                     </div>
                 </form>
                 <form action="/superadmin/probar_debo/{{ e['id'] }}" method="POST" style="margin-top: 10px;">
-                    <button type="submit" class="btn-accion" style="background:#38bdf8;">Probar conexión</button>
+                    <button type="submit" class="btn-accion" style="background:#38bdf8;">Probar conexion</button>
                 </form>
             </div>
             {% endfor %}
         </div>
         {% if preview_station %}
         <div style="margin-top: 20px;">
-            <h3 style="margin-bottom: 8px;">Muestra DEBO: {{ preview_station['nombre'] }}</h3>
+            <h3 style="margin-bottom: 8px;">Estado DEBO: {{ preview_station['nombre'] }}</h3>
             {% if preview_error %}
             <div class="preview-error">{{ preview_error }}</div>
             {% else %}
-            <div class="table-responsive" style="margin-top: 12px;">
-                <table class="preview-table">
-                    <thead>
-                        <tr><th>Fecha hora</th><th>Factura</th><th>Vendedor</th><th>Combustible</th><th>Litros</th><th>Tipo</th><th>Letra</th></tr>
-                    </thead>
-                    <tbody>
-                        {% for row in preview_rows %}
-                        <tr>
-                            <td>{{ row['fecha_hora_ticket'] }}</td>
-                            <td>{{ row['numero_factura'] }}</td>
-                            <td>{{ row['vendedor'] }}</td>
-                            <td>{{ row['combustible'] }}</td>
-                            <td>{{ row['litros'] }}</td>
-                            <td>{{ row['tipo_comprobante'] }}</td>
-                            <td>{{ row['letra_fiscal'] }}</td>
-                        </tr>
-                        {% else %}
-                        <tr><td colspan="7">La consulta conectó pero no devolvió tickets de muestra.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+            <p style="color:#dcfce7; background:#14532d; padding:12px; border-radius:8px;">Conexion DEBO estable.</p>
             {% endif %}
         </div>
         {% endif %}

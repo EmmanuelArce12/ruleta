@@ -53,7 +53,7 @@ def get_station_by_id(station_id):
     return row
 
 
-def render_superadmin_page(preview_station_id=None, preview_rows=None, preview_error=None):
+def render_superadmin_page(preview_station_id=None, preview_error=None):
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     c.execute("SELECT * FROM estaciones ORDER BY id DESC")
@@ -64,8 +64,8 @@ def render_superadmin_page(preview_station_id=None, preview_rows=None, preview_e
         "superadmin.html",
         estaciones=estaciones,
         preview_station=preview_station,
-        preview_rows=preview_rows or [],
         preview_error=preview_error,
+        preview_ok=preview_station_id is not None and not preview_error,
         sqlserver_driver=SQLSERVER_DRIVER,
     )
 
@@ -395,6 +395,10 @@ def init_db():
             ALTER TABLE estaciones
             ADD COLUMN IF NOT EXISTS debo_password_encrypted TEXT
         """)
+        c.execute("""
+            ALTER TABLE estaciones
+            ADD COLUMN IF NOT EXISTS debo_allow_remitos BOOLEAN DEFAULT FALSE
+        """)
 
         conn.close()
 
@@ -494,6 +498,7 @@ def configurar_debo(id):
     debo_database = (request.form.get('debo_database') or 'DEBO').strip() or 'DEBO'
     debo_user = (request.form.get('debo_user') or '').strip()
     raw_password = (request.form.get('debo_password') or '').strip()
+    debo_allow_remitos = request.form.get('debo_allow_remitos') == 'on'
     debo_password_encrypted = actual.get('debo_password_encrypted') or ''
     if raw_password:
         debo_password_encrypted = encrypt_secret(raw_password)
@@ -506,11 +511,12 @@ def configurar_debo(id):
         SET debo_host = %s,
             debo_database = %s,
             debo_user = %s,
+            debo_allow_remitos = %s,
             debo_password = NULL,
             debo_password_encrypted = %s
         WHERE id = %s
         """,
-        (debo_host, debo_database, debo_user, debo_password_encrypted, id),
+        (debo_host, debo_database, debo_user, debo_allow_remitos, debo_password_encrypted, id),
     )
     conn.commit()
     conn.close()
@@ -527,8 +533,8 @@ def probar_debo(id):
     if not station_debo_ready(station):
         return render_superadmin_page(preview_station_id=id, preview_error='Falta completar IP, base, usuario o clave DEBO.')
     try:
-        rows = preview_station_tickets(station, limit=15)
-        return render_superadmin_page(preview_station_id=id, preview_rows=rows)
+        preview_station_tickets(station, limit=1)
+        return render_superadmin_page(preview_station_id=id)
     except Exception as exc:
         return render_superadmin_page(preview_station_id=id, preview_error=f'Error DEBO: {exc}')
 
