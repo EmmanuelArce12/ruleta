@@ -703,6 +703,34 @@ def denegar_dudoso(participante_id):
     return redirect(sorteo_path('/admin'))
 
 
+@app.route('/admin/denegado/<int:participante_id>/aprobar', methods=['POST'])
+@app.route('/sorteo/admin/denegado/<int:participante_id>/aprobar', methods=['POST'])
+def aprobar_denegado(participante_id):
+    if not admin_required():
+        return redirect(sorteo_path('/admin/login'))
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute('''
+        SELECT *
+        FROM sorteo_participantes
+        WHERE id = %s AND estacion_id = %s AND conteo_id IS NULL AND estado = 'DENEGADO'
+    ''', (participante_id, session['sorteo_estacion_id']))
+    row = c.fetchone()
+    if row:
+        chances = compute_chances(row.get('combustible'), bool(row.get('pago_app_ypf'))) if row.get('combustible') in PROMO_COMBUSTIBLES else 1
+        c.execute('''
+            UPDATE sorteo_participantes
+            SET estado = 'APROBADO',
+                chances = %s,
+                detalle_validacion = 'Aprobado manualmente desde la bandeja de denegados.',
+                consulta_at = CURRENT_TIMESTAMP
+            WHERE id = %s AND estacion_id = %s AND conteo_id IS NULL
+        ''', (chances, participante_id, session['sorteo_estacion_id']))
+        conn.commit()
+    conn.close()
+    return redirect(sorteo_path('/admin'))
+
+
 @app.route('/admin/exportar-excel')
 @app.route('/sorteo/admin/exportar-excel')
 def exportar_excel():
