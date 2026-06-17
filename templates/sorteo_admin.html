@@ -70,7 +70,7 @@
     <div id="admin-root"></div>
     <form id="config-form" action="{{ base_path }}/admin/config" method="POST" style="display:none;">
         <input type="hidden" name="minimo_litros" id="config-minimo-litros" value="{{ config['minimo_litros'] or 0 }}">
-        <input type="hidden" name="intervalo_horas" id="config-intervalo-horas" value="{{ config['intervalo_horas'] or 4 }}">
+        <input type="hidden" name="consulta_automatica_hora" id="config-consulta-automatica-hora" value="{{ (config['consulta_automatica_hora'] and (config['consulta_automatica_hora']|string)[:5]) or '04:00' }}">
         <input type="hidden" name="promocion_desde" id="config-promocion-desde" value="{{ config['promocion_desde'] or '' }}">
         <input type="hidden" name="promocion_hasta" id="config-promocion-hasta" value="{{ config['promocion_hasta'] or '' }}">
     </form>
@@ -100,7 +100,7 @@
             estacion: { deboHost: {{ (estacion['debo_host'] or 'sin configurar')|tojson }}, deboAllowRemitos: {{ estacion['debo_allow_remitos']|tojson }} },
             config: {
                 minimoLitros: {{ (config['minimo_litros'] or 0)|tojson }},
-                intervaloHoras: {{ (config['intervalo_horas'] or 4)|tojson }},
+                consultaAutomaticaHora: {{ (((config['consulta_automatica_hora']|string)[:5]) if config['consulta_automatica_hora'] else '04:00')|tojson }},
                 promocionDesde: {{ (config['promocion_desde'] and (config['promocion_desde']|string) or '')|tojson }},
                 promocionHasta: {{ (config['promocion_hasta'] and (config['promocion_hasta']|string) or '')|tojson }},
                 detenido: {{ config['detenido']|tojson }},
@@ -134,12 +134,13 @@
             }
             function OverviewTab() {
                 const [minimoLitros, setMinimoLitros] = useState(String(data.config.minimoLitros ?? 0));
+                const [consultaAutomaticaHora, setConsultaAutomaticaHora] = useState(data.config.consultaAutomaticaHora || '04:00');
                 const [promocionDesde, setPromocionDesde] = useState(data.config.promocionDesde || '');
                 const [promocionHasta, setPromocionHasta] = useState(data.config.promocionHasta || '');
                 function saveConfig(ev) {
                     ev.preventDefault();
                     document.getElementById('config-minimo-litros').value = minimoLitros;
-                    document.getElementById('config-intervalo-horas').value = '4';
+                    document.getElementById('config-consulta-automatica-hora').value = consultaAutomaticaHora || '04:00';
                     document.getElementById('config-promocion-desde').value = promocionDesde;
                     document.getElementById('config-promocion-hasta').value = promocionHasta;
                     submitForm('config-form');
@@ -156,7 +157,7 @@
                             e('h3', null, 'Configuracion y promocion'),
                             e('form', { className: 'stack', onSubmit: saveConfig },
                                 e('div', { className: 'field' }, e('label', null, 'Litros minimos para aprobar'), e('input', { type: 'number', min: '0', step: '0.001', value: minimoLitros, onChange: ev => setMinimoLitros(ev.target.value) })),
-                                e('div', { className: 'field' }, e('label', null, 'Consulta automatica programada'), e('input', { type: 'text', value: 'Todos los dias a las 04:00', readOnly: true })),
+                                e('div', { className: 'field' }, e('label', null, 'Consulta automatica diaria'), e('input', { type: 'time', value: consultaAutomaticaHora, onChange: ev => setConsultaAutomaticaHora(ev.target.value || '04:00') })),
                                 e('div', { className: 'field' }, e('label', null, 'Promocion desde'), e('input', { type: 'date', value: promocionDesde, onChange: ev => setPromocionDesde(ev.target.value) })),
                                 e('div', { className: 'field' }, e('label', null, 'Promocion hasta'), e('input', { type: 'date', value: promocionHasta, onChange: ev => setPromocionHasta(ev.target.value) })),
                                 e('div', { className: 'inline-actions' },
@@ -172,7 +173,7 @@
                                 e('button', { type: 'button', className: 'btn btn-success', onClick: () => submitForm('forzar-form') }, 'Forzar consulta'),
                                 data.config.detenido ? e('button', { type: 'button', className: 'btn btn-primary', onClick: () => submitForm('reanudar-form') }, 'Reanudar') : e('button', { type: 'button', className: 'btn btn-danger', onClick: () => submitForm('detener-form') }, 'Detener')
                             ),
-                            e('p', { className: 'muted-note' }, 'Ultima consulta: ' + (data.config.ultimaConsulta || 'sin consultas') + '. DEBO: ' + data.estacion.deboHost + '. Remitos: ' + (data.estacion.deboAllowRemitos ? 'permitidos' : 'denegados') + '.')
+                            e('p', { className: 'muted-note' }, 'Ultima consulta: ' + (data.config.ultimaConsulta || 'sin consultas') + '. Proxima ventana diaria: ' + (data.config.consultaAutomaticaHora || '04:00') + '. DEBO: ' + data.estacion.deboHost + '. Remitos: ' + (data.estacion.deboAllowRemitos ? 'permitidos' : 'denegados') + '.')
                         ),
                         e('div', { className: 'panel-card stack' },
                             e('h3', null, 'Fraude y exportaciones'),

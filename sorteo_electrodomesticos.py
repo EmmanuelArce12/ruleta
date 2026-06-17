@@ -65,6 +65,7 @@ def init_db():
             estacion_id INTEGER PRIMARY KEY REFERENCES estaciones(id) ON DELETE CASCADE,
             minimo_litros NUMERIC(10, 3) DEFAULT 0,
             intervalo_horas INTEGER DEFAULT 4,
+            consulta_automatica_hora TIME DEFAULT TIME '04:00',
             promocion_desde DATE,
             promocion_hasta DATE,
             activo BOOLEAN DEFAULT TRUE,
@@ -76,6 +77,7 @@ def init_db():
     ''')
     c.execute("ALTER TABLE sorteo_config ADD COLUMN IF NOT EXISTS promocion_desde DATE")
     c.execute("ALTER TABLE sorteo_config ADD COLUMN IF NOT EXISTS promocion_hasta DATE")
+    c.execute("ALTER TABLE sorteo_config ADD COLUMN IF NOT EXISTS consulta_automatica_hora TIME DEFAULT TIME '04:00'")
     c.execute('''
         CREATE TABLE IF NOT EXISTS sorteo_participantes (
             id SERIAL PRIMARY KEY,
@@ -165,6 +167,7 @@ def ensure_config(estacion_id):
         UPDATE sorteo_config
         SET promocion_desde = COALESCE(promocion_desde, CURRENT_DATE),
             promocion_hasta = COALESCE(promocion_hasta, CURRENT_DATE + INTERVAL '30 days'),
+            consulta_automatica_hora = COALESCE(consulta_automatica_hora, TIME '04:00'),
             actualizado_en = CURRENT_TIMESTAMP
         WHERE estacion_id = %s
     ''', (estacion_id,))
@@ -526,10 +529,10 @@ def scheduler_loop():
                 FROM sorteo_config
                 WHERE activo = TRUE
                   AND detenido = FALSE
-                  AND CURRENT_TIMESTAMP >= date_trunc('day', CURRENT_TIMESTAMP) + INTERVAL '4 hours'
+                  AND CURRENT_TIMESTAMP >= date_trunc('day', CURRENT_TIMESTAMP) + COALESCE(consulta_automatica_hora, TIME '04:00')
                   AND (
                     ultima_consulta IS NULL OR
-                    ultima_consulta < date_trunc('day', CURRENT_TIMESTAMP) + INTERVAL '4 hours'
+                    ultima_consulta < date_trunc('day', CURRENT_TIMESTAMP) + COALESCE(consulta_automatica_hora, TIME '04:00')
                   )
             ''')
             estaciones = c.fetchall()
@@ -591,7 +594,7 @@ def configurar():
         return redirect(sorteo_path('/admin/login'))
     eid = session['sorteo_estacion_id']
     minimo_litros = request.form.get('minimo_litros') or 0
-    intervalo_horas = request.form.get('intervalo_horas') or 4
+    consulta_automatica_hora = request.form.get('consulta_automatica_hora') or '04:00'
     promocion_desde = request.form.get('promocion_desde') or None
     promocion_hasta = request.form.get('promocion_hasta') or None
     conn = get_db()
@@ -599,12 +602,12 @@ def configurar():
     c.execute('''
         UPDATE sorteo_config
         SET minimo_litros = %s,
-            intervalo_horas = %s,
+            consulta_automatica_hora = %s,
             promocion_desde = %s,
             promocion_hasta = %s,
             actualizado_en = CURRENT_TIMESTAMP
         WHERE estacion_id = %s
-    ''', (minimo_litros, intervalo_horas, promocion_desde, promocion_hasta, eid))
+    ''', (minimo_litros, consulta_automatica_hora, promocion_desde, promocion_hasta, eid))
     conn.commit()
     conn.close()
     return redirect(sorteo_path('/admin'))
