@@ -65,8 +65,9 @@ def preview_sql(limit: int = 15) -> str:
     return DEFAULT_FACTURACION_SQL.replace("TOP (15)", f"TOP ({safe_limit})", 1)
 
 
-def ticket_lookup_sql(include_remitos: bool = False) -> str:
+def ticket_lookup_sql(include_remitos: bool = False, same_day_only: bool = False) -> str:
     tco_condition = "1 = 1" if include_remitos else "f.TCO <> 'RE'"
+    time_condition = "CAST(f.FEC AS DATETIME) >= ? AND CAST(f.FEC AS DATETIME) < ?" if same_day_only else "f.FEC = ?"
     return f"""
 WITH FacturaObjetivo AS (
     SELECT TOP (1)
@@ -94,8 +95,7 @@ WITH FacturaObjetivo AS (
         ON f.OPE = v.CodVen
     WHERE f.ANU = ''
       AND f.LUG = 1
-      AND f.FEC >= ?
-      AND f.FEC < DATEADD(SECOND, 1, ?)
+      AND {time_condition}
       AND f.SUC = ?
       AND f.NCO = ?
       AND {tco_condition}
@@ -225,6 +225,14 @@ def preview_station_tickets(station: dict, limit: int = 15):
     return run_query(station, preview_sql(limit))
 
 
+def round_to_smalldatetime(dt: datetime) -> datetime:
+    rounded = dt.replace(second=0, microsecond=0)
+    if dt.second >= 30 or dt.microsecond:
+        from datetime import timedelta
+        rounded = rounded + timedelta(minutes=1)
+    return rounded
+
+
 def validate_ticket_identity(
     station: dict,
     ticket_hora: datetime,
@@ -232,11 +240,44 @@ def validate_ticket_identity(
     numero: int,
     include_remitos: bool = False,
 ):
+    rounded_time = round_to_smalldatetime(ticket_hora)
     rows = run_query(
         station,
         ticket_lookup_sql(include_remitos=include_remitos),
-        (ticket_hora, ticket_hora, int(sucursal), int(numero)),
+        (rounded_time, int(sucursal), int(numero)),
+    )
+    if rows:
+        return rows[0], None
+
+    from datetime import datetime as _dt, timedelta
+    day_start = _dt(ticket_hora.year, ticket_hora.month, ticket_hora.day)
+    day_end = day_start + timedelta(days=1)
+    same_day_rows = run_query(
+        station,
+        ticket_lookup_sql(include_remitos=include_remitos, same_day_only=True),
+        (day_start, day_end, int(sucursal), int(numero)),
+    )
+    if same_day_rows:
+        return None, "La factura existe en DEBO, pero la hora no coincide con la registrada."
+
+    return None, "No se encontro una factura para esa fecha, hora exacta y numero."
+
+
+def validate_ticket_invoice_on_date(
+    station: dict,
+    ticket_date: datetime,
+    sucursal: int,
+    numero: int,
+    include_remitos: bool = False,
+):
+    from datetime import datetime as _dt, timedelta
+    day_start = _dt(ticket_date.year, ticket_date.month, ticket_date.day)
+    day_end = day_start + timedelta(days=1)
+    rows = run_query(
+        station,
+        ticket_lookup_sql(include_remitos=include_remitos, same_day_only=True),
+        (day_start, day_end, int(sucursal), int(numero)),
     )
     if not rows:
-        return None, "No se encontro una factura para esa fecha, hora exacta y numero."
+        return None, "No se encontro una factura para esa fecha y numero."
     return rows[0], None

@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, session, Response
 from werkzeug.security import check_password_hash
-from datetime import datetime
+from datetime import datetime, date
 from io import BytesIO
 from decimal import Decimal
 import os
@@ -19,7 +19,7 @@ except ImportError:
     qrcode = None
 
 from dotenv import load_dotenv
-from debo import SQLSERVER_DRIVER, station_debo_ready, validate_ticket_identity
+from debo import SQLSERVER_DRIVER, station_debo_ready, validate_ticket_invoice_on_date
 
 load_dotenv()
 
@@ -31,6 +31,7 @@ SORTEO_BASE_PATH = os.environ.get('SORTEO_BASE_PATH', '/sorteo').rstrip('/')
 
 PROMO_COMBUSTIBLES = {'Super', 'Diesel 500', 'Infinia', 'Infinia Diesel'}
 INF_INFINIA = {'Infinia', 'Infinia Diesel'}
+ACTIVE_STATES = ('PENDIENTE', 'DUDOSO', 'APROBADO', 'DENEGADO')
 
 
 def get_db():
@@ -64,6 +65,8 @@ def init_db():
             estacion_id INTEGER PRIMARY KEY REFERENCES estaciones(id) ON DELETE CASCADE,
             minimo_litros NUMERIC(10, 3) DEFAULT 0,
             intervalo_horas INTEGER DEFAULT 4,
+            promocion_desde DATE,
+            promocion_hasta DATE,
             activo BOOLEAN DEFAULT TRUE,
             detenido BOOLEAN DEFAULT FALSE,
             ultima_consulta TIMESTAMP,
@@ -71,11 +74,14 @@ def init_db():
             actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    c.execute("ALTER TABLE sorteo_config ADD COLUMN IF NOT EXISTS promocion_desde DATE")
+    c.execute("ALTER TABLE sorteo_config ADD COLUMN IF NOT EXISTS promocion_hasta DATE")
     c.execute('''
         CREATE TABLE IF NOT EXISTS sorteo_participantes (
             id SERIAL PRIMARY KEY,
             estacion_id INTEGER REFERENCES estaciones(id) ON DELETE CASCADE,
-            ticket_hora TIMESTAMP NOT NULL,
+            ticket_fecha DATE NOT NULL,
+            ticket_hora TIMESTAMP,
             numero_factura TEXT NOT NULL,
             nombre TEXT NOT NULL,
             apellido TEXT NOT NULL,
@@ -91,17 +97,29 @@ def init_db():
             chances INTEGER DEFAULT 1,
             tipo_comprobante TEXT,
             letra_fiscal TEXT,
+            device_token TEXT,
+            ip_registro TEXT,
+            user_agent TEXT,
+            sospecha_dispositivo BOOLEAN DEFAULT FALSE,
             detalle_validacion TEXT,
             consulta_at TIMESTAMP,
             conteo_id INTEGER,
             creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS ticket_fecha DATE")
+    c.execute("UPDATE sorteo_participantes SET ticket_fecha = COALESCE(ticket_fecha, ticket_hora::date) WHERE ticket_fecha IS NULL")
+    c.execute("ALTER TABLE sorteo_participantes ALTER COLUMN ticket_fecha SET NOT NULL")
+    c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS ticket_hora TIMESTAMP")
     c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS vendedor TEXT")
     c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS factura_real TEXT")
     c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS chances INTEGER DEFAULT 1")
     c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS tipo_comprobante TEXT")
     c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS letra_fiscal TEXT")
+    c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS device_token TEXT")
+    c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS ip_registro TEXT")
+    c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS user_agent TEXT")
+    c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS sospecha_dispositivo BOOLEAN DEFAULT FALSE")
     c.execute('''
         CREATE TABLE IF NOT EXISTS sorteo_conteos (
             id SERIAL PRIMARY KEY,
@@ -111,18 +129,21 @@ def init_db():
             aprobados INTEGER DEFAULT 0,
             denegados INTEGER DEFAULT 0,
             pendientes INTEGER DEFAULT 0,
+            dudosos INTEGER DEFAULT 0,
             snapshot_json TEXT
         )
     ''')
+    c.execute("ALTER TABLE sorteo_conteos ADD COLUMN IF NOT EXISTS dudosos INTEGER DEFAULT 0")
     c.execute('''
         CREATE INDEX IF NOT EXISTS idx_sorteo_participantes_estacion_activo
         ON sorteo_participantes(estacion_id, conteo_id, creado_en DESC)
     ''')
     c.execute('DROP INDEX IF EXISTS idx_sorteo_participantes_factura_estacion')
     c.execute('DROP INDEX IF EXISTS idx_sorteo_participantes_factura_estacion_activa')
+    c.execute('DROP INDEX IF EXISTS idx_sorteo_participantes_ticket_factura_activa')
     c.execute('''
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_sorteo_participantes_ticket_factura_activa
-        ON sorteo_participantes(estacion_id, ticket_hora, numero_factura)
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_sorteo_participantes_fecha_factura_activa
+        ON sorteo_participantes(estacion_id, ticket_fecha, numero_factura)
         WHERE conteo_id IS NULL
     ''')
     conn.close()
@@ -132,6 +153,13 @@ def ensure_config(estacion_id):
     conn = get_db()
     c = conn.cursor()
     c.execute('INSERT INTO sorteo_config (estacion_id) VALUES (%s) ON CONFLICT (estacion_id) DO NOTHING', (estacion_id,))
+    c.execute('''
+        UPDATE sorteo_config
+        SET promocion_desde = COALESCE(promocion_desde, CURRENT_DATE),
+            promocion_hasta = COALESCE(promocion_hasta, CURRENT_DATE + INTERVAL '30 days'),
+            actualizado_en = CURRENT_TIMESTAMP
+        WHERE estacion_id = %s
+    ''', (estacion_id,))
     conn.commit()
     conn.close()
 
@@ -163,8 +191,8 @@ def qr_data_url(text):
     return 'data:image/png;base64,' + base64.b64encode(salida.getvalue()).decode('ascii')
 
 
-def parse_ticket_time(fecha, hora):
-    return datetime.strptime(f'{fecha} {hora}', '%Y-%m-%d %H:%M:%S')
+def parse_ticket_date(fecha):
+    return datetime.strptime(fecha, '%Y-%m-%d').date()
 
 
 def normalize_invoice_number(raw_value):
@@ -220,25 +248,70 @@ def compute_chances(combustible, pago_app_ypf):
 
 
 def technical_validation_error(message):
-    return (
-        message.startswith('Falta configurar')
-        or message.startswith('Error consultando DEBO:')
-    )
+    return message.startswith('Falta configurar') or message.startswith('Error consultando DEBO:')
 
 
-def consultar_facturacion(estacion_id, ticket_hora, numero_factura):
+def suspicious_device_message():
+    return 'Registro marcado como dudoso: este dispositivo ya supera el limite permitido de cargas en la promocion.'
+
+
+def get_client_ip():
+    forwarded = request.headers.get('X-Forwarded-For', '')
+    if forwarded:
+        return forwarded.split(',')[0].strip()
+    return request.remote_addr or ''
+
+
+def get_active_promo_bounds(config):
+    if config and config.get('promocion_desde') and config.get('promocion_hasta'):
+        return config['promocion_desde'], config['promocion_hasta']
+    today = date.today()
+    return today, today
+
+
+def count_device_registrations(cursor, estacion_id, config, device_token, exclude_id=None):
+    if not device_token:
+        return 0
+    promo_desde, promo_hasta = get_active_promo_bounds(config)
+    sql = '''
+        SELECT COUNT(*)
+        FROM sorteo_participantes
+        WHERE estacion_id = %s
+          AND conteo_id IS NULL
+          AND device_token = %s
+          AND ticket_fecha >= %s
+          AND ticket_fecha <= %s
+    '''
+    params = [estacion_id, device_token, promo_desde, promo_hasta]
+    if exclude_id is not None:
+        sql += ' AND id <> %s'
+        params.append(exclude_id)
+    cursor.execute(sql, params)
+    return cursor.fetchone()[0]
+
+
+def is_suspicious_device(cursor, participante, config):
+    return count_device_registrations(
+        cursor,
+        participante['estacion_id'],
+        config,
+        participante.get('device_token'),
+        exclude_id=participante['id'],
+    ) >= 2
+
+
+def consultar_facturacion(estacion_id, ticket_fecha, numero_factura):
     station = get_station(estacion_id)
     if not station_debo_ready(station):
         return None, 'Falta configurar IP, base, usuario o clave de DEBO para esta estacion.'
-
     try:
         factura = normalize_invoice_number(numero_factura)
     except ValueError as exc:
         return None, str(exc)
     try:
-        return validate_ticket_identity(
+        return validate_ticket_invoice_on_date(
             station,
-            ticket_hora,
+            datetime.combine(ticket_fecha, datetime.min.time()),
             factura['sucursal'],
             factura['numero'],
             include_remitos=bool(station.get('debo_allow_remitos')),
@@ -252,7 +325,6 @@ def classify_ticket_match(factura, minimo_litros):
     lineas_no_validas = int(factura.get('lineas_no_validas') or 0)
     combustible = factura.get('combustible')
     litros = decimal_to_float(factura.get('litros'))
-    pago_app_ypf = bool(factura.get('pago_app_ypf'))
     if promo_lineas <= 0 or combustible not in PROMO_COMBUSTIBLES:
         return 'DENEGADO', 'La factura no corresponde a un combustible participante.'
     if lineas_no_validas > 0:
@@ -289,13 +361,14 @@ def build_admin_context(eid):
     c.execute('SELECT * FROM estaciones WHERE id = %s', (eid,))
     station = c.fetchone()
     participantes = query_participantes(c, eid, archived=False)
-    c.execute('SELECT * FROM sorteo_conteos WHERE estacion_id = %s ORDER BY iniciado_en DESC LIMIT 10', (eid,))
+    c.execute('SELECT * FROM sorteo_conteos WHERE estacion_id = %s ORDER BY iniciado_en DESC LIMIT 20', (eid,))
     conteos = c.fetchall()
     conn.close()
 
     aprobados = [p for p in participantes if p['estado'] == 'APROBADO']
     denegados = [p for p in participantes if p['estado'] == 'DENEGADO']
     pendientes = [p for p in participantes if p['estado'] == 'PENDIENTE']
+    dudosos = [p for p in participantes if p['estado'] == 'DUDOSO']
     url = public_url(eid)
 
     return {
@@ -305,6 +378,7 @@ def build_admin_context(eid):
         'aprobados': aprobados,
         'denegados': denegados,
         'pendientes': pendientes,
+        'dudosos': dudosos,
         'conteos': conteos,
         'public_url': url,
         'qr': qr_data_url(url),
@@ -316,10 +390,29 @@ def build_admin_context(eid):
             'aprobados': len(aprobados),
             'denegados': len(denegados),
             'pendientes': len(pendientes),
+            'dudosos': len(dudosos),
         },
         'split_timestamp': split_timestamp,
         'yes_no_blank': yes_no_blank,
     }
+
+
+def reset_participante_validation(cursor, participante_id, estado='PENDIENTE', detalle='Esperando validacion.'):
+    cursor.execute('''
+        UPDATE sorteo_participantes
+        SET estado = %s,
+            combustible = NULL,
+            litros = NULL,
+            pago_app_ypf = NULL,
+            vendedor = NULL,
+            factura_real = NULL,
+            chances = 0,
+            tipo_comprobante = NULL,
+            letra_fiscal = NULL,
+            detalle_validacion = %s,
+            consulta_at = CURRENT_TIMESTAMP
+        WHERE id = %s
+    ''', (estado, detalle, participante_id))
 
 
 def validar_pendientes(estacion_id=None):
@@ -327,7 +420,7 @@ def validar_pendientes(estacion_id=None):
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     if estacion_id:
         c.execute('''
-            SELECT p.*, cfg.minimo_litros
+            SELECT p.*, cfg.minimo_litros, cfg.promocion_desde, cfg.promocion_hasta
             FROM sorteo_participantes p
             JOIN sorteo_config cfg ON cfg.estacion_id = p.estacion_id
             WHERE p.estado = 'PENDIENTE' AND p.conteo_id IS NULL AND p.estacion_id = %s
@@ -335,7 +428,7 @@ def validar_pendientes(estacion_id=None):
         ''', (estacion_id,))
     else:
         c.execute('''
-            SELECT p.*, cfg.minimo_litros
+            SELECT p.*, cfg.minimo_litros, cfg.promocion_desde, cfg.promocion_hasta
             FROM sorteo_participantes p
             JOIN sorteo_config cfg ON cfg.estacion_id = p.estacion_id
             WHERE p.estado = 'PENDIENTE' AND p.conteo_id IS NULL
@@ -346,32 +439,23 @@ def validar_pendientes(estacion_id=None):
     for participante in pendientes:
         factura, error = consultar_facturacion(
             participante['estacion_id'],
-            participante['ticket_hora'],
+            participante['ticket_fecha'],
             participante['numero_factura'],
         )
         if error:
             nuevo_estado = 'PENDIENTE' if technical_validation_error(error) else 'DENEGADO'
-            c.execute('''
-                UPDATE sorteo_participantes
-                SET estado = %s,
-                    combustible = NULL,
-                    litros = NULL,
-                    pago_app_ypf = NULL,
-                    vendedor = NULL,
-                    factura_real = NULL,
-                    chances = 0,
-                    tipo_comprobante = NULL,
-                    letra_fiscal = NULL,
-                    detalle_validacion = %s,
-                    consulta_at = CURRENT_TIMESTAMP
-                WHERE id = %s
-            ''', (nuevo_estado, error, participante['id']))
+            reset_participante_validation(c, participante['id'], estado=nuevo_estado, detalle=error)
             continue
 
         estado, detalle = classify_ticket_match(factura, participante['minimo_litros'])
         combustible = factura.get('combustible')
         pago_app_ypf = bool(factura.get('pago_app_ypf'))
         chances = compute_chances(combustible, pago_app_ypf) if estado == 'APROBADO' else 0
+        sospecha_dispositivo = is_suspicious_device(c, participante, participante)
+
+        if estado == 'APROBADO' and sospecha_dispositivo:
+            estado = 'DUDOSO'
+            detalle = suspicious_device_message()
 
         c.execute('''
             UPDATE sorteo_participantes
@@ -384,6 +468,7 @@ def validar_pendientes(estacion_id=None):
                 chances = %s,
                 tipo_comprobante = %s,
                 letra_fiscal = %s,
+                sospecha_dispositivo = %s,
                 detalle_validacion = %s,
                 consulta_at = CURRENT_TIMESTAMP
             WHERE id = %s
@@ -397,6 +482,7 @@ def validar_pendientes(estacion_id=None):
             chances,
             factura.get('tipo_comprobante'),
             factura.get('letra_fiscal'),
+            sospecha_dispositivo,
             detalle,
             participante['id'],
         ))
@@ -486,13 +572,19 @@ def configurar():
     eid = session['sorteo_estacion_id']
     minimo_litros = request.form.get('minimo_litros') or 0
     intervalo_horas = request.form.get('intervalo_horas') or 4
+    promocion_desde = request.form.get('promocion_desde') or None
+    promocion_hasta = request.form.get('promocion_hasta') or None
     conn = get_db()
     c = conn.cursor()
     c.execute('''
         UPDATE sorteo_config
-        SET minimo_litros = %s, intervalo_horas = %s, actualizado_en = CURRENT_TIMESTAMP
+        SET minimo_litros = %s,
+            intervalo_horas = %s,
+            promocion_desde = %s,
+            promocion_hasta = %s,
+            actualizado_en = CURRENT_TIMESTAMP
         WHERE estacion_id = %s
-    ''', (minimo_litros, intervalo_horas, eid))
+    ''', (minimo_litros, intervalo_horas, promocion_desde, promocion_hasta, eid))
     conn.commit()
     conn.close()
     return redirect(sorteo_path('/admin'))
@@ -533,26 +625,79 @@ def reanudar():
     return redirect(sorteo_path('/admin'))
 
 
-@app.route('/admin/iniciar-conteo', methods=['POST'])
-@app.route('/sorteo/admin/iniciar-conteo', methods=['POST'])
-def iniciar_conteo():
-    if not admin_required():
-        return redirect(sorteo_path('/admin/login'))
-    eid = session['sorteo_estacion_id']
-    conn = get_db()
-    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    rows = query_participantes(c, eid, archived=False)
+def archive_current_promo(cursor, eid):
+    rows = query_participantes(cursor, eid, archived=False)
     total = len(rows)
     aprobados = sum(1 for row in rows if row['estado'] == 'APROBADO')
     denegados = sum(1 for row in rows if row['estado'] == 'DENEGADO')
     pendientes = sum(1 for row in rows if row['estado'] == 'PENDIENTE')
+    dudosos = sum(1 for row in rows if row['estado'] == 'DUDOSO')
     snapshot = json.dumps([dict(row) for row in rows], default=str, ensure_ascii=False)
+    cursor.execute('''
+        INSERT INTO sorteo_conteos (estacion_id, total, aprobados, denegados, pendientes, dudosos, snapshot_json)
+        VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
+    ''', (eid, total, aprobados, denegados, pendientes, dudosos, snapshot))
+    conteo_id = cursor.fetchone()['id']
+    cursor.execute('UPDATE sorteo_participantes SET conteo_id = %s WHERE estacion_id = %s AND conteo_id IS NULL', (conteo_id, eid))
+
+
+@app.route('/admin/nueva-promocion', methods=['POST'])
+@app.route('/sorteo/admin/nueva-promocion', methods=['POST'])
+def nueva_promocion():
+    if not admin_required():
+        return redirect(sorteo_path('/admin/login'))
+    eid = session['sorteo_estacion_id']
+    promocion_desde = request.form.get('promocion_desde') or None
+    promocion_hasta = request.form.get('promocion_hasta') or None
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    archive_current_promo(c, eid)
     c.execute('''
-        INSERT INTO sorteo_conteos (estacion_id, total, aprobados, denegados, pendientes, snapshot_json)
-        VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
-    ''', (eid, total, aprobados, denegados, pendientes, snapshot))
-    conteo_id = c.fetchone()['id']
-    c.execute('UPDATE sorteo_participantes SET conteo_id = %s WHERE estacion_id = %s AND conteo_id IS NULL', (conteo_id, eid))
+        UPDATE sorteo_config
+        SET promocion_desde = %s,
+            promocion_hasta = %s,
+            actualizado_en = CURRENT_TIMESTAMP
+        WHERE estacion_id = %s
+    ''', (promocion_desde, promocion_hasta, eid))
+    conn.commit()
+    conn.close()
+    return redirect(sorteo_path('/admin'))
+
+
+@app.route('/admin/dudoso/<int:participante_id>/aprobar', methods=['POST'])
+@app.route('/sorteo/admin/dudoso/<int:participante_id>/aprobar', methods=['POST'])
+def aprobar_dudoso(participante_id):
+    if not admin_required():
+        return redirect(sorteo_path('/admin/login'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''
+        UPDATE sorteo_participantes
+        SET estado = 'APROBADO',
+            detalle_validacion = 'Aprobado manualmente desde la bandeja de dudosos.',
+            consulta_at = CURRENT_TIMESTAMP
+        WHERE id = %s AND estacion_id = %s AND conteo_id IS NULL
+    ''', (participante_id, session['sorteo_estacion_id']))
+    conn.commit()
+    conn.close()
+    return redirect(sorteo_path('/admin'))
+
+
+@app.route('/admin/dudoso/<int:participante_id>/denegar', methods=['POST'])
+@app.route('/sorteo/admin/dudoso/<int:participante_id>/denegar', methods=['POST'])
+def denegar_dudoso(participante_id):
+    if not admin_required():
+        return redirect(sorteo_path('/admin/login'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''
+        UPDATE sorteo_participantes
+        SET estado = 'DENEGADO',
+            chances = 0,
+            detalle_validacion = 'Denegado manualmente desde la bandeja de dudosos.',
+            consulta_at = CURRENT_TIMESTAMP
+        WHERE id = %s AND estacion_id = %s AND conteo_id IS NULL
+    ''', (participante_id, session['sorteo_estacion_id']))
     conn.commit()
     conn.close()
     return redirect(sorteo_path('/admin'))
@@ -589,7 +734,6 @@ def exportar_excel():
         'Registro',
         'Estado',
         'Fecha ticket',
-        'Hora ticket',
         'Factura cliente',
         'Factura DEBO',
         'Tipo',
@@ -599,6 +743,10 @@ def exportar_excel():
         'Litros',
         'App YPF',
         'Chances',
+        'Device token',
+        'IP',
+        'User agent',
+        'Sospecha dispositivo',
         'Nombre',
         'Apellido',
         'DNI',
@@ -610,12 +758,10 @@ def exportar_excel():
         'Repeticion exportada',
     ])
     for row, repetition in export_rows:
-        fecha_ticket, hora_ticket = split_timestamp(row['ticket_hora'])
         ws.append([
             str(row['creado_en'])[:19],
             row['estado'],
-            fecha_ticket,
-            hora_ticket,
+            str(row['ticket_fecha']),
             row['numero_factura'],
             row['factura_real'] or '',
             row['tipo_comprobante'] or '',
@@ -625,6 +771,10 @@ def exportar_excel():
             row['litros'],
             yes_no_blank(row['pago_app_ypf']),
             row['chances'] or '',
+            row.get('device_token') or '',
+            row.get('ip_registro') or '',
+            row.get('user_agent') or '',
+            'Si' if row.get('sospecha_dispositivo') else 'No',
             row['nombre'],
             row['apellido'],
             row['dni'] or '',
@@ -639,6 +789,8 @@ def exportar_excel():
     wb.save(salida)
     salida.seek(0)
     suffix = estado.lower() if estado else 'general'
+    if incluir_archivados:
+        suffix += '_archivado'
     if ponderado:
         suffix += '_ponderado'
     return Response(
@@ -657,7 +809,7 @@ def cliente_sorteo(estacion_id):
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     c.execute('SELECT nombre FROM estaciones WHERE id = %s', (estacion_id,))
     estacion = c.fetchone()
-    c.execute('SELECT detenido FROM sorteo_config WHERE estacion_id = %s', (estacion_id,))
+    c.execute('SELECT * FROM sorteo_config WHERE estacion_id = %s', (estacion_id,))
     config = c.fetchone()
     mensaje = None
     error = None
@@ -671,24 +823,40 @@ def cliente_sorteo(estacion_id):
             error = 'El sorteo se encuentra cerrado.'
         else:
             try:
-                ticket_hora = parse_ticket_time(request.form['fecha_ticket'], request.form['hora_ticket'])
+                ticket_fecha = parse_ticket_date(request.form['fecha_ticket'])
+                promo_desde, promo_hasta = get_active_promo_bounds(config)
+                if ticket_fecha < promo_desde or ticket_fecha > promo_hasta:
+                    raise ValueError('La fecha del ticket esta fuera de la promocion activa.')
                 factura = normalize_invoice_number(request.form.get('numero_factura'))
+                device_token = (request.form.get('device_token') or '').strip()
+                user_agent = request.headers.get('User-Agent', '')
+                ip_registro = get_client_ip()
+                sospecha = count_device_registrations(c, estacion_id, config, device_token) >= 2
+                estado_inicial = 'PENDIENTE'
+                detalle = 'Esperando validacion.' if not sospecha else 'Esperando validacion. El dispositivo sera revisado si la factura matchea.'
                 c.execute('''
                     INSERT INTO sorteo_participantes
-                    (estacion_id, ticket_hora, numero_factura, nombre, apellido, dni, telefono, email)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    (estacion_id, ticket_fecha, ticket_hora, numero_factura, nombre, apellido, dni, telefono, email, estado, device_token, ip_registro, user_agent, sospecha_dispositivo, detalle_validacion)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ''', (
                     estacion_id,
-                    ticket_hora,
+                    ticket_fecha,
+                    datetime.combine(ticket_fecha, datetime.min.time()),
                     factura['canonical'],
                     request.form['nombre'].strip(),
                     request.form['apellido'].strip(),
                     request.form.get('dni', '').strip(),
                     request.form['telefono'].strip(),
                     request.form['email'].strip().lower(),
+                    estado_inicial,
+                    device_token,
+                    ip_registro,
+                    user_agent,
+                    sospecha,
+                    detalle,
                 ))
                 conn.commit()
-                mensaje = 'Tu cupon quedo pendiente. Se aprueba solo si coinciden fecha, hora exacta con segundos y numero de factura.'
+                mensaje = 'Tu cupon quedo registrado. Si la factura coincide, pasara a aprobado; si detectamos algo raro con el dispositivo, quedara en revision.'
             except psycopg2.errors.UniqueViolation:
                 conn.rollback()
                 error = 'Ese ticket ya fue registrado para esta estacion.'

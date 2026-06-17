@@ -5,213 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gran sorteo en {{ estacion['nombre'] }}</title>
     <style>
-        :root {
-            --blue: #005cab;
-            --blue-dark: #073763;
-            --yellow: #f4c542;
-            --ink: #14233b;
-            --muted: #667085;
-            --line: #d7dee8;
-            --surface: #ffffff;
-            --bg: #eef4fb;
-            --ok: #027a48;
-            --bad: #b42318;
-        }
-
+        :root { --blue:#005cab; --blue-dark:#073763; --yellow:#f4c542; --ink:#14233b; --muted:#667085; --line:#d7dee8; --surface:#ffffff; --bg:#eef4fb; --ok:#027a48; --bad:#b42318; }
         * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            min-height: 100vh;
-            font-family: Arial, Helvetica, sans-serif;
-            color: var(--ink);
-            background:
-                linear-gradient(135deg, rgba(0, 92, 171, .12), rgba(244, 197, 66, .18)),
-                var(--bg);
-        }
-        .page {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        .hero {
-            background: linear-gradient(135deg, var(--blue), var(--blue-dark));
-            color: white;
-            padding: clamp(22px, 6vw, 48px) 18px clamp(64px, 12vw, 96px);
-            text-align: center;
-        }
-        .brand {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 34px;
-            padding: 7px 14px;
-            border: 1px solid rgba(255,255,255,.25);
-            border-radius: 999px;
-            font-weight: 700;
-            font-size: 13px;
-            letter-spacing: .4px;
-            background: rgba(255,255,255,.12);
-        }
-        .hero h1 {
-            margin: 18px auto 8px;
-            max-width: 760px;
-            font-size: clamp(30px, 8vw, 54px);
-            line-height: 1.02;
-        }
-        .hero p {
-            margin: 0 auto;
-            max-width: 620px;
-            color: rgba(255,255,255,.86);
-            font-size: clamp(15px, 4vw, 18px);
-            line-height: 1.45;
-        }
-        .shell {
-            width: min(760px, calc(100% - 28px));
-            margin: clamp(-54px, -8vw, -42px) auto 28px;
-        }
-        .panel {
-            background: var(--surface);
-            border: 1px solid rgba(13, 52, 89, .12);
-            border-radius: 18px;
-            box-shadow: 0 22px 55px rgba(16, 42, 67, .18);
-            overflow: hidden;
-        }
-        .panel-head {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            padding: 18px;
-            border-bottom: 1px solid var(--line);
-            background: #fbfdff;
-        }
-        .step {
-            flex: 0 0 auto;
-            width: 42px;
-            height: 42px;
-            display: grid;
-            place-items: center;
-            border-radius: 50%;
-            background: var(--yellow);
-            color: #1d2939;
-            font-weight: 800;
-        }
-        .panel-head h2 {
-            margin: 0 0 3px;
-            font-size: 20px;
-        }
-        .panel-head p {
-            margin: 0;
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.35;
-        }
-        .content {
-            padding: 18px;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 14px;
-        }
-        .field {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .field.full { grid-column: 1 / -1; }
-        label {
-            font-size: 12px;
-            text-transform: uppercase;
-            font-weight: 800;
-            color: #344054;
-            letter-spacing: .3px;
-        }
-        input {
-            width: 100%;
-            min-height: 50px;
-            border: 1px solid #c8d2df;
-            border-radius: 12px;
-            padding: 13px 14px;
-            font-size: 16px;
-            color: var(--ink);
-            background: white;
-            outline: none;
-            transition: border-color .2s, box-shadow .2s;
-        }
-        input:focus {
-            border-color: var(--blue);
-            box-shadow: 0 0 0 4px rgba(0, 92, 171, .13);
-        }
-        .hint {
-            margin: 0 0 16px;
-            color: var(--muted);
-            font-size: 14px;
-            line-height: 1.45;
-        }
-        .alert {
-            margin-bottom: 14px;
-            padding: 12px 14px;
-            border-radius: 12px;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-        .alert.error {
-            background: #fdecea;
-            color: var(--bad);
-        }
-        .submit {
-            width: 100%;
-            min-height: 54px;
-            margin-top: 18px;
-            border: none;
-            border-radius: 14px;
-            background: linear-gradient(135deg, var(--blue), #0b75ce);
-            color: white;
-            font-weight: 800;
-            font-size: 16px;
-            cursor: pointer;
-            box-shadow: 0 12px 24px rgba(0, 92, 171, .24);
-        }
-        .submit:disabled {
-            cursor: not-allowed;
-            opacity: .55;
-            box-shadow: none;
-        }
-        .thanks {
-            padding: clamp(28px, 8vw, 48px) 22px;
-            text-align: center;
-        }
-        .check {
-            width: 62px;
-            height: 62px;
-            display: grid;
-            place-items: center;
-            margin: 0 auto 16px;
-            border-radius: 50%;
-            background: #ecfdf3;
-            color: var(--ok);
-            font-size: 32px;
-            font-weight: 900;
-        }
-        .thanks h2 {
-            margin: 0 0 10px;
-            color: var(--ok);
-            font-size: clamp(26px, 7vw, 38px);
-        }
-        .thanks p {
-            margin: 0 auto;
-            max-width: 520px;
-            color: #344054;
-            line-height: 1.55;
-        }
-        @media (max-width: 620px) {
-            .shell { width: min(100% - 20px, 760px); }
-            .panel { border-radius: 16px; }
-            .panel-head { align-items: flex-start; }
-            .grid { grid-template-columns: 1fr; }
-            .content { padding: 16px; }
-            input { min-height: 52px; }
-        }
+        body { margin:0; min-height:100vh; font-family:Arial, Helvetica, sans-serif; color:var(--ink); background:linear-gradient(135deg, rgba(0, 92, 171, .12), rgba(244, 197, 66, .18)), var(--bg); }
+        .page { min-height:100vh; display:flex; flex-direction:column; }
+        .hero { background:linear-gradient(135deg, var(--blue), var(--blue-dark)); color:white; padding:clamp(22px, 6vw, 48px) 18px clamp(64px, 12vw, 96px); text-align:center; }
+        .brand { display:inline-flex; align-items:center; justify-content:center; min-height:34px; padding:7px 14px; border:1px solid rgba(255,255,255,.25); border-radius:999px; font-weight:700; font-size:13px; letter-spacing:.4px; background:rgba(255,255,255,.12); }
+        .hero h1 { margin:18px auto 8px; max-width:760px; font-size:clamp(30px, 8vw, 54px); line-height:1.02; }
+        .hero p { margin:0 auto; max-width:620px; color:rgba(255,255,255,.86); font-size:clamp(15px, 4vw, 18px); line-height:1.45; }
+        .shell { width:min(760px, calc(100% - 28px)); margin:clamp(-54px, -8vw, -42px) auto 28px; }
+        .panel { background:var(--surface); border:1px solid rgba(13, 52, 89, .12); border-radius:18px; box-shadow:0 22px 55px rgba(16, 42, 67, .18); overflow:hidden; }
+        .panel-head { display:flex; gap:12px; align-items:center; padding:18px; border-bottom:1px solid var(--line); background:#fbfdff; }
+        .step { flex:0 0 auto; width:42px; height:42px; display:grid; place-items:center; border-radius:50%; background:var(--yellow); color:#1d2939; font-weight:800; }
+        .panel-head h2 { margin:0 0 3px; font-size:20px; }
+        .panel-head p { margin:0; color:var(--muted); font-size:13px; line-height:1.35; }
+        .content { padding:18px; }
+        .grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:14px; }
+        .field { display:flex; flex-direction:column; gap:6px; }
+        .field.full { grid-column:1 / -1; }
+        label { font-size:12px; text-transform:uppercase; font-weight:800; color:#344054; letter-spacing:.3px; }
+        input { width:100%; min-height:50px; border:1px solid #c8d2df; border-radius:12px; padding:13px 14px; font-size:16px; color:var(--ink); background:white; outline:none; transition:border-color .2s, box-shadow .2s; }
+        input:focus { border-color:var(--blue); box-shadow:0 0 0 4px rgba(0, 92, 171, .13); }
+        .hint { margin:0 0 16px; color:var(--muted); font-size:14px; line-height:1.45; }
+        .alert { margin-bottom:14px; padding:12px 14px; border-radius:12px; font-size:14px; line-height:1.4; }
+        .alert.error { background:#fdecea; color:var(--bad); }
+        .submit { width:100%; min-height:54px; margin-top:18px; border:none; border-radius:14px; background:linear-gradient(135deg, var(--blue), #0b75ce); color:white; font-weight:800; font-size:16px; cursor:pointer; box-shadow:0 12px 24px rgba(0, 92, 171, .24); }
+        .submit:disabled { cursor:not-allowed; opacity:.55; box-shadow:none; }
+        .thanks { padding:clamp(28px, 8vw, 48px) 22px; text-align:center; }
+        .check { width:62px; height:62px; display:grid; place-items:center; margin:0 auto 16px; border-radius:50%; background:#ecfdf3; color:var(--ok); font-size:32px; font-weight:900; }
+        .thanks h2 { margin:0 0 10px; color:var(--ok); font-size:clamp(26px, 7vw, 38px); }
+        .thanks p { margin:0 auto; max-width:520px; color:#344054; line-height:1.55; }
+        @media (max-width: 620px) { .shell { width:min(100% - 20px, 760px); } .panel { border-radius:16px; } .panel-head { align-items:flex-start; } .grid { grid-template-columns:1fr; } .content { padding:16px; } input { min-height:52px; } }
     </style>
 </head>
 <body>
@@ -220,7 +44,7 @@
             <header class="hero">
                 <div class="brand">{{ estacion['nombre'] }}</div>
                 <h1>Gran sorteo en {{ estacion['nombre'] }}</h1>
-                <p>Registrá tu cupón y quedá participando una vez que el ticket sea validado.</p>
+                <p>Registrá tu cupón con fecha y número de factura. Si el sistema detecta muchas cargas desde el mismo dispositivo, puede dejarlo en revisión.</p>
             </header>
             {% if mensaje %}
             <main class="shell">
@@ -239,24 +63,21 @@
                         <div class="step">1</div>
                         <div>
                             <h2>Completá tus datos</h2>
-                            <p>Usá la fecha, la hora exacta con segundos y el número de factura.</p>
+                            <p>Usá la fecha del ticket y el número de factura exactamente como aparecen impresos.</p>
                         </div>
                     </div>
                     <div class="content">
                         {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
                         {% if detenido %}<div class="alert error">El sorteo se encuentra cerrado.</div>{% endif %}
-                        <p class="hint">Ejemplo válido: fecha 2026-06-16, hora 14:35:09 y factura 19-828192. Si no coinciden los tres datos, el cupón queda denegado.</p>
+                        <p class="hint">Si una misma persona o dispositivo intenta cargar demasiadas facturas dentro de la misma promoción, el cupón puede quedar en revisión manual.</p>
                         <form method="POST">
+                            <input type="hidden" name="device_token" id="device_token">
                             <div class="grid">
                                 <div class="field">
                                     <label>Fecha del ticket</label>
                                     <input type="date" name="fecha_ticket" required>
                                 </div>
                                 <div class="field">
-                                    <label>Hora exacta</label>
-                                    <input type="text" name="hora_ticket" placeholder="HH:MM:SS" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}" inputmode="numeric" required>
-                                </div>
-                                <div class="field full">
                                     <label>Numero de factura</label>
                                     <input name="numero_factura" placeholder="Ej: 19-828192 o 0019-000828192" autocomplete="off" required>
                                 </div>
@@ -291,85 +112,16 @@
     </div>
 
     <script>
-        window.SORTEO_DATA = {
-            estacionNombre: {{ estacion['nombre']|tojson }},
-            mensaje: {{ mensaje|tojson }},
-            error: {{ error|tojson }},
-            detenido: {{ detenido|tojson }}
-        };
-    </script>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script>
         (function () {
-            if (!window.React || !window.ReactDOM || !window.SORTEO_DATA) return;
-
-            const data = window.SORTEO_DATA;
-            const e = React.createElement;
-
-            function Field(props) {
-                return e('div', { className: props.full ? 'field full' : 'field' },
-                    e('label', null, props.label),
-                    props.children
-                );
+            const input = document.getElementById('device_token');
+            if (!input) return;
+            const key = 'sorteo_device_token_v1';
+            let token = window.localStorage.getItem(key);
+            if (!token) {
+                token = 'dev-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+                window.localStorage.setItem(key, token);
             }
-
-            function Thanks() {
-                return e('main', { className: 'shell' },
-                    e('section', { className: 'panel' },
-                        e('div', { className: 'thanks' },
-                            e('div', { className: 'check' }, '✓'),
-                            e('h2', null, 'Gracias por participar'),
-                            e('p', null, data.mensaje)
-                        )
-                    )
-                );
-            }
-
-            function Form() {
-                return e('main', { className: 'shell' },
-                    e('section', { className: 'panel' },
-                        e('div', { className: 'panel-head' },
-                            e('div', { className: 'step' }, '1'),
-                            e('div', null,
-                                e('h2', null, 'Completá tus datos'),
-                                e('p', null, 'Usá la fecha, la hora exacta con segundos y el número de factura.')
-                            )
-                        ),
-                        e('div', { className: 'content' },
-                            data.error ? e('div', { className: 'alert error' }, data.error) : null,
-                            data.detenido ? e('div', { className: 'alert error' }, 'El sorteo se encuentra cerrado.') : null,
-                            e('p', { className: 'hint' }, 'Ejemplo válido: fecha 2026-06-16, hora 14:35:09 y factura 19-828192. Si no coinciden los tres datos, el cupón queda denegado.'),
-                            e('form', { method: 'POST' },
-                                e('div', { className: 'grid' },
-                                    e(Field, { label: 'Fecha del ticket' }, e('input', { type: 'date', name: 'fecha_ticket', required: true })),
-                                    e(Field, { label: 'Hora exacta' }, e('input', { type: 'text', name: 'hora_ticket', placeholder: 'HH:MM:SS', pattern: '[0-9]{2}:[0-9]{2}:[0-9]{2}', inputMode: 'numeric', required: true })),
-                                    e(Field, { label: 'Numero de factura', full: true }, e('input', { name: 'numero_factura', placeholder: 'Ej: 19-828192 o 0019-000828192', autoComplete: 'off', required: true })),
-                                    e(Field, { label: 'Nombre' }, e('input', { name: 'nombre', autoComplete: 'given-name', required: true })),
-                                    e(Field, { label: 'Apellido' }, e('input', { name: 'apellido', autoComplete: 'family-name', required: true })),
-                                    e(Field, { label: 'Telefono' }, e('input', { name: 'telefono', type: 'tel', autoComplete: 'tel', required: true })),
-                                    e(Field, { label: 'Correo electronico' }, e('input', { name: 'email', type: 'email', autoComplete: 'email', required: true })),
-                                    e(Field, { label: 'DNI', full: true }, e('input', { name: 'dni', inputMode: 'numeric', autoComplete: 'off' }))
-                                ),
-                                e('button', { className: 'submit', type: 'submit', disabled: data.detenido }, 'Enviar participacion')
-                            )
-                        )
-                    )
-                );
-            }
-
-            function App() {
-                return e('div', { className: 'page' },
-                    e('header', { className: 'hero' },
-                        e('div', { className: 'brand' }, data.estacionNombre),
-                        e('h1', null, 'Gran sorteo en ' + data.estacionNombre),
-                        e('p', null, 'Registrá tu cupón y quedá participando una vez que el ticket sea validado.')
-                    ),
-                    data.mensaje ? e(Thanks) : e(Form)
-                );
-            }
-
-            ReactDOM.createRoot(document.getElementById('sorteo-root')).render(e(App));
+            input.value = token;
         })();
     </script>
 </body>

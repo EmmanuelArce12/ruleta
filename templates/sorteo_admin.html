@@ -5,358 +5,84 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sorteo Electrodomesticos</title>
     <style>
-        :root {
-            --navy: #102a43;
-            --blue: #005cab;
-            --sky: #cbe7ff;
-            --sand: #f4ede1;
-            --paper: #f7fafc;
-            --line: #d8e2eb;
-            --ink: #17202a;
-            --muted: #61758a;
-            --ok: #138a43;
-            --bad: #c2410c;
-            --warn: #a16207;
-            --card-shadow: 0 18px 45px rgba(16, 42, 67, 0.12);
-        }
-
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
-            color: var(--ink);
-            background:
-                radial-gradient(circle at top left, rgba(0, 92, 171, 0.12), transparent 28%),
-                linear-gradient(180deg, #f9fbfd 0%, #eef4f8 100%);
-        }
-        a { color: inherit; }
-        .app-shell {
-            min-height: 100vh;
-            padding: 24px;
-        }
-        .hero {
-            background: linear-gradient(135deg, #0f2c4f 0%, #174b82 52%, #1f6eb5 100%);
-            color: white;
-            border-radius: 24px;
-            padding: 28px;
-            box-shadow: var(--card-shadow);
-        }
-        .hero-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 18px;
-            flex-wrap: wrap;
-        }
-        .eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 7px 12px;
-            border-radius: 999px;
-            background: rgba(255,255,255,0.14);
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.4px;
-            text-transform: uppercase;
-        }
-        .hero h1 {
-            margin: 14px 0 6px;
-            font-size: clamp(28px, 5vw, 42px);
-            line-height: 1.02;
-        }
-        .hero p {
-            margin: 0;
-            max-width: 860px;
-            color: rgba(255,255,255,0.86);
-            line-height: 1.5;
-        }
-        .hero-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-        }
-        .btn, .hero-actions a, .hero-actions button {
-            appearance: none;
-            border: 0;
-            border-radius: 12px;
-            padding: 12px 16px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
-        }
-        .btn:hover, .hero-actions a:hover, .hero-actions button:hover {
-            transform: translateY(-1px);
-        }
-        .btn-primary { background: white; color: var(--navy); }
-        .btn-secondary { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.18); }
-        .btn-danger { background: #b42318; color: white; }
-        .btn-success { background: #138a43; color: white; }
-        .btn-dark { background: #243b53; color: white; }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            margin-top: 22px;
-        }
-        .stat-card {
-            border-radius: 18px;
-            padding: 18px;
-            background: rgba(255,255,255,0.14);
-            border: 1px solid rgba(255,255,255,0.12);
-            backdrop-filter: blur(6px);
-        }
-        .stat-card strong {
-            display: block;
-            font-size: 34px;
-            margin-top: 8px;
-        }
-        .stat-label {
-            font-size: 13px;
-            color: rgba(255,255,255,0.82);
-        }
-
-        .content-shell {
-            margin-top: 22px;
-            background: rgba(255,255,255,0.74);
-            border: 1px solid rgba(210, 223, 235, 0.9);
-            border-radius: 24px;
-            box-shadow: var(--card-shadow);
-            overflow: hidden;
-        }
-        .tabs {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            padding: 18px 18px 0;
-            background: linear-gradient(180deg, rgba(236,243,248,0.92) 0%, rgba(247,250,252,0.96) 100%);
-            border-bottom: 1px solid var(--line);
-        }
-        .tab-btn {
-            border: 1px solid transparent;
-            background: transparent;
-            color: var(--muted);
-            padding: 12px 14px;
-            border-radius: 14px 14px 0 0;
-            font-weight: 700;
-            cursor: pointer;
-            min-width: 120px;
-            text-align: center;
-        }
-        .tab-btn.active {
-            background: white;
-            color: var(--blue);
-            border-color: var(--line);
-            border-bottom-color: white;
-        }
-        .panel {
-            padding: 22px;
-        }
-        .panel h2 {
-            margin: 0 0 8px;
-            font-size: 24px;
-            color: var(--navy);
-        }
-        .panel-copy {
-            margin: 0 0 18px;
-            color: var(--muted);
-            line-height: 1.5;
-        }
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 16px;
-        }
-        .panel-card {
-            background: white;
-            border: 1px solid var(--line);
-            border-radius: 18px;
-            padding: 18px;
-            box-shadow: 0 10px 24px rgba(15, 44, 79, 0.06);
-        }
-        .panel-card h3 {
-            margin: 0 0 10px;
-            font-size: 17px;
-            color: var(--navy);
-        }
-        .panel-card p {
-            margin: 0;
-            color: var(--muted);
-            line-height: 1.45;
-        }
-        .stack {
-            display: grid;
-            gap: 12px;
-        }
-        .field label {
-            display: block;
-            margin: 0 0 6px;
-            font-size: 12px;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: #425466;
-            letter-spacing: 0.4px;
-        }
-        .field input {
-            width: 100%;
-            padding: 12px 13px;
-            border: 1px solid var(--line);
-            border-radius: 12px;
-            font-size: 15px;
-            background: #fcfdff;
-        }
-        .inline-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .glossary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 14px;
-        }
-        .glossary-item {
-            border-radius: 16px;
-            padding: 16px;
-            border: 1px solid var(--line);
-            background: linear-gradient(180deg, #ffffff 0%, #f9fbfd 100%);
-        }
-        .glossary-item strong {
-            display: inline-flex;
-            min-width: 38px;
-            height: 38px;
-            border-radius: 999px;
-            align-items: center;
-            justify-content: center;
-            background: var(--sky);
-            color: var(--blue);
-            margin-bottom: 10px;
-        }
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 5px 10px;
-            border-radius: 999px;
-            color: white;
-            font-size: 12px;
-            font-weight: 800;
-        }
-        .badge.PENDIENTE { background: var(--warn); }
-        .badge.APROBADO { background: var(--ok); }
-        .badge.DENEGADO { background: var(--bad); }
-        .table-shell {
-            background: white;
-            border: 1px solid var(--line);
-            border-radius: 18px;
-            overflow: hidden;
-        }
-        .table-toolbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-            padding: 16px 18px;
-            border-bottom: 1px solid var(--line);
-            background: linear-gradient(180deg, #fbfdff 0%, #f5f9fc 100%);
-        }
-        .table-wrap {
-            overflow: auto;
-        }
-        table {
-            width: 100%;
-            min-width: 1100px;
-            border-collapse: collapse;
-        }
-        th, td {
-            padding: 12px 14px;
-            border-bottom: 1px solid #e8eef4;
-            font-size: 13px;
-            text-align: left;
-            vertical-align: top;
-        }
-        th {
-            background: #f1f6fa;
-            color: #425466;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-        }
-        tr:hover td {
-            background: #fcfdff;
-        }
-        .empty {
-            padding: 42px 20px;
-            text-align: center;
-            color: var(--muted);
-        }
-        .muted-note {
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.45;
-        }
-        .link-box {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            flex-wrap: wrap;
-            padding: 12px 14px;
-            border-radius: 14px;
-            background: #f2f7fc;
-            border: 1px solid var(--line);
-        }
-        .qr-box {
-            display: flex;
-            gap: 18px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .qr-box img {
-            width: 150px;
-            height: 150px;
-            object-fit: contain;
-            border-radius: 16px;
-            border: 1px solid var(--line);
-            background: white;
-            padding: 12px;
-        }
-        @media (max-width: 900px) {
-            .app-shell { padding: 14px; }
-            .hero { border-radius: 20px; padding: 20px; }
-            .content-shell { border-radius: 20px; }
-            .panel { padding: 16px; }
-            .tabs { padding: 14px 14px 0; }
-            .tab-btn { min-width: unset; flex: 1 1 calc(50% - 10px); }
-        }
-        @media (max-width: 640px) {
-            .hero-actions, .inline-actions { width: 100%; }
-            .hero-actions a, .hero-actions button, .inline-actions .btn { width: 100%; }
-            .tab-btn { flex: 1 1 100%; border-radius: 12px; }
-            .tab-btn.active { border-bottom-color: var(--line); }
-        }
+        :root { --navy:#102a43; --blue:#005cab; --sky:#cbe7ff; --paper:#f7fafc; --line:#d8e2eb; --ink:#17202a; --muted:#61758a; --ok:#138a43; --bad:#c2410c; --warn:#a16207; --violet:#7c3aed; --card-shadow:0 18px 45px rgba(16, 42, 67, 0.12); }
+        * { box-sizing:border-box; }
+        body { margin:0; font-family:Arial, Helvetica, sans-serif; color:var(--ink); background:radial-gradient(circle at top left, rgba(0,92,171,0.12), transparent 28%), linear-gradient(180deg, #f9fbfd 0%, #eef4f8 100%); }
+        a { color:inherit; }
+        .app-shell { min-height:100vh; padding:24px; }
+        .hero { background:linear-gradient(135deg, #0f2c4f 0%, #174b82 52%, #1f6eb5 100%); color:white; border-radius:24px; padding:28px; box-shadow:var(--card-shadow); }
+        .hero-top { display:flex; justify-content:space-between; align-items:flex-start; gap:18px; flex-wrap:wrap; }
+        .eyebrow { display:inline-flex; align-items:center; gap:8px; padding:7px 12px; border-radius:999px; background:rgba(255,255,255,0.14); font-size:12px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; }
+        .hero h1 { margin:14px 0 6px; font-size:clamp(28px, 5vw, 42px); line-height:1.02; }
+        .hero p { margin:0; max-width:860px; color:rgba(255,255,255,.86); line-height:1.5; }
+        .hero-actions, .inline-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+        .btn, .hero-actions a, .hero-actions button, .inline-actions a, .inline-actions button { appearance:none; border:0; border-radius:12px; padding:12px 16px; font-size:14px; font-weight:700; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+        .btn-primary { background:white; color:var(--navy); }
+        .btn-secondary { background:rgba(255,255,255,0.12); color:white; border:1px solid rgba(255,255,255,0.18); }
+        .btn-danger { background:#b42318; color:white; }
+        .btn-success { background:#138a43; color:white; }
+        .btn-dark { background:#243b53; color:white; }
+        .btn-violet { background:var(--violet); color:white; }
+        .stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-top:22px; }
+        .stat-card { border-radius:18px; padding:18px; background:rgba(255,255,255,0.14); border:1px solid rgba(255,255,255,0.12); backdrop-filter:blur(6px); }
+        .stat-card strong { display:block; font-size:34px; margin-top:8px; }
+        .stat-label { font-size:13px; color:rgba(255,255,255,0.82); }
+        .content-shell { margin-top:22px; background:rgba(255,255,255,0.74); border:1px solid rgba(210,223,235,0.9); border-radius:24px; box-shadow:var(--card-shadow); overflow:hidden; }
+        .tabs { display:flex; gap:10px; flex-wrap:wrap; padding:18px 18px 0; background:linear-gradient(180deg, rgba(236,243,248,0.92) 0%, rgba(247,250,252,0.96) 100%); border-bottom:1px solid var(--line); }
+        .tab-btn { border:1px solid transparent; background:transparent; color:var(--muted); padding:12px 14px; border-radius:14px 14px 0 0; font-weight:700; cursor:pointer; min-width:120px; text-align:center; }
+        .tab-btn.active { background:white; color:var(--blue); border-color:var(--line); border-bottom-color:white; }
+        .panel { padding:22px; }
+        .panel h2 { margin:0 0 8px; font-size:24px; color:var(--navy); }
+        .panel-copy { margin:0 0 18px; color:var(--muted); line-height:1.5; }
+        .cards-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; }
+        .panel-card { background:white; border:1px solid var(--line); border-radius:18px; padding:18px; box-shadow:0 10px 24px rgba(15,44,79,0.06); }
+        .panel-card h3 { margin:0 0 10px; font-size:17px; color:var(--navy); }
+        .panel-card p { margin:0; color:var(--muted); line-height:1.45; }
+        .stack { display:grid; gap:12px; }
+        .field label { display:block; margin:0 0 6px; font-size:12px; font-weight:800; text-transform:uppercase; color:#425466; letter-spacing:.4px; }
+        .field input { width:100%; padding:12px 13px; border:1px solid var(--line); border-radius:12px; font-size:15px; background:#fcfdff; }
+        .glossary-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px; }
+        .glossary-item { border-radius:16px; padding:16px; border:1px solid var(--line); background:linear-gradient(180deg, #ffffff 0%, #f9fbfd 100%); }
+        .glossary-item strong { display:inline-flex; min-width:38px; height:38px; border-radius:999px; align-items:center; justify-content:center; background:var(--sky); color:var(--blue); margin-bottom:10px; }
+        .badge { display:inline-flex; align-items:center; justify-content:center; padding:5px 10px; border-radius:999px; color:white; font-size:12px; font-weight:800; }
+        .badge.PENDIENTE { background:var(--warn); }
+        .badge.APROBADO { background:var(--ok); }
+        .badge.DENEGADO { background:var(--bad); }
+        .badge.DUDOSO { background:var(--violet); }
+        .table-shell { background:white; border:1px solid var(--line); border-radius:18px; overflow:hidden; }
+        .table-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding:16px 18px; border-bottom:1px solid var(--line); background:linear-gradient(180deg, #fbfdff 0%, #f5f9fc 100%); }
+        .table-wrap { overflow:auto; }
+        table { width:100%; min-width:1100px; border-collapse:collapse; }
+        th, td { padding:12px 14px; border-bottom:1px solid #e8eef4; font-size:13px; text-align:left; vertical-align:top; }
+        th { background:#f1f6fa; color:#425466; font-size:11px; text-transform:uppercase; letter-spacing:.4px; }
+        .empty { padding:42px 20px; text-align:center; color:var(--muted); }
+        .muted-note { color:var(--muted); font-size:13px; line-height:1.45; }
+        .link-box { display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:12px 14px; border-radius:14px; background:#f2f7fc; border:1px solid var(--line); }
+        .qr-box { display:flex; gap:18px; align-items:center; flex-wrap:wrap; }
+        .qr-box img { width:150px; height:150px; object-fit:contain; border-radius:16px; border:1px solid var(--line); background:white; padding:12px; }
+        @media (max-width: 900px) { .app-shell { padding:14px; } .hero { border-radius:20px; padding:20px; } .content-shell { border-radius:20px; } .panel { padding:16px; } .tabs { padding:14px 14px 0; } .tab-btn { min-width:unset; flex:1 1 calc(50% - 10px); } }
+        @media (max-width: 640px) { .hero-actions, .inline-actions { width:100%; } .hero-actions a, .hero-actions button, .inline-actions .btn { width:100%; } .tab-btn { flex:1 1 100%; border-radius:12px; } .tab-btn.active { border-bottom-color:var(--line); } }
     </style>
 </head>
 <body>
     <div id="admin-root"></div>
-
     <form id="config-form" action="{{ base_path }}/admin/config" method="POST" style="display:none;">
         <input type="hidden" name="minimo_litros" id="config-minimo-litros" value="{{ config['minimo_litros'] or 0 }}">
         <input type="hidden" name="intervalo_horas" id="config-intervalo-horas" value="{{ config['intervalo_horas'] or 4 }}">
+        <input type="hidden" name="promocion_desde" id="config-promocion-desde" value="{{ config['promocion_desde'] or '' }}">
+        <input type="hidden" name="promocion_hasta" id="config-promocion-hasta" value="{{ config['promocion_hasta'] or '' }}">
+    </form>
+    <form id="promo-form" action="{{ base_path }}/admin/nueva-promocion" method="POST" style="display:none;">
+        <input type="hidden" name="promocion_desde" id="promo-promocion-desde" value="{{ config['promocion_desde'] or '' }}">
+        <input type="hidden" name="promocion_hasta" id="promo-promocion-hasta" value="{{ config['promocion_hasta'] or '' }}">
     </form>
     <form id="forzar-form" action="{{ base_path }}/admin/forzar-consulta" method="POST" style="display:none;"></form>
     <form id="detener-form" action="{{ base_path }}/admin/detener" method="POST" style="display:none;"></form>
     <form id="reanudar-form" action="{{ base_path }}/admin/reanudar" method="POST" style="display:none;"></form>
-    <form id="conteo-form" action="{{ base_path }}/admin/iniciar-conteo" method="POST" style="display:none;"></form>
+    {% for p in dudosos %}
+    <form id="aprobar-dudoso-{{ p['id'] }}" action="{{ base_path }}/admin/dudoso/{{ p['id'] }}/aprobar" method="POST" style="display:none;"></form>
+    <form id="denegar-dudoso-{{ p['id'] }}" action="{{ base_path }}/admin/dudoso/{{ p['id'] }}/denegar" method="POST" style="display:none;"></form>
+    {% endfor %}
 
     <script>
         window.SORTEO_ADMIN_DATA = {
@@ -366,98 +92,22 @@
             qr: {{ qr|tojson }},
             facturacionConfigurada: {{ facturacion_configurada|tojson }},
             sqlserverDriver: {{ sqlserver_driver|tojson }},
-            estacion: {
-                deboHost: {{ (estacion['debo_host'] or 'sin configurar')|tojson }},
-                deboAllowRemitos: {{ estacion['debo_allow_remitos']|tojson }}
-            },
+            estacion: { deboHost: {{ (estacion['debo_host'] or 'sin configurar')|tojson }}, deboAllowRemitos: {{ estacion['debo_allow_remitos']|tojson }} },
             config: {
                 minimoLitros: {{ (config['minimo_litros'] or 0)|tojson }},
                 intervaloHoras: {{ (config['intervalo_horas'] or 4)|tojson }},
+                promocionDesde: {{ (config['promocion_desde'] and (config['promocion_desde']|string) or '')|tojson }},
+                promocionHasta: {{ (config['promocion_hasta'] and (config['promocion_hasta']|string) or '')|tojson }},
                 detenido: {{ config['detenido']|tojson }},
                 ultimaConsulta: {{ (config['ultima_consulta'] and (config['ultima_consulta']|string))|tojson }}
             },
             totales: {{ totales|tojson }},
-            sellerRanking: [
-                {% for row in seller_ranking %}
-                {
-                    vendedor: {{ row['vendedor']|tojson }},
-                    facturasAprobadas: {{ row['facturas_aprobadas']|tojson }}
-                }{% if not loop.last %},{% endif %}
-                {% endfor %}
-            ],
-            pendientes: [
-                {% for p in pendientes %}
-                {% set fecha, hora = split_timestamp(p['ticket_hora']) %}
-                {
-                    creadoEn: {{ (p['creado_en'] and (p['creado_en']|string))|tojson }},
-                    fecha: {{ fecha|tojson }},
-                    hora: {{ hora|tojson }},
-                    numeroFactura: {{ p['numero_factura']|tojson }},
-                    nombre: {{ p['nombre']|tojson }},
-                    apellido: {{ p['apellido']|tojson }},
-                    dni: {{ (p['dni'] or '')|tojson }},
-                    telefono: {{ p['telefono']|tojson }},
-                    email: {{ p['email']|tojson }},
-                    detalle: {{ (p['detalle_validacion'] or 'Esperando validacion.')|tojson }}
-                }{% if not loop.last %},{% endif %}
-                {% endfor %}
-            ],
-            aprobados: [
-                {% for p in aprobados %}
-                {% set fecha, hora = split_timestamp(p['ticket_hora']) %}
-                {
-                    estado: {{ p['estado']|tojson }},
-                    fecha: {{ fecha|tojson }},
-                    hora: {{ hora|tojson }},
-                    factura: {{ (p['factura_real'] or p['numero_factura'])|tojson }},
-                    tipo: {{ (((p['tipo_comprobante'] or '') ~ ' ' ~ (p['letra_fiscal'] or ''))|trim)|tojson }},
-                    vendedor: {{ (p['vendedor'] or '')|tojson }},
-                    combustible: {{ (p['combustible'] or '')|tojson }},
-                    litros: {{ (p['litros'] if p['litros'] is not none else '')|tojson }},
-                    appYpf: {{ yes_no_blank(p['pago_app_ypf'])|tojson }},
-                    chances: {{ (p['chances'] or '')|tojson }},
-                    nombre: {{ p['nombre']|tojson }},
-                    apellido: {{ p['apellido']|tojson }},
-                    dni: {{ (p['dni'] or '')|tojson }},
-                    telefono: {{ p['telefono']|tojson }},
-                    email: {{ p['email']|tojson }},
-                    detalle: {{ (p['detalle_validacion'] or '')|tojson }}
-                }{% if not loop.last %},{% endif %}
-                {% endfor %}
-            ],
-            denegados: [
-                {% for p in denegados %}
-                {% set fecha, hora = split_timestamp(p['ticket_hora']) %}
-                {
-                    estado: {{ p['estado']|tojson }},
-                    fecha: {{ fecha|tojson }},
-                    hora: {{ hora|tojson }},
-                    factura: {{ (p['factura_real'] or p['numero_factura'])|tojson }},
-                    tipo: {{ (((p['tipo_comprobante'] or '') ~ ' ' ~ (p['letra_fiscal'] or ''))|trim)|tojson }},
-                    vendedor: {{ (p['vendedor'] or '')|tojson }},
-                    combustible: {{ (p['combustible'] or '')|tojson }},
-                    litros: {{ (p['litros'] if p['litros'] is not none else '')|tojson }},
-                    nombre: {{ p['nombre']|tojson }},
-                    apellido: {{ p['apellido']|tojson }},
-                    dni: {{ (p['dni'] or '')|tojson }},
-                    telefono: {{ p['telefono']|tojson }},
-                    email: {{ p['email']|tojson }},
-                    detalle: {{ (p['detalle_validacion'] or '')|tojson }}
-                }{% if not loop.last %},{% endif %}
-                {% endfor %}
-            ],
-            conteos: [
-                {% for c in conteos %}
-                {
-                    id: {{ c['id']|tojson }},
-                    fecha: {{ (c['iniciado_en'] and (c['iniciado_en']|string))|tojson }},
-                    total: {{ c['total']|tojson }},
-                    aprobados: {{ c['aprobados']|tojson }},
-                    denegados: {{ c['denegados']|tojson }},
-                    pendientes: {{ c['pendientes']|tojson }}
-                }{% if not loop.last %},{% endif %}
-                {% endfor %}
-            ]
+            sellerRanking: [{% for row in seller_ranking %}{ vendedor: {{ row['vendedor']|tojson }}, facturasAprobadas: {{ row['facturas_aprobadas']|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
+            pendientes: [{% for p in pendientes %}{ id: {{ p['id']|tojson }}, fecha: {{ (p['ticket_fecha']|string)|tojson }}, factura: {{ p['numero_factura']|tojson }}, cliente: {{ ((p['nombre'] ~ ' ' ~ p['apellido']) ~ (p['dni'] and (' / ' ~ p['dni']) or ''))|tojson }}, telefono: {{ p['telefono']|tojson }}, email: {{ p['email']|tojson }}, detalle: {{ (p['detalle_validacion'] or 'Esperando validacion.')|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
+            dudosos: [{% for p in dudosos %}{ id: {{ p['id']|tojson }}, fecha: {{ (p['ticket_fecha']|string)|tojson }}, factura: {{ (p['factura_real'] or p['numero_factura'])|tojson }}, vendedor: {{ (p['vendedor'] or '')|tojson }}, combustible: {{ (p['combustible'] or '')|tojson }}, litros: {{ (p['litros'] if p['litros'] is not none else '')|tojson }}, chances: {{ (p['chances'] or '')|tojson }}, deviceToken: {{ (p['device_token'] or '')|tojson }}, ip: {{ (p['ip_registro'] or '')|tojson }}, detalle: {{ (p['detalle_validacion'] or '')|tojson }}, cliente: {{ ((p['nombre'] ~ ' ' ~ p['apellido']) ~ (p['dni'] and (' / ' ~ p['dni']) or ''))|tojson }}, telefono: {{ p['telefono']|tojson }}, email: {{ p['email']|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
+            aprobados: [{% for p in aprobados %}{ id: {{ p['id']|tojson }}, estado: {{ p['estado']|tojson }}, fecha: {{ (p['ticket_fecha']|string)|tojson }}, factura: {{ (p['factura_real'] or p['numero_factura'])|tojson }}, tipo: {{ (((p['tipo_comprobante'] or '') ~ ' ' ~ (p['letra_fiscal'] or ''))|trim)|tojson }}, vendedor: {{ (p['vendedor'] or '')|tojson }}, combustible: {{ (p['combustible'] or '')|tojson }}, litros: {{ (p['litros'] if p['litros'] is not none else '')|tojson }}, appYpf: {{ yes_no_blank(p['pago_app_ypf'])|tojson }}, chances: {{ (p['chances'] or '')|tojson }}, cliente: {{ ((p['nombre'] ~ ' ' ~ p['apellido']) ~ (p['dni'] and (' / ' ~ p['dni']) or ''))|tojson }}, telefono: {{ p['telefono']|tojson }}, email: {{ p['email']|tojson }}, detalle: {{ (p['detalle_validacion'] or '')|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
+            denegados: [{% for p in denegados %}{ id: {{ p['id']|tojson }}, estado: {{ p['estado']|tojson }}, fecha: {{ (p['ticket_fecha']|string)|tojson }}, factura: {{ (p['factura_real'] or p['numero_factura'])|tojson }}, tipo: {{ (((p['tipo_comprobante'] or '') ~ ' ' ~ (p['letra_fiscal'] or ''))|trim)|tojson }}, vendedor: {{ (p['vendedor'] or '')|tojson }}, combustible: {{ (p['combustible'] or '')|tojson }}, litros: {{ (p['litros'] if p['litros'] is not none else '')|tojson }}, cliente: {{ ((p['nombre'] ~ ' ' ~ p['apellido']) ~ (p['dni'] and (' / ' ~ p['dni']) or ''))|tojson }}, telefono: {{ p['telefono']|tojson }}, email: {{ p['email']|tojson }}, detalle: {{ (p['detalle_validacion'] or '')|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
+            conteos: [{% for c in conteos %}{ id: {{ c['id']|tojson }}, fecha: {{ (c['iniciado_en'] and (c['iniciado_en']|string))|tojson }}, total: {{ c['total']|tojson }}, aprobados: {{ c['aprobados']|tojson }}, denegados: {{ c['denegados']|tojson }}, pendientes: {{ c['pendientes']|tojson }}, dudosos: {{ (c['dudosos'] or 0)|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}]
         };
     </script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -465,347 +115,141 @@
     <script>
         (function () {
             if (!window.React || !window.ReactDOM || !window.SORTEO_ADMIN_DATA) return;
-
             const { useState } = React;
             const e = React.createElement;
             const data = window.SORTEO_ADMIN_DATA;
-
-            function submitForm(id) {
-                const form = document.getElementById(id);
-                if (form) form.submit();
-            }
-
-            function exportHref(query) {
-                return data.basePath + '/admin/exportar-excel' + query;
-            }
-
+            function submitForm(id) { const form = document.getElementById(id); if (form) form.submit(); }
+            function exportHref(query) { return data.basePath + '/admin/exportar-excel' + query; }
             function InfoTable(props) {
                 const rows = props.rows || [];
                 return e('div', { className: 'table-shell' },
-                    e('div', { className: 'table-toolbar' },
-                        e('div', null,
-                            e('h3', { style: { margin: 0 } }, props.title),
-                            e('div', { className: 'muted-note' }, props.subtitle || '')
-                        ),
-                        props.toolbar || null
-                    ),
-                    rows.length
-                        ? e('div', { className: 'table-wrap' },
-                            e('table', null,
-                                e('thead', null,
-                                    e('tr', null, props.columns.map(col => e('th', { key: col.key }, col.label)))
-                                ),
-                                e('tbody', null,
-                                    rows.map((row, index) => e('tr', { key: index },
-                                        props.columns.map(col => e('td', { key: col.key },
-                                            col.render ? col.render(row) : (row[col.key] ?? '')
-                                        ))
-                                    ))
-                                )
-                            )
-                        )
-                        : e('div', { className: 'empty' }, props.emptyText || 'No hay datos.')
+                    e('div', { className: 'table-toolbar' }, e('div', null, e('h3', { style: { margin: 0 } }, props.title), e('div', { className: 'muted-note' }, props.subtitle || '')), props.toolbar || null),
+                    rows.length ? e('div', { className: 'table-wrap' }, e('table', null, e('thead', null, e('tr', null, props.columns.map(col => e('th', { key: col.key }, col.label)))), e('tbody', null, rows.map((row, index) => e('tr', { key: index }, props.columns.map(col => e('td', { key: col.key }, col.render ? col.render(row) : (row[col.key] ?? '')))))))) : e('div', { className: 'empty' }, props.emptyText || 'No hay datos.')
                 );
             }
-
             function OverviewTab() {
                 const [minimoLitros, setMinimoLitros] = useState(String(data.config.minimoLitros ?? 0));
                 const [intervaloHoras, setIntervaloHoras] = useState(String(data.config.intervaloHoras ?? 4));
-
-                function saveConfig(event) {
-                    event.preventDefault();
+                const [promocionDesde, setPromocionDesde] = useState(data.config.promocionDesde || '');
+                const [promocionHasta, setPromocionHasta] = useState(data.config.promocionHasta || '');
+                function saveConfig(ev) {
+                    ev.preventDefault();
                     document.getElementById('config-minimo-litros').value = minimoLitros;
                     document.getElementById('config-intervalo-horas').value = intervaloHoras;
+                    document.getElementById('config-promocion-desde').value = promocionDesde;
+                    document.getElementById('config-promocion-hasta').value = promocionHasta;
                     submitForm('config-form');
                 }
-
+                function nuevaPromo() {
+                    document.getElementById('promo-promocion-desde').value = promocionDesde;
+                    document.getElementById('promo-promocion-hasta').value = promocionHasta;
+                    if (window.confirm('Se archivaran aprobados, denegados, pendientes y dudosos actuales para comenzar una nueva promocion.')) submitForm('promo-form');
+                }
                 return e('div', { className: 'stack' },
-                    e('div', { className: 'panel-copy' }, 'Acá concentrás la configuración, los botones de control y el resumen general. Los litros mínimos aplican por igual a Super, Infinia, Diesel 500 e Infinia Diesel.'),
+                    e('div', { className: 'panel-copy' }, 'La promoción valida por fecha + número de factura. Los litros mínimos aplican por igual a Super, Infinia, Diesel 500 e Infinia Diesel.'),
                     e('div', { className: 'cards-grid' },
                         e('div', { className: 'panel-card stack' },
-                            e('h3', null, 'Configuracion del sorteo'),
+                            e('h3', null, 'Configuracion y promocion'),
                             e('form', { className: 'stack', onSubmit: saveConfig },
-                                e('div', { className: 'field' },
-                                    e('label', null, 'Litros minimos para aprobar'),
-                                    e('input', {
-                                        type: 'number',
-                                        min: '0',
-                                        step: '0.001',
-                                        value: minimoLitros,
-                                        onChange: ev => setMinimoLitros(ev.target.value)
-                                    })
-                                ),
-                                e('div', { className: 'field' },
-                                    e('label', null, 'Consulta automatica cada tantas horas'),
-                                    e('input', {
-                                        type: 'number',
-                                        min: '1',
-                                        value: intervaloHoras,
-                                        onChange: ev => setIntervaloHoras(ev.target.value)
-                                    })
-                                ),
+                                e('div', { className: 'field' }, e('label', null, 'Litros minimos para aprobar'), e('input', { type: 'number', min: '0', step: '0.001', value: minimoLitros, onChange: ev => setMinimoLitros(ev.target.value) })),
+                                e('div', { className: 'field' }, e('label', null, 'Consulta automatica cada tantas horas'), e('input', { type: 'number', min: '1', value: intervaloHoras, onChange: ev => setIntervaloHoras(ev.target.value) })),
+                                e('div', { className: 'field' }, e('label', null, 'Promocion desde'), e('input', { type: 'date', value: promocionDesde, onChange: ev => setPromocionDesde(ev.target.value) })),
+                                e('div', { className: 'field' }, e('label', null, 'Promocion hasta'), e('input', { type: 'date', value: promocionHasta, onChange: ev => setPromocionHasta(ev.target.value) })),
                                 e('div', { className: 'inline-actions' },
-                                    e('button', { type: 'submit', className: 'btn btn-primary' }, 'Guardar configuracion')
+                                    e('button', { type: 'submit', className: 'btn btn-primary' }, 'Guardar configuracion'),
+                                    e('button', { type: 'button', className: 'btn btn-dark', onClick: nuevaPromo }, 'Comenzar nueva promocion')
                                 )
-                            ),
-                            e('p', { className: 'muted-note' }, 'DEBO cargado en superusuario: ' + data.estacion.deboHost + '. Remitos: ' + (data.estacion.deboAllowRemitos ? 'permitidos' : 'denegados') + '. Conexion cargada: ' + (data.facturacionConfigurada ? 'si' : 'no') + '.'),
-                            e('p', { className: 'muted-note' }, 'Ultima consulta registrada: ' + (data.config.ultimaConsulta || 'sin consultas') + '. Driver esperado: ' + data.sqlserverDriver + '.')
-                        ),
-                        e('div', { className: 'panel-card stack' },
-                            e('h3', null, 'Controles'),
-                            e('p', null, 'La consulta manual y la automática solo toman tickets pendientes. Aprobados y denegados no se reprocesan.'),
-                            e('div', { className: 'inline-actions' },
-                                e('button', { type: 'button', className: 'btn btn-success', onClick: () => submitForm('forzar-form') }, 'Forzar consulta'),
-                                data.config.detenido
-                                    ? e('button', { type: 'button', className: 'btn btn-primary', onClick: () => submitForm('reanudar-form') }, 'Reanudar')
-                                    : e('button', { type: 'button', className: 'btn btn-danger', onClick: () => submitForm('detener-form') }, 'Detener'),
-                                e('button', {
-                                    type: 'button',
-                                    className: 'btn btn-dark',
-                                    onClick: () => {
-                                        if (window.confirm('Se archivara el listado activo y quedara limpio para el proximo conteo.')) submitForm('conteo-form');
-                                    }
-                                }, 'Iniciar conteo')
                             )
                         ),
                         e('div', { className: 'panel-card stack' },
-                            e('h3', null, 'Exportaciones'),
-                            e('p', null, 'Descargá el padrón limpio o el ponderado para el sorteo sin mezclar estados.'),
+                            e('h3', null, 'Controles'),
+                            e('p', null, 'Las consultas manuales y automáticas solo toman pendientes. Los dudosos quedan en revisión manual.'),
+                            e('div', { className: 'inline-actions' },
+                                e('button', { type: 'button', className: 'btn btn-success', onClick: () => submitForm('forzar-form') }, 'Forzar consulta'),
+                                data.config.detenido ? e('button', { type: 'button', className: 'btn btn-primary', onClick: () => submitForm('reanudar-form') }, 'Reanudar') : e('button', { type: 'button', className: 'btn btn-danger', onClick: () => submitForm('detener-form') }, 'Detener')
+                            ),
+                            e('p', { className: 'muted-note' }, 'Ultima consulta: ' + (data.config.ultimaConsulta || 'sin consultas') + '. DEBO: ' + data.estacion.deboHost + '. Remitos: ' + (data.estacion.deboAllowRemitos ? 'permitidos' : 'denegados') + '.')
+                        ),
+                        e('div', { className: 'panel-card stack' },
+                            e('h3', null, 'Fraude y exportaciones'),
+                            e('p', null, 'Si el mismo dispositivo supera dos registros durante la promoción, el cupón queda como dudoso para revisión manual.'),
                             e('div', { className: 'inline-actions' },
                                 e('a', { className: 'btn btn-primary', href: exportHref('?estado=APROBADO') }, 'Excel aprobados'),
                                 e('a', { className: 'btn btn-primary', href: exportHref('?estado=APROBADO&ponderado=1') }, 'Excel sorteo'),
-                                e('a', { className: 'btn btn-primary', href: exportHref('?estado=DENEGADO') }, 'Excel denegados')
+                                e('a', { className: 'btn btn-primary', href: exportHref('?estado=DUDOSO') }, 'Excel dudosos'),
+                                e('a', { className: 'btn btn-primary', href: exportHref('?todo=1') }, 'Excel archivados')
                             )
                         )
                     ),
                     e('div', { className: 'cards-grid' },
                         e('div', { className: 'panel-card stack' },
                             e('h3', null, 'QR y formulario publico'),
-                            e('div', { className: 'qr-box' },
-                                data.qr ? e('img', { src: data.qr, alt: 'QR sorteo' }) : null,
-                                e('div', { className: 'stack' },
-                                    e('div', { className: 'link-box' },
-                                        e('a', { href: data.publicUrl, target: '_blank', rel: 'noreferrer' }, data.publicUrl)
-                                    ),
-                                    data.qr ? e('a', { className: 'btn btn-primary', href: data.qr, download: 'qr-sorteo-electrodomesticos.png' }, 'Descargar QR') : null,
-                                    e('p', { className: 'muted-note' }, 'El cliente tiene que cargar fecha, hora exacta con segundos y numero de factura.')
-                                )
-                            )
+                            e('div', { className: 'qr-box' }, data.qr ? e('img', { src: data.qr, alt: 'QR sorteo' }) : null, e('div', { className: 'stack' }, e('div', { className: 'link-box' }, e('a', { href: data.publicUrl, target: '_blank', rel: 'noreferrer' }, data.publicUrl)), data.qr ? e('a', { className: 'btn btn-primary', href: data.qr, download: 'qr-sorteo-electrodomesticos.png' }, 'Descargar QR') : null))
                         ),
                         e('div', { className: 'panel-card stack' },
                             e('h3', null, 'Glosario de chances'),
                             e('div', { className: 'glossary-grid' },
-                                e('div', { className: 'glossary-item' },
-                                    e('strong', null, '1'),
-                                    e('div', null, 'Super o Diesel 500 sin App YPF.')
-                                ),
-                                e('div', { className: 'glossary-item' },
-                                    e('strong', null, '2'),
-                                    e('div', null, 'Infinia sin App YPF, o Super / Diesel 500 con App YPF.')
-                                ),
-                                e('div', { className: 'glossary-item' },
-                                    e('strong', null, '3'),
-                                    e('div', null, 'Infinia o Infinia Diesel con App YPF.')
-                                )
+                                e('div', { className: 'glossary-item' }, e('strong', null, '1'), e('div', null, 'Super o Diesel 500 sin App YPF.')),
+                                e('div', { className: 'glossary-item' }, e('strong', null, '2'), e('div', null, 'Infinia sin App YPF, o Super / Diesel 500 con App YPF.')),
+                                e('div', { className: 'glossary-item' }, e('strong', null, '3'), e('div', null, 'Infinia o Infinia Diesel con App YPF.'))
                             )
                         )
                     )
                 );
             }
-
-            function PendingTab() {
+            const PendingTab = () => e(InfoTable, { title:'Pendientes', subtitle:'Solo fecha + factura. Todavía no pasaron por validación.', rows:data.pendientes, emptyText:'No hay pendientes.', toolbar:e('div',{className:'inline-actions'}, e('button',{type:'button', className:'btn btn-success', onClick:()=>submitForm('forzar-form')},'Consultar pendientes ahora')), columns:[{key:'fecha',label:'Fecha'},{key:'factura',label:'Factura'},{key:'cliente',label:'Cliente'},{key:'telefono',label:'Telefono'},{key:'email',label:'Email'},{key:'detalle',label:'Detalle'}] });
+            const ApprovedTab = () => e(InfoTable, { title:'Aprobados', subtitle:'Padrón válido listo para exportar.', rows:data.aprobados, emptyText:'No hay aprobados.', toolbar:e('div',{className:'inline-actions'}, e('a',{className:'btn btn-primary',href:exportHref('?estado=APROBADO')},'Exportar aprobados'), e('a',{className:'btn btn-primary',href:exportHref('?estado=APROBADO&ponderado=1')},'Exportar sorteo')), columns:[{key:'estado',label:'Estado',render:row=>e('span',{className:'badge '+row.estado},row.estado)},{key:'fecha',label:'Fecha'},{key:'factura',label:'Factura'},{key:'tipo',label:'Tipo'},{key:'vendedor',label:'Vendedor'},{key:'combustible',label:'Combustible'},{key:'litros',label:'Litros'},{key:'appYpf',label:'App YPF'},{key:'chances',label:'Chances'},{key:'cliente',label:'Cliente'},{key:'telefono',label:'Telefono'},{key:'email',label:'Email'},{key:'detalle',label:'Detalle'}] });
+            const DeniedTab = () => e(InfoTable, { title:'Denegados', subtitle:'Facturas no válidas o que no alcanzaron los litros mínimos.', rows:data.denegados, emptyText:'No hay denegados.', toolbar:e('div',{className:'inline-actions'}, e('a',{className:'btn btn-primary',href:exportHref('?estado=DENEGADO')},'Exportar denegados')), columns:[{key:'estado',label:'Estado',render:row=>e('span',{className:'badge '+row.estado},row.estado)},{key:'fecha',label:'Fecha'},{key:'factura',label:'Factura'},{key:'tipo',label:'Tipo'},{key:'vendedor',label:'Vendedor'},{key:'combustible',label:'Combustible'},{key:'litros',label:'Litros'},{key:'cliente',label:'Cliente'},{key:'telefono',label:'Telefono'},{key:'email',label:'Email'},{key:'detalle',label:'Detalle'}] });
+            const RankingTab = () => e(InfoTable, { title:'Ranking de vendedores', subtitle:'Cada factura aprobada suma 1 punto.', rows:data.sellerRanking, emptyText:'Todavia no hay facturas aprobadas.', columns:[{key:'vendedor',label:'Vendedor'},{key:'facturasAprobadas',label:'Facturas aprobadas'}] });
+            const ArchiveTab = () => e(InfoTable, { title:'Archivados', subtitle:'Cada nueva promoción archiva aprobados, denegados, pendientes y dudosos. También se exportan a Excel.', rows:data.conteos, emptyText:'Todavia no hay promociones archivadas.', toolbar:e('div',{className:'inline-actions'}, e('a',{className:'btn btn-primary',href:exportHref('?todo=1')},'Exportar archivados')), columns:[{key:'id',label:'ID'},{key:'fecha',label:'Fecha'},{key:'total',label:'Total'},{key:'aprobados',label:'Aprobados'},{key:'denegados',label:'Denegados'},{key:'pendientes',label:'Pendientes'},{key:'dudosos',label:'Dudosos'}] });
+            function SuspiciousTab() {
                 return e(InfoTable, {
-                    title: 'Pendientes',
-                    subtitle: 'Se validan por fecha, hora exacta con segundos y numero de factura.',
-                    rows: data.pendientes,
-                    emptyText: 'No hay pendientes.',
-                    toolbar: e('div', { className: 'inline-actions' },
-                        e('button', { type: 'button', className: 'btn btn-success', onClick: () => submitForm('forzar-form') }, 'Consultar pendientes ahora')
-                    ),
-                    columns: [
-                        { key: 'creadoEn', label: 'Registro' },
-                        { key: 'fecha', label: 'Fecha' },
-                        { key: 'hora', label: 'Hora' },
-                        { key: 'numeroFactura', label: 'Factura' },
-                        { key: 'cliente', label: 'Cliente', render: row => row.nombre + ' ' + row.apellido + (row.dni ? ' / ' + row.dni : '') },
-                        { key: 'telefono', label: 'Telefono' },
-                        { key: 'email', label: 'Email' },
-                        { key: 'detalle', label: 'Detalle' }
+                    title:'Dudosos',
+                    subtitle:'Bandeja manual para casos de posible fraude o exceso de registros del mismo dispositivo.',
+                    rows:data.dudosos,
+                    emptyText:'No hay dudosos.',
+                    toolbar:e('div',{className:'inline-actions'}, e('a',{className:'btn btn-primary',href:exportHref('?estado=DUDOSO')},'Exportar dudosos')),
+                    columns:[
+                        {key:'fecha',label:'Fecha'},
+                        {key:'factura',label:'Factura'},
+                        {key:'vendedor',label:'Vendedor'},
+                        {key:'combustible',label:'Combustible'},
+                        {key:'litros',label:'Litros'},
+                        {key:'chances',label:'Chances'},
+                        {key:'cliente',label:'Cliente'},
+                        {key:'telefono',label:'Telefono'},
+                        {key:'email',label:'Email'},
+                        {key:'deviceToken',label:'Dispositivo'},
+                        {key:'ip',label:'IP'},
+                        {key:'detalle',label:'Detalle'},
+                        {key:'acciones',label:'Acciones',render:row=>e('div',{className:'inline-actions'}, e('button',{type:'button',className:'btn btn-success',onClick:()=>submitForm('aprobar-dudoso-'+row.id)},'Aprobar'), e('button',{type:'button',className:'btn btn-danger',onClick:()=>submitForm('denegar-dudoso-'+row.id)},'Denegar'))}
                     ]
                 });
             }
-
-            function ApprovedTab() {
-                return e(InfoTable, {
-                    title: 'Aprobadas',
-                    subtitle: 'Solo figuran facturas que cumplen litros minimos y combustible valido.',
-                    rows: data.aprobados,
-                    emptyText: 'No hay aprobadas.',
-                    toolbar: e('div', { className: 'inline-actions' },
-                        e('a', { className: 'btn btn-primary', href: exportHref('?estado=APROBADO') }, 'Exportar aprobadas'),
-                        e('a', { className: 'btn btn-primary', href: exportHref('?estado=APROBADO&ponderado=1') }, 'Exportar sorteo')
-                    ),
-                    columns: [
-                        { key: 'estado', label: 'Estado', render: row => e('span', { className: 'badge ' + row.estado }, row.estado) },
-                        { key: 'fecha', label: 'Fecha' },
-                        { key: 'hora', label: 'Hora' },
-                        { key: 'factura', label: 'Factura' },
-                        { key: 'tipo', label: 'Tipo' },
-                        { key: 'vendedor', label: 'Vendedor' },
-                        { key: 'combustible', label: 'Combustible' },
-                        { key: 'litros', label: 'Litros' },
-                        { key: 'appYpf', label: 'App YPF' },
-                        { key: 'chances', label: 'Chances' },
-                        { key: 'cliente', label: 'Cliente', render: row => row.nombre + ' ' + row.apellido + (row.dni ? ' / ' + row.dni : '') },
-                        { key: 'telefono', label: 'Telefono' },
-                        { key: 'email', label: 'Email' },
-                        { key: 'detalle', label: 'Detalle' }
-                    ]
-                });
-            }
-
-            function DeniedTab() {
-                return e(InfoTable, {
-                    title: 'Denegadas',
-                    subtitle: 'Acá quedan las facturas con litros insuficientes, datos no coincidentes o conceptos no válidos.',
-                    rows: data.denegados,
-                    emptyText: 'No hay denegadas.',
-                    toolbar: e('div', { className: 'inline-actions' },
-                        e('a', { className: 'btn btn-primary', href: exportHref('?estado=DENEGADO') }, 'Exportar denegadas')
-                    ),
-                    columns: [
-                        { key: 'estado', label: 'Estado', render: row => e('span', { className: 'badge ' + row.estado }, row.estado) },
-                        { key: 'fecha', label: 'Fecha' },
-                        { key: 'hora', label: 'Hora' },
-                        { key: 'factura', label: 'Factura' },
-                        { key: 'tipo', label: 'Tipo' },
-                        { key: 'vendedor', label: 'Vendedor' },
-                        { key: 'combustible', label: 'Combustible' },
-                        { key: 'litros', label: 'Litros' },
-                        { key: 'cliente', label: 'Cliente', render: row => row.nombre + ' ' + row.apellido + (row.dni ? ' / ' + row.dni : '') },
-                        { key: 'telefono', label: 'Telefono' },
-                        { key: 'email', label: 'Email' },
-                        { key: 'detalle', label: 'Detalle' }
-                    ]
-                });
-            }
-
-            function RankingTab() {
-                return e(InfoTable, {
-                    title: 'Ranking de vendedores',
-                    subtitle: 'Cada factura aprobada suma 1 punto, sin importar combustible ni chances.',
-                    rows: data.sellerRanking,
-                    emptyText: 'Todavia no hay facturas aprobadas.',
-                    columns: [
-                        { key: 'vendedor', label: 'Vendedor' },
-                        { key: 'facturasAprobadas', label: 'Facturas aprobadas' }
-                    ]
-                });
-            }
-
-            function ArchiveTab() {
-                return e(InfoTable, {
-                    title: 'Conteos archivados',
-                    subtitle: 'Historial de cierres para separar tandas sin mezclar tickets nuevos con tandas anteriores.',
-                    rows: data.conteos,
-                    emptyText: 'Todavia no hay conteos archivados.',
-                    columns: [
-                        { key: 'id', label: 'ID' },
-                        { key: 'fecha', label: 'Fecha' },
-                        { key: 'total', label: 'Total' },
-                        { key: 'aprobados', label: 'Aprobados' },
-                        { key: 'denegados', label: 'Denegados' },
-                        { key: 'pendientes', label: 'Pendientes' }
-                    ]
-                });
-            }
-
             function AdminApp() {
                 const [tab, setTab] = useState('overview');
-                const tabs = [
-                    { id: 'overview', label: 'Resumen' },
-                    { id: 'pendientes', label: 'Pendientes' },
-                    { id: 'aprobados', label: 'Aprobadas' },
-                    { id: 'denegados', label: 'Denegadas' },
-                    { id: 'ranking', label: 'Ranking' },
-                    { id: 'archivados', label: 'Archivados' }
-                ];
-
-                let panel;
-                let title = 'Resumen';
-                let copy = 'Navegá por solapas y mostrale al administrador solo la parte que necesita en ese momento.';
-                if (tab === 'pendientes') {
-                    title = 'Pendientes';
-                    copy = 'Esta vista muestra exclusivamente los tickets todavía no resueltos.';
-                    panel = e(PendingTab);
-                } else if (tab === 'aprobados') {
-                    title = 'Aprobadas';
-                    copy = 'Acá ves el padrón limpio de participantes válidos.';
-                    panel = e(ApprovedTab);
-                } else if (tab === 'denegados') {
-                    title = 'Denegadas';
-                    copy = 'Banco de datos separado para revisar rechazos sin ensuciar las aprobadas.';
-                    panel = e(DeniedTab);
-                } else if (tab === 'ranking') {
-                    title = 'Ranking';
-                    copy = 'Resumen simple de vendedores por facturas aprobadas.';
-                    panel = e(RankingTab);
-                } else if (tab === 'archivados') {
-                    title = 'Archivados';
-                    copy = 'Historial de tandas ya cerradas.';
-                    panel = e(ArchiveTab);
-                } else {
-                    panel = e(OverviewTab);
-                }
-
-                return e('div', { className: 'app-shell' },
-                    e('section', { className: 'hero' },
-                        e('div', { className: 'hero-top' },
-                            e('div', null,
-                                e('div', { className: 'eyebrow' }, 'Sorteo', ' · ', data.config.detenido ? 'Detenido' : 'Activo'),
-                                e('h1', null, data.nombreEstacion),
-                                e('p', null, 'Panel de control del sorteo con validación DEBO. Cambiá de solapa para ver solo pendientes, aprobadas, denegadas, ranking o archivo.')
-                            ),
-                            e('div', { className: 'hero-actions' },
-                                e('a', { className: 'btn-secondary', href: exportHref('?estado=APROBADO') }, 'Excel aprobadas'),
-                                e('a', { className: 'btn-secondary', href: exportHref('?estado=APROBADO&ponderado=1') }, 'Excel sorteo'),
-                                e('a', { className: 'btn-secondary', href: exportHref('?estado=DENEGADO') }, 'Excel denegadas'),
-                                e('a', { className: 'btn-danger', href: data.basePath + '/admin/logout' }, 'Salir')
-                            )
+                const tabs = [{id:'overview',label:'Resumen'},{id:'pendientes',label:'Pendientes'},{id:'dudosos',label:'Dudosos'},{id:'aprobados',label:'Aprobados'},{id:'denegados',label:'Denegadas'},{id:'ranking',label:'Ranking'},{id:'archivados',label:'Archivados'}];
+                const panels = { overview:e(OverviewTab), pendientes:e(PendingTab), dudosos:e(SuspiciousTab), aprobados:e(ApprovedTab), denegados:e(DeniedTab), ranking:e(RankingTab), archivados:e(ArchiveTab) };
+                const titles = { overview:['Resumen','Configuración, promoción activa, QR, controles y exportaciones.'], pendientes:['Pendientes','Lo que todavía no fue consultado contra DEBO.'], dudosos:['Dudosos','Casos a revisar manualmente antes de aprobar o denegar.'], aprobados:['Aprobados','Participantes válidos listos para el sorteo.'], denegados:['Denegadas','Facturas rechazadas por litros, combustible o datos inválidos.'], ranking:['Ranking','Conteo de vendedores por facturas aprobadas.'], archivados:['Archivados','Historial de promociones anteriores con exportación disponible.'] };
+                return e('div',{className:'app-shell'},
+                    e('section',{className:'hero'},
+                        e('div',{className:'hero-top'},
+                            e('div',null, e('div',{className:'eyebrow'},'Sorteo',' · ',data.config.detenido?'Detenido':'Activo'), e('h1',null,data.nombreEstacion), e('p',null,'Validación por fecha y factura. Los dispositivos que exceden el límite de cargas pasan a revisión manual.')),
+                            e('div',{className:'hero-actions'}, e('a',{className:'btn-secondary',href:exportHref('?estado=APROBADO')},'Excel aprobados'), e('a',{className:'btn-secondary',href:exportHref('?estado=DUDOSO')},'Excel dudosos'), e('a',{className:'btn-secondary',href:exportHref('?todo=1')},'Excel archivados'), e('a',{className:'btn-danger',href:data.basePath + '/admin/logout'},'Salir'))
                         ),
-                        e('div', { className: 'stats-grid' },
-                            e('div', { className: 'stat-card' },
-                                e('div', { className: 'stat-label' }, 'Pendientes'),
-                                e('strong', null, data.totales.pendientes)
-                            ),
-                            e('div', { className: 'stat-card' },
-                                e('div', { className: 'stat-label' }, 'Aprobadas'),
-                                e('strong', null, data.totales.aprobados)
-                            ),
-                            e('div', { className: 'stat-card' },
-                                e('div', { className: 'stat-label' }, 'Denegadas'),
-                                e('strong', null, data.totales.denegados)
-                            )
+                        e('div',{className:'stats-grid'},
+                            e('div',{className:'stat-card'}, e('div',{className:'stat-label'},'Pendientes'), e('strong',null,data.totales.pendientes)),
+                            e('div',{className:'stat-card'}, e('div',{className:'stat-label'},'Dudosos'), e('strong',null,data.totales.dudosos)),
+                            e('div',{className:'stat-card'}, e('div',{className:'stat-label'},'Aprobados'), e('strong',null,data.totales.aprobados)),
+                            e('div',{className:'stat-card'}, e('div',{className:'stat-label'},'Denegados'), e('strong',null,data.totales.denegados))
                         )
                     ),
-                    e('section', { className: 'content-shell' },
-                        e('div', { className: 'tabs' },
-                            tabs.map(item => e('button', {
-                                key: item.id,
-                                type: 'button',
-                                className: 'tab-btn' + (tab === item.id ? ' active' : ''),
-                                onClick: () => setTab(item.id)
-                            }, item.label))
-                        ),
-                        e('div', { className: 'panel' },
-                            e('h2', null, title),
-                            e('p', { className: 'panel-copy' }, copy),
-                            panel
-                        )
+                    e('section',{className:'content-shell'},
+                        e('div',{className:'tabs'}, tabs.map(item=>e('button',{key:item.id,type:'button',className:'tab-btn'+(tab===item.id?' active':''),onClick:()=>setTab(item.id)},item.label))),
+                        e('div',{className:'panel'}, e('h2',null,titles[tab][0]), e('p',{className:'panel-copy'},titles[tab][1]), panels[tab])
                     )
                 );
             }
-
             ReactDOM.createRoot(document.getElementById('admin-root')).render(e(AdminApp));
         })();
     </script>
