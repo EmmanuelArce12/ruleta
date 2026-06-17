@@ -5,232 +5,809 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sorteo Electrodomesticos</title>
     <style>
-        :root { --blue:#005cab; --ink:#17202a; --muted:#667085; --line:#d7dee8; --bg:#f4f7fb; --ok:#138a43; --bad:#c2410c; --wait:#a16207; }
-        body { margin:0; font-family: Arial, sans-serif; background:var(--bg); color:var(--ink); }
-        header { background:#102a43; color:white; padding:18px 24px; display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap; }
-        header h1 { margin:0; font-size:22px; }
-        main { padding:22px; max-width:1380px; margin:0 auto; }
-        .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; }
-        .stats { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:16px; }
-        section, .stat { background:white; border:1px solid var(--line); border-radius:8px; padding:18px; margin-bottom:16px; }
-        .stat strong { display:block; font-size:30px; margin-top:6px; }
-        h2 { margin:0 0 14px; font-size:18px; color:var(--blue); }
-        h3 { margin:0 0 12px; font-size:16px; color:var(--ink); }
-        label { display:block; font-size:12px; font-weight:700; text-transform:uppercase; margin:8px 0 5px; }
-        input { width:100%; box-sizing:border-box; padding:10px; border:1px solid var(--line); border-radius:6px; }
-        button, .btn { display:inline-block; border:0; border-radius:6px; padding:10px 13px; background:var(--blue); color:white; font-weight:700; cursor:pointer; text-decoration:none; font-size:14px; }
-        .btn-alt { background:#344054; }
-        .btn-stop { background:#b42318; }
-        .btn-ok { background:var(--ok); }
-        .btn-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-        .qr { width:180px; max-width:100%; border:1px solid var(--line); padding:10px; border-radius:8px; background:white; }
-        .hint { color:var(--muted); font-size:13px; line-height:1.45; }
-        .table-wrap { overflow:auto; border:1px solid var(--line); border-radius:8px; }
-        table { width:100%; border-collapse:collapse; min-width:1180px; background:white; }
-        th, td { padding:10px; border-bottom:1px solid var(--line); text-align:left; font-size:13px; vertical-align:top; }
-        th { background:#eef3f8; font-size:11px; text-transform:uppercase; }
-        .badge { display:inline-block; padding:4px 8px; border-radius:999px; color:white; font-weight:700; font-size:11px; }
-        .PENDIENTE { background:var(--wait); }
-        .APROBADO { background:var(--ok); }
-        .DENEGADO { background:var(--bad); }
-        .status { font-weight:700; color:{{ '#b42318' if config['detenido'] else '#138a43' }}; }
-        @media (max-width: 760px) { main { padding:12px; } header { padding:14px; } }
+        :root {
+            --navy: #102a43;
+            --blue: #005cab;
+            --sky: #cbe7ff;
+            --sand: #f4ede1;
+            --paper: #f7fafc;
+            --line: #d8e2eb;
+            --ink: #17202a;
+            --muted: #61758a;
+            --ok: #138a43;
+            --bad: #c2410c;
+            --warn: #a16207;
+            --card-shadow: 0 18px 45px rgba(16, 42, 67, 0.12);
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(0, 92, 171, 0.12), transparent 28%),
+                linear-gradient(180deg, #f9fbfd 0%, #eef4f8 100%);
+        }
+        a { color: inherit; }
+        .app-shell {
+            min-height: 100vh;
+            padding: 24px;
+        }
+        .hero {
+            background: linear-gradient(135deg, #0f2c4f 0%, #174b82 52%, #1f6eb5 100%);
+            color: white;
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: var(--card-shadow);
+        }
+        .hero-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.14);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+        }
+        .hero h1 {
+            margin: 14px 0 6px;
+            font-size: clamp(28px, 5vw, 42px);
+            line-height: 1.02;
+        }
+        .hero p {
+            margin: 0;
+            max-width: 860px;
+            color: rgba(255,255,255,0.86);
+            line-height: 1.5;
+        }
+        .hero-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .btn, .hero-actions a, .hero-actions button {
+            appearance: none;
+            border: 0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+        }
+        .btn:hover, .hero-actions a:hover, .hero-actions button:hover {
+            transform: translateY(-1px);
+        }
+        .btn-primary { background: white; color: var(--navy); }
+        .btn-secondary { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.18); }
+        .btn-danger { background: #b42318; color: white; }
+        .btn-success { background: #138a43; color: white; }
+        .btn-dark { background: #243b53; color: white; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-top: 22px;
+        }
+        .stat-card {
+            border-radius: 18px;
+            padding: 18px;
+            background: rgba(255,255,255,0.14);
+            border: 1px solid rgba(255,255,255,0.12);
+            backdrop-filter: blur(6px);
+        }
+        .stat-card strong {
+            display: block;
+            font-size: 34px;
+            margin-top: 8px;
+        }
+        .stat-label {
+            font-size: 13px;
+            color: rgba(255,255,255,0.82);
+        }
+
+        .content-shell {
+            margin-top: 22px;
+            background: rgba(255,255,255,0.74);
+            border: 1px solid rgba(210, 223, 235, 0.9);
+            border-radius: 24px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 18px 18px 0;
+            background: linear-gradient(180deg, rgba(236,243,248,0.92) 0%, rgba(247,250,252,0.96) 100%);
+            border-bottom: 1px solid var(--line);
+        }
+        .tab-btn {
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--muted);
+            padding: 12px 14px;
+            border-radius: 14px 14px 0 0;
+            font-weight: 700;
+            cursor: pointer;
+            min-width: 120px;
+            text-align: center;
+        }
+        .tab-btn.active {
+            background: white;
+            color: var(--blue);
+            border-color: var(--line);
+            border-bottom-color: white;
+        }
+        .panel {
+            padding: 22px;
+        }
+        .panel h2 {
+            margin: 0 0 8px;
+            font-size: 24px;
+            color: var(--navy);
+        }
+        .panel-copy {
+            margin: 0 0 18px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        .panel-card {
+            background: white;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: 0 10px 24px rgba(15, 44, 79, 0.06);
+        }
+        .panel-card h3 {
+            margin: 0 0 10px;
+            font-size: 17px;
+            color: var(--navy);
+        }
+        .panel-card p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.45;
+        }
+        .stack {
+            display: grid;
+            gap: 12px;
+        }
+        .field label {
+            display: block;
+            margin: 0 0 6px;
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #425466;
+            letter-spacing: 0.4px;
+        }
+        .field input {
+            width: 100%;
+            padding: 12px 13px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            font-size: 15px;
+            background: #fcfdff;
+        }
+        .inline-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .glossary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+        }
+        .glossary-item {
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid var(--line);
+            background: linear-gradient(180deg, #ffffff 0%, #f9fbfd 100%);
+        }
+        .glossary-item strong {
+            display: inline-flex;
+            min-width: 38px;
+            height: 38px;
+            border-radius: 999px;
+            align-items: center;
+            justify-content: center;
+            background: var(--sky);
+            color: var(--blue);
+            margin-bottom: 10px;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px 10px;
+            border-radius: 999px;
+            color: white;
+            font-size: 12px;
+            font-weight: 800;
+        }
+        .badge.PENDIENTE { background: var(--warn); }
+        .badge.APROBADO { background: var(--ok); }
+        .badge.DENEGADO { background: var(--bad); }
+        .table-shell {
+            background: white;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            overflow: hidden;
+        }
+        .table-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--line);
+            background: linear-gradient(180deg, #fbfdff 0%, #f5f9fc 100%);
+        }
+        .table-wrap {
+            overflow: auto;
+        }
+        table {
+            width: 100%;
+            min-width: 1100px;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #e8eef4;
+            font-size: 13px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #f1f6fa;
+            color: #425466;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        tr:hover td {
+            background: #fcfdff;
+        }
+        .empty {
+            padding: 42px 20px;
+            text-align: center;
+            color: var(--muted);
+        }
+        .muted-note {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.45;
+        }
+        .link-box {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: #f2f7fc;
+            border: 1px solid var(--line);
+        }
+        .qr-box {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .qr-box img {
+            width: 150px;
+            height: 150px;
+            object-fit: contain;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: white;
+            padding: 12px;
+        }
+        @media (max-width: 900px) {
+            .app-shell { padding: 14px; }
+            .hero { border-radius: 20px; padding: 20px; }
+            .content-shell { border-radius: 20px; }
+            .panel { padding: 16px; }
+            .tabs { padding: 14px 14px 0; }
+            .tab-btn { min-width: unset; flex: 1 1 calc(50% - 10px); }
+        }
+        @media (max-width: 640px) {
+            .hero-actions, .inline-actions { width: 100%; }
+            .hero-actions a, .hero-actions button, .inline-actions .btn { width: 100%; }
+            .tab-btn { flex: 1 1 100%; border-radius: 12px; }
+            .tab-btn.active { border-bottom-color: var(--line); }
+        }
     </style>
 </head>
 <body>
-    <header>
-        <div>
-            <h1>Sorteo Electrodomesticos</h1>
-            <div>{{ nombre_estacion }} · Estado: <span class="status">{{ 'Detenido' if config['detenido'] else 'Activo' }}</span></div>
-        </div>
-        <div class="btn-row">
-            <a class="btn btn-alt" href="{{ base_path }}/admin/exportar-excel?estado=APROBADO">Excel aprobados</a>
-            <a class="btn btn-alt" href="{{ base_path }}/admin/exportar-excel?estado=APROBADO&ponderado=1">Excel sorteo</a>
-            <a class="btn btn-alt" href="{{ base_path }}/admin/exportar-excel?estado=DENEGADO">Excel denegados</a>
-            <a class="btn btn-stop" href="{{ base_path }}/admin/logout">Salir</a>
-        </div>
-    </header>
+    <div id="admin-root"></div>
 
-    <main>
-        <div class="stats">
-            <div class="stat">
-                <div>Pendientes</div>
-                <strong>{{ totales['pendientes'] }}</strong>
-            </div>
-            <div class="stat">
-                <div>Aprobados</div>
-                <strong>{{ totales['aprobados'] }}</strong>
-            </div>
-            <div class="stat">
-                <div>Denegados</div>
-                <strong>{{ totales['denegados'] }}</strong>
-            </div>
-        </div>
+    <form id="config-form" action="{{ base_path }}/admin/config" method="POST" style="display:none;">
+        <input type="hidden" name="minimo_litros" id="config-minimo-litros" value="{{ config['minimo_litros'] or 0 }}">
+        <input type="hidden" name="intervalo_horas" id="config-intervalo-horas" value="{{ config['intervalo_horas'] or 4 }}">
+    </form>
+    <form id="forzar-form" action="{{ base_path }}/admin/forzar-consulta" method="POST" style="display:none;"></form>
+    <form id="detener-form" action="{{ base_path }}/admin/detener" method="POST" style="display:none;"></form>
+    <form id="reanudar-form" action="{{ base_path }}/admin/reanudar" method="POST" style="display:none;"></form>
+    <form id="conteo-form" action="{{ base_path }}/admin/iniciar-conteo" method="POST" style="display:none;"></form>
 
-        <div class="grid">
-            <section>
-                <h2>QR para clientes</h2>
-                {% if qr %}
-                    <img class="qr" src="{{ qr }}" alt="QR sorteo">
-                    <div class="btn-row" style="margin-top:10px;">
-                        <a class="btn" href="{{ qr }}" download="qr-sorteo-electrodomesticos.png">Descargar QR</a>
-                    </div>
-                {% else %}
-                    <p class="hint">Instala qrcode[pil] para generar el QR automatico.</p>
-                {% endif %}
-                <p><a href="{{ public_url }}" target="_blank">{{ public_url }}</a></p>
-                <p class="hint">El cliente debe cargar fecha, hora exacta con segundos y numero de factura.</p>
-            </section>
+    <script>
+        window.SORTEO_ADMIN_DATA = {
+            nombreEstacion: {{ nombre_estacion|tojson }},
+            basePath: {{ base_path|tojson }},
+            publicUrl: {{ public_url|tojson }},
+            qr: {{ qr|tojson }},
+            facturacionConfigurada: {{ facturacion_configurada|tojson }},
+            sqlserverDriver: {{ sqlserver_driver|tojson }},
+            estacion: {
+                deboHost: {{ (estacion['debo_host'] or 'sin configurar')|tojson }},
+                deboAllowRemitos: {{ estacion['debo_allow_remitos']|tojson }}
+            },
+            config: {
+                minimoLitros: {{ (config['minimo_litros'] or 0)|tojson }},
+                intervaloHoras: {{ (config['intervalo_horas'] or 4)|tojson }},
+                detenido: {{ config['detenido']|tojson }},
+                ultimaConsulta: {{ (config['ultima_consulta'] and (config['ultima_consulta']|string))|tojson }}
+            },
+            totales: {{ totales|tojson }},
+            sellerRanking: [
+                {% for row in seller_ranking %}
+                {
+                    vendedor: {{ row['vendedor']|tojson }},
+                    facturasAprobadas: {{ row['facturas_aprobadas']|tojson }}
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            pendientes: [
+                {% for p in pendientes %}
+                {% set fecha, hora = split_timestamp(p['ticket_hora']) %}
+                {
+                    creadoEn: {{ (p['creado_en'] and (p['creado_en']|string))|tojson }},
+                    fecha: {{ fecha|tojson }},
+                    hora: {{ hora|tojson }},
+                    numeroFactura: {{ p['numero_factura']|tojson }},
+                    nombre: {{ p['nombre']|tojson }},
+                    apellido: {{ p['apellido']|tojson }},
+                    dni: {{ (p['dni'] or '')|tojson }},
+                    telefono: {{ p['telefono']|tojson }},
+                    email: {{ p['email']|tojson }},
+                    detalle: {{ (p['detalle_validacion'] or 'Esperando validacion.')|tojson }}
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            aprobados: [
+                {% for p in aprobados %}
+                {% set fecha, hora = split_timestamp(p['ticket_hora']) %}
+                {
+                    estado: {{ p['estado']|tojson }},
+                    fecha: {{ fecha|tojson }},
+                    hora: {{ hora|tojson }},
+                    factura: {{ (p['factura_real'] or p['numero_factura'])|tojson }},
+                    tipo: {{ (((p['tipo_comprobante'] or '') ~ ' ' ~ (p['letra_fiscal'] or ''))|trim)|tojson }},
+                    vendedor: {{ (p['vendedor'] or '')|tojson }},
+                    combustible: {{ (p['combustible'] or '')|tojson }},
+                    litros: {{ (p['litros'] if p['litros'] is not none else '')|tojson }},
+                    appYpf: {{ yes_no_blank(p['pago_app_ypf'])|tojson }},
+                    chances: {{ (p['chances'] or '')|tojson }},
+                    nombre: {{ p['nombre']|tojson }},
+                    apellido: {{ p['apellido']|tojson }},
+                    dni: {{ (p['dni'] or '')|tojson }},
+                    telefono: {{ p['telefono']|tojson }},
+                    email: {{ p['email']|tojson }},
+                    detalle: {{ (p['detalle_validacion'] or '')|tojson }}
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            denegados: [
+                {% for p in denegados %}
+                {% set fecha, hora = split_timestamp(p['ticket_hora']) %}
+                {
+                    estado: {{ p['estado']|tojson }},
+                    fecha: {{ fecha|tojson }},
+                    hora: {{ hora|tojson }},
+                    factura: {{ (p['factura_real'] or p['numero_factura'])|tojson }},
+                    tipo: {{ (((p['tipo_comprobante'] or '') ~ ' ' ~ (p['letra_fiscal'] or ''))|trim)|tojson }},
+                    vendedor: {{ (p['vendedor'] or '')|tojson }},
+                    combustible: {{ (p['combustible'] or '')|tojson }},
+                    litros: {{ (p['litros'] if p['litros'] is not none else '')|tojson }},
+                    nombre: {{ p['nombre']|tojson }},
+                    apellido: {{ p['apellido']|tojson }},
+                    dni: {{ (p['dni'] or '')|tojson }},
+                    telefono: {{ p['telefono']|tojson }},
+                    email: {{ p['email']|tojson }},
+                    detalle: {{ (p['detalle_validacion'] or '')|tojson }}
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            conteos: [
+                {% for c in conteos %}
+                {
+                    id: {{ c['id']|tojson }},
+                    fecha: {{ (c['iniciado_en'] and (c['iniciado_en']|string))|tojson }},
+                    total: {{ c['total']|tojson }},
+                    aprobados: {{ c['aprobados']|tojson }},
+                    denegados: {{ c['denegados']|tojson }},
+                    pendientes: {{ c['pendientes']|tojson }}
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ]
+        };
+    </script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script>
+        (function () {
+            if (!window.React || !window.ReactDOM || !window.SORTEO_ADMIN_DATA) return;
 
-            <section>
-                <h2>Configuracion</h2>
-                <form action="{{ base_path }}/admin/config" method="POST">
-                    <label>Litros minimos para aprobar</label>
-                    <input type="number" name="minimo_litros" step="0.001" min="0" value="{{ config['minimo_litros'] or 0 }}">
-                    <label>Consulta automatica cada tantas horas</label>
-                    <input type="number" name="intervalo_horas" min="1" value="{{ config['intervalo_horas'] or 4 }}">
-                    <button type="submit">Guardar</button>
-                </form>
-                <p class="hint">DEBO configurado en superusuario: <strong>{{ estacion['debo_host'] or 'sin configurar' }}</strong>.</p>
-                <p class="hint">Remitos: {{ 'permitidos' if estacion['debo_allow_remitos'] else 'denegados' }}. Driver esperado: {{ sqlserver_driver }}.</p>
-                <p class="hint">Conexion cargada: {{ 'si' if facturacion_configurada else 'no' }}.</p>
-            </section>
+            const { useState } = React;
+            const e = React.createElement;
+            const data = window.SORTEO_ADMIN_DATA;
 
-            <section>
-                <h2>Controles</h2>
-                <div class="btn-row">
-                    <form action="{{ base_path }}/admin/forzar-consulta" method="POST"><button class="btn-ok" type="submit">Forzar consulta</button></form>
-                    {% if config['detenido'] %}
-                    <form action="{{ base_path }}/admin/reanudar" method="POST"><button type="submit">Reanudar</button></form>
-                    {% else %}
-                    <form action="{{ base_path }}/admin/detener" method="POST"><button class="btn-stop" type="submit">Detener</button></form>
-                    {% endif %}
-                    <form action="{{ base_path }}/admin/iniciar-conteo" method="POST" onsubmit="return confirm('Se archivara el listado activo y quedara limpio para el proximo conteo.');"><button class="btn-alt" type="submit">Iniciar conteo</button></form>
-                </div>
-                <p class="hint">Ultima consulta: {{ config['ultima_consulta'] or 'sin consultas' }}.</p>
-                <p class="hint">Si falla la conexion o pyodbc, el ticket queda pendiente. Si no coincide fecha, hora, factura o combustible, queda denegado.</p>
-            </section>
-        </div>
+            function submitForm(id) {
+                const form = document.getElementById(id);
+                if (form) form.submit();
+            }
 
-        <section>
-            <h2>Ranking de vendedores</h2>
-            <div class="table-wrap">
-                <table style="min-width:480px;">
-                    <thead><tr><th>Vendedor</th><th>Facturas aprobadas</th></tr></thead>
-                    <tbody>
-                        {% for row in seller_ranking %}
-                        <tr><td>{{ row['vendedor'] }}</td><td>{{ row['facturas_aprobadas'] }}</td></tr>
-                        {% else %}
-                        <tr><td colspan="2">Todavia no hay facturas aprobadas.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </section>
+            function exportHref(query) {
+                return data.basePath + '/admin/exportar-excel' + query;
+            }
 
-        <section>
-            <h2>Pendientes</h2>
-            <div class="table-wrap">
-                <table>
-                    <thead><tr><th>Registro</th><th>Fecha</th><th>Hora</th><th>Factura</th><th>Cliente</th><th>Telefono</th><th>Email</th><th>Detalle</th></tr></thead>
-                    <tbody>
-                        {% for p in pendientes %}
-                        {% set fecha, hora = split_timestamp(p['ticket_hora']) %}
-                        <tr>
-                            <td>{{ p['creado_en'] }}</td>
-                            <td>{{ fecha }}</td>
-                            <td>{{ hora }}</td>
-                            <td>{{ p['numero_factura'] }}</td>
-                            <td><strong>{{ p['nombre'] }} {{ p['apellido'] }}</strong><br>{{ p['dni'] or '' }}</td>
-                            <td>{{ p['telefono'] }}</td>
-                            <td>{{ p['email'] }}</td>
-                            <td>{{ p['detalle_validacion'] or 'Esperando validacion.' }}</td>
-                        </tr>
-                        {% else %}
-                        <tr><td colspan="8">No hay pendientes.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </section>
+            function InfoTable(props) {
+                const rows = props.rows || [];
+                return e('div', { className: 'table-shell' },
+                    e('div', { className: 'table-toolbar' },
+                        e('div', null,
+                            e('h3', { style: { margin: 0 } }, props.title),
+                            e('div', { className: 'muted-note' }, props.subtitle || '')
+                        ),
+                        props.toolbar || null
+                    ),
+                    rows.length
+                        ? e('div', { className: 'table-wrap' },
+                            e('table', null,
+                                e('thead', null,
+                                    e('tr', null, props.columns.map(col => e('th', { key: col.key }, col.label)))
+                                ),
+                                e('tbody', null,
+                                    rows.map((row, index) => e('tr', { key: index },
+                                        props.columns.map(col => e('td', { key: col.key },
+                                            col.render ? col.render(row) : (row[col.key] ?? '')
+                                        ))
+                                    ))
+                                )
+                            )
+                        )
+                        : e('div', { className: 'empty' }, props.emptyText || 'No hay datos.')
+                );
+            }
 
-        <section>
-            <h2>Aprobados</h2>
-            <div class="table-wrap">
-                <table>
-                    <thead><tr><th>Estado</th><th>Fecha</th><th>Hora</th><th>Factura</th><th>Tipo</th><th>Vendedor</th><th>Combustible</th><th>Litros</th><th>App YPF</th><th>Chances</th><th>Cliente</th><th>Telefono</th><th>Email</th><th>Detalle</th></tr></thead>
-                    <tbody>
-                        {% for p in aprobados %}
-                        {% set fecha, hora = split_timestamp(p['ticket_hora']) %}
-                        <tr>
-                            <td><span class="badge {{ p['estado'] }}">{{ p['estado'] }}</span></td>
-                            <td>{{ fecha }}</td>
-                            <td>{{ hora }}</td>
-                            <td>{{ p['factura_real'] or p['numero_factura'] }}</td>
-                            <td>{{ p['tipo_comprobante'] or '' }} {{ p['letra_fiscal'] or '' }}</td>
-                            <td>{{ p['vendedor'] or '' }}</td>
-                            <td>{{ p['combustible'] or '' }}</td>
-                            <td>{{ p['litros'] or '' }}</td>
-                            <td>{{ yes_no_blank(p['pago_app_ypf']) }}</td>
-                            <td>{{ p['chances'] or '' }}</td>
-                            <td><strong>{{ p['nombre'] }} {{ p['apellido'] }}</strong><br>{{ p['dni'] or '' }}</td>
-                            <td>{{ p['telefono'] }}</td>
-                            <td>{{ p['email'] }}</td>
-                            <td>{{ p['detalle_validacion'] or '' }}</td>
-                        </tr>
-                        {% else %}
-                        <tr><td colspan="14">No hay aprobados.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </section>
+            function OverviewTab() {
+                const [minimoLitros, setMinimoLitros] = useState(String(data.config.minimoLitros ?? 0));
+                const [intervaloHoras, setIntervaloHoras] = useState(String(data.config.intervaloHoras ?? 4));
 
-        <section>
-            <h2>Denegados</h2>
-            <div class="table-wrap">
-                <table>
-                    <thead><tr><th>Estado</th><th>Fecha</th><th>Hora</th><th>Factura</th><th>Tipo</th><th>Vendedor</th><th>Combustible</th><th>Litros</th><th>Cliente</th><th>Telefono</th><th>Email</th><th>Detalle</th></tr></thead>
-                    <tbody>
-                        {% for p in denegados %}
-                        {% set fecha, hora = split_timestamp(p['ticket_hora']) %}
-                        <tr>
-                            <td><span class="badge {{ p['estado'] }}">{{ p['estado'] }}</span></td>
-                            <td>{{ fecha }}</td>
-                            <td>{{ hora }}</td>
-                            <td>{{ p['factura_real'] or p['numero_factura'] }}</td>
-                            <td>{{ p['tipo_comprobante'] or '' }} {{ p['letra_fiscal'] or '' }}</td>
-                            <td>{{ p['vendedor'] or '' }}</td>
-                            <td>{{ p['combustible'] or '' }}</td>
-                            <td>{{ p['litros'] or '' }}</td>
-                            <td><strong>{{ p['nombre'] }} {{ p['apellido'] }}</strong><br>{{ p['dni'] or '' }}</td>
-                            <td>{{ p['telefono'] }}</td>
-                            <td>{{ p['email'] }}</td>
-                            <td>{{ p['detalle_validacion'] or '' }}</td>
-                        </tr>
-                        {% else %}
-                        <tr><td colspan="12">No hay denegados.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </section>
+                function saveConfig(event) {
+                    event.preventDefault();
+                    document.getElementById('config-minimo-litros').value = minimoLitros;
+                    document.getElementById('config-intervalo-horas').value = intervaloHoras;
+                    submitForm('config-form');
+                }
 
-        <section>
-            <h2>Conteos archivados</h2>
-            <div class="table-wrap">
-                <table style="min-width:720px;">
-                    <thead><tr><th>ID</th><th>Fecha</th><th>Total</th><th>Aprobados</th><th>Denegados</th><th>Pendientes</th></tr></thead>
-                    <tbody>
-                        {% for c in conteos %}
-                        <tr><td>{{ c['id'] }}</td><td>{{ c['iniciado_en'] }}</td><td>{{ c['total'] }}</td><td>{{ c['aprobados'] }}</td><td>{{ c['denegados'] }}</td><td>{{ c['pendientes'] }}</td></tr>
-                        {% else %}
-                        <tr><td colspan="6">Todavia no hay conteos archivados.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    </main>
+                return e('div', { className: 'stack' },
+                    e('div', { className: 'panel-copy' }, 'Acá concentrás la configuración, los botones de control y el resumen general. Los litros mínimos aplican por igual a Super, Infinia, Diesel 500 e Infinia Diesel.'),
+                    e('div', { className: 'cards-grid' },
+                        e('div', { className: 'panel-card stack' },
+                            e('h3', null, 'Configuracion del sorteo'),
+                            e('form', { className: 'stack', onSubmit: saveConfig },
+                                e('div', { className: 'field' },
+                                    e('label', null, 'Litros minimos para aprobar'),
+                                    e('input', {
+                                        type: 'number',
+                                        min: '0',
+                                        step: '0.001',
+                                        value: minimoLitros,
+                                        onChange: ev => setMinimoLitros(ev.target.value)
+                                    })
+                                ),
+                                e('div', { className: 'field' },
+                                    e('label', null, 'Consulta automatica cada tantas horas'),
+                                    e('input', {
+                                        type: 'number',
+                                        min: '1',
+                                        value: intervaloHoras,
+                                        onChange: ev => setIntervaloHoras(ev.target.value)
+                                    })
+                                ),
+                                e('div', { className: 'inline-actions' },
+                                    e('button', { type: 'submit', className: 'btn btn-primary' }, 'Guardar configuracion')
+                                )
+                            ),
+                            e('p', { className: 'muted-note' }, 'DEBO cargado en superusuario: ' + data.estacion.deboHost + '. Remitos: ' + (data.estacion.deboAllowRemitos ? 'permitidos' : 'denegados') + '. Conexion cargada: ' + (data.facturacionConfigurada ? 'si' : 'no') + '.'),
+                            e('p', { className: 'muted-note' }, 'Ultima consulta registrada: ' + (data.config.ultimaConsulta || 'sin consultas') + '. Driver esperado: ' + data.sqlserverDriver + '.')
+                        ),
+                        e('div', { className: 'panel-card stack' },
+                            e('h3', null, 'Controles'),
+                            e('p', null, 'La consulta manual y la automática solo toman tickets pendientes. Aprobados y denegados no se reprocesan.'),
+                            e('div', { className: 'inline-actions' },
+                                e('button', { type: 'button', className: 'btn btn-success', onClick: () => submitForm('forzar-form') }, 'Forzar consulta'),
+                                data.config.detenido
+                                    ? e('button', { type: 'button', className: 'btn btn-primary', onClick: () => submitForm('reanudar-form') }, 'Reanudar')
+                                    : e('button', { type: 'button', className: 'btn btn-danger', onClick: () => submitForm('detener-form') }, 'Detener'),
+                                e('button', {
+                                    type: 'button',
+                                    className: 'btn btn-dark',
+                                    onClick: () => {
+                                        if (window.confirm('Se archivara el listado activo y quedara limpio para el proximo conteo.')) submitForm('conteo-form');
+                                    }
+                                }, 'Iniciar conteo')
+                            )
+                        ),
+                        e('div', { className: 'panel-card stack' },
+                            e('h3', null, 'Exportaciones'),
+                            e('p', null, 'Descargá el padrón limpio o el ponderado para el sorteo sin mezclar estados.'),
+                            e('div', { className: 'inline-actions' },
+                                e('a', { className: 'btn btn-primary', href: exportHref('?estado=APROBADO') }, 'Excel aprobados'),
+                                e('a', { className: 'btn btn-primary', href: exportHref('?estado=APROBADO&ponderado=1') }, 'Excel sorteo'),
+                                e('a', { className: 'btn btn-primary', href: exportHref('?estado=DENEGADO') }, 'Excel denegados')
+                            )
+                        )
+                    ),
+                    e('div', { className: 'cards-grid' },
+                        e('div', { className: 'panel-card stack' },
+                            e('h3', null, 'QR y formulario publico'),
+                            e('div', { className: 'qr-box' },
+                                data.qr ? e('img', { src: data.qr, alt: 'QR sorteo' }) : null,
+                                e('div', { className: 'stack' },
+                                    e('div', { className: 'link-box' },
+                                        e('a', { href: data.publicUrl, target: '_blank', rel: 'noreferrer' }, data.publicUrl)
+                                    ),
+                                    data.qr ? e('a', { className: 'btn btn-primary', href: data.qr, download: 'qr-sorteo-electrodomesticos.png' }, 'Descargar QR') : null,
+                                    e('p', { className: 'muted-note' }, 'El cliente tiene que cargar fecha, hora exacta con segundos y numero de factura.')
+                                )
+                            )
+                        ),
+                        e('div', { className: 'panel-card stack' },
+                            e('h3', null, 'Glosario de chances'),
+                            e('div', { className: 'glossary-grid' },
+                                e('div', { className: 'glossary-item' },
+                                    e('strong', null, '1'),
+                                    e('div', null, 'Super o Diesel 500 sin App YPF.')
+                                ),
+                                e('div', { className: 'glossary-item' },
+                                    e('strong', null, '2'),
+                                    e('div', null, 'Infinia sin App YPF, o Super / Diesel 500 con App YPF.')
+                                ),
+                                e('div', { className: 'glossary-item' },
+                                    e('strong', null, '3'),
+                                    e('div', null, 'Infinia o Infinia Diesel con App YPF.')
+                                )
+                            )
+                        )
+                    )
+                );
+            }
+
+            function PendingTab() {
+                return e(InfoTable, {
+                    title: 'Pendientes',
+                    subtitle: 'Se validan por fecha, hora exacta con segundos y numero de factura.',
+                    rows: data.pendientes,
+                    emptyText: 'No hay pendientes.',
+                    toolbar: e('div', { className: 'inline-actions' },
+                        e('button', { type: 'button', className: 'btn btn-success', onClick: () => submitForm('forzar-form') }, 'Consultar pendientes ahora')
+                    ),
+                    columns: [
+                        { key: 'creadoEn', label: 'Registro' },
+                        { key: 'fecha', label: 'Fecha' },
+                        { key: 'hora', label: 'Hora' },
+                        { key: 'numeroFactura', label: 'Factura' },
+                        { key: 'cliente', label: 'Cliente', render: row => row.nombre + ' ' + row.apellido + (row.dni ? ' / ' + row.dni : '') },
+                        { key: 'telefono', label: 'Telefono' },
+                        { key: 'email', label: 'Email' },
+                        { key: 'detalle', label: 'Detalle' }
+                    ]
+                });
+            }
+
+            function ApprovedTab() {
+                return e(InfoTable, {
+                    title: 'Aprobadas',
+                    subtitle: 'Solo figuran facturas que cumplen litros minimos y combustible valido.',
+                    rows: data.aprobados,
+                    emptyText: 'No hay aprobadas.',
+                    toolbar: e('div', { className: 'inline-actions' },
+                        e('a', { className: 'btn btn-primary', href: exportHref('?estado=APROBADO') }, 'Exportar aprobadas'),
+                        e('a', { className: 'btn btn-primary', href: exportHref('?estado=APROBADO&ponderado=1') }, 'Exportar sorteo')
+                    ),
+                    columns: [
+                        { key: 'estado', label: 'Estado', render: row => e('span', { className: 'badge ' + row.estado }, row.estado) },
+                        { key: 'fecha', label: 'Fecha' },
+                        { key: 'hora', label: 'Hora' },
+                        { key: 'factura', label: 'Factura' },
+                        { key: 'tipo', label: 'Tipo' },
+                        { key: 'vendedor', label: 'Vendedor' },
+                        { key: 'combustible', label: 'Combustible' },
+                        { key: 'litros', label: 'Litros' },
+                        { key: 'appYpf', label: 'App YPF' },
+                        { key: 'chances', label: 'Chances' },
+                        { key: 'cliente', label: 'Cliente', render: row => row.nombre + ' ' + row.apellido + (row.dni ? ' / ' + row.dni : '') },
+                        { key: 'telefono', label: 'Telefono' },
+                        { key: 'email', label: 'Email' },
+                        { key: 'detalle', label: 'Detalle' }
+                    ]
+                });
+            }
+
+            function DeniedTab() {
+                return e(InfoTable, {
+                    title: 'Denegadas',
+                    subtitle: 'Acá quedan las facturas con litros insuficientes, datos no coincidentes o conceptos no válidos.',
+                    rows: data.denegados,
+                    emptyText: 'No hay denegadas.',
+                    toolbar: e('div', { className: 'inline-actions' },
+                        e('a', { className: 'btn btn-primary', href: exportHref('?estado=DENEGADO') }, 'Exportar denegadas')
+                    ),
+                    columns: [
+                        { key: 'estado', label: 'Estado', render: row => e('span', { className: 'badge ' + row.estado }, row.estado) },
+                        { key: 'fecha', label: 'Fecha' },
+                        { key: 'hora', label: 'Hora' },
+                        { key: 'factura', label: 'Factura' },
+                        { key: 'tipo', label: 'Tipo' },
+                        { key: 'vendedor', label: 'Vendedor' },
+                        { key: 'combustible', label: 'Combustible' },
+                        { key: 'litros', label: 'Litros' },
+                        { key: 'cliente', label: 'Cliente', render: row => row.nombre + ' ' + row.apellido + (row.dni ? ' / ' + row.dni : '') },
+                        { key: 'telefono', label: 'Telefono' },
+                        { key: 'email', label: 'Email' },
+                        { key: 'detalle', label: 'Detalle' }
+                    ]
+                });
+            }
+
+            function RankingTab() {
+                return e(InfoTable, {
+                    title: 'Ranking de vendedores',
+                    subtitle: 'Cada factura aprobada suma 1 punto, sin importar combustible ni chances.',
+                    rows: data.sellerRanking,
+                    emptyText: 'Todavia no hay facturas aprobadas.',
+                    columns: [
+                        { key: 'vendedor', label: 'Vendedor' },
+                        { key: 'facturasAprobadas', label: 'Facturas aprobadas' }
+                    ]
+                });
+            }
+
+            function ArchiveTab() {
+                return e(InfoTable, {
+                    title: 'Conteos archivados',
+                    subtitle: 'Historial de cierres para separar tandas sin mezclar tickets nuevos con tandas anteriores.',
+                    rows: data.conteos,
+                    emptyText: 'Todavia no hay conteos archivados.',
+                    columns: [
+                        { key: 'id', label: 'ID' },
+                        { key: 'fecha', label: 'Fecha' },
+                        { key: 'total', label: 'Total' },
+                        { key: 'aprobados', label: 'Aprobados' },
+                        { key: 'denegados', label: 'Denegados' },
+                        { key: 'pendientes', label: 'Pendientes' }
+                    ]
+                });
+            }
+
+            function AdminApp() {
+                const [tab, setTab] = useState('overview');
+                const tabs = [
+                    { id: 'overview', label: 'Resumen' },
+                    { id: 'pendientes', label: 'Pendientes' },
+                    { id: 'aprobados', label: 'Aprobadas' },
+                    { id: 'denegados', label: 'Denegadas' },
+                    { id: 'ranking', label: 'Ranking' },
+                    { id: 'archivados', label: 'Archivados' }
+                ];
+
+                let panel;
+                let title = 'Resumen';
+                let copy = 'Navegá por solapas y mostrale al administrador solo la parte que necesita en ese momento.';
+                if (tab === 'pendientes') {
+                    title = 'Pendientes';
+                    copy = 'Esta vista muestra exclusivamente los tickets todavía no resueltos.';
+                    panel = e(PendingTab);
+                } else if (tab === 'aprobados') {
+                    title = 'Aprobadas';
+                    copy = 'Acá ves el padrón limpio de participantes válidos.';
+                    panel = e(ApprovedTab);
+                } else if (tab === 'denegados') {
+                    title = 'Denegadas';
+                    copy = 'Banco de datos separado para revisar rechazos sin ensuciar las aprobadas.';
+                    panel = e(DeniedTab);
+                } else if (tab === 'ranking') {
+                    title = 'Ranking';
+                    copy = 'Resumen simple de vendedores por facturas aprobadas.';
+                    panel = e(RankingTab);
+                } else if (tab === 'archivados') {
+                    title = 'Archivados';
+                    copy = 'Historial de tandas ya cerradas.';
+                    panel = e(ArchiveTab);
+                } else {
+                    panel = e(OverviewTab);
+                }
+
+                return e('div', { className: 'app-shell' },
+                    e('section', { className: 'hero' },
+                        e('div', { className: 'hero-top' },
+                            e('div', null,
+                                e('div', { className: 'eyebrow' }, 'Sorteo', ' · ', data.config.detenido ? 'Detenido' : 'Activo'),
+                                e('h1', null, data.nombreEstacion),
+                                e('p', null, 'Panel de control del sorteo con validación DEBO. Cambiá de solapa para ver solo pendientes, aprobadas, denegadas, ranking o archivo.')
+                            ),
+                            e('div', { className: 'hero-actions' },
+                                e('a', { className: 'btn-secondary', href: exportHref('?estado=APROBADO') }, 'Excel aprobadas'),
+                                e('a', { className: 'btn-secondary', href: exportHref('?estado=APROBADO&ponderado=1') }, 'Excel sorteo'),
+                                e('a', { className: 'btn-secondary', href: exportHref('?estado=DENEGADO') }, 'Excel denegadas'),
+                                e('a', { className: 'btn-danger', href: data.basePath + '/admin/logout' }, 'Salir')
+                            )
+                        ),
+                        e('div', { className: 'stats-grid' },
+                            e('div', { className: 'stat-card' },
+                                e('div', { className: 'stat-label' }, 'Pendientes'),
+                                e('strong', null, data.totales.pendientes)
+                            ),
+                            e('div', { className: 'stat-card' },
+                                e('div', { className: 'stat-label' }, 'Aprobadas'),
+                                e('strong', null, data.totales.aprobados)
+                            ),
+                            e('div', { className: 'stat-card' },
+                                e('div', { className: 'stat-label' }, 'Denegadas'),
+                                e('strong', null, data.totales.denegados)
+                            )
+                        )
+                    ),
+                    e('section', { className: 'content-shell' },
+                        e('div', { className: 'tabs' },
+                            tabs.map(item => e('button', {
+                                key: item.id,
+                                type: 'button',
+                                className: 'tab-btn' + (tab === item.id ? ' active' : ''),
+                                onClick: () => setTab(item.id)
+                            }, item.label))
+                        ),
+                        e('div', { className: 'panel' },
+                            e('h2', null, title),
+                            e('p', { className: 'panel-copy' }, copy),
+                            panel
+                        )
+                    )
+                );
+            }
+
+            ReactDOM.createRoot(document.getElementById('admin-root')).render(e(AdminApp));
+        })();
+    </script>
 </body>
 </html>
