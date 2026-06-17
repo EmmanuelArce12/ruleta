@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, Response
+from flask import Flask, render_template, request, redirect, session, Response, jsonify
 from werkzeug.security import check_password_hash
 from datetime import datetime, date
 from io import BytesIO
@@ -206,25 +206,53 @@ def parse_ticket_date(fecha):
     return datetime.strptime(fecha, '%Y-%m-%d').date()
 
 
+def normalize_invoice_branch_digits(raw_value):
+    digits = re.sub(r'\D+', '', raw_value or '')
+    digits = digits.lstrip('0') or '0'
+    if len(digits) > 2:
+        digits = digits.rstrip('0') or digits
+    digits = digits.lstrip('0') or '0'
+    return str(int(digits))
+
+
+def normalize_invoice_serial_digits(raw_value):
+    digits = re.sub(r'\D+', '', raw_value or '')
+    digits = digits.lstrip('0') or '0'
+    return str(int(digits))
+
+
+def build_canonical_invoice(branch_raw, serial_raw):
+    sucursal = int(normalize_invoice_branch_digits(branch_raw))
+    numero = int(normalize_invoice_serial_digits(serial_raw))
+    return {
+        'sucursal': sucursal,
+        'numero': numero,
+        'canonical': f'{sucursal}-{numero}',
+    }
+
+
 def normalize_invoice_number(raw_value):
     raw_value = (raw_value or '').strip()
     groups = re.findall(r'\d+', raw_value)
     if not groups:
         raise ValueError('Ingresa el numero de factura con punto de venta y numero.')
     if len(groups) >= 2:
-        sucursal = int(groups[-2])
-        numero = int(groups[-1])
+        return build_canonical_invoice(groups[-2], groups[-1])
     else:
         digits = groups[0]
         if len(digits) <= 6:
             raise ValueError('El numero de factura debe incluir punto de venta y numero.')
-        sucursal = int(digits[:-6])
-        numero = int(digits[-6:])
-    return {
-        'sucursal': sucursal,
-        'numero': numero,
-        'canonical': f'{sucursal}-{numero}',
-    }
+        return build_canonical_invoice(digits[:-6], digits[-6:])
+
+
+def parse_invoice_from_form(form):
+    punto_venta = form.get('numero_factura_sucursal')
+    numero = form.get('numero_factura_numero')
+    if punto_venta is not None or numero is not None:
+        if not (punto_venta or '').strip() or not (numero or '').strip():
+            raise ValueError('Completa punto de venta y numero de factura.')
+        return build_canonical_invoice(punto_venta, numero)
+    return normalize_invoice_number(form.get('numero_factura'))
 
 
 def decimal_to_float(value):
@@ -427,6 +455,44 @@ def reset_participante_validation(cursor, participante_id, estado='PENDIENTE', d
             consulta_at = CURRENT_TIMESTAMP
         WHERE id = %s
     ''', (estado, detalle, participante_id))
+
+
+def requeue_participante_with_invoice(cursor, estacion_id, participante_id, numero_factura):
+    factura = normalize_invoice_number(numero_factura)
+    cursor.execute('''
+        SELECT id, ticket_fecha
+        FROM sorteo_participantes
+        WHERE id = %s
+          AND estacion_id = %s
+          AND conteo_id IS NULL
+          AND estado IN ('DENEGADO', 'DUDOSO')
+    ''', (participante_id, estacion_id))
+    row = cursor.fetchone()
+    if not row:
+        raise ValueError('El registro ya no esta disponible para reproceso.')
+
+    row_id = row['id'] if isinstance(row, dict) else row[0]
+    ticket_fecha = row['ticket_fecha'] if isinstance(row, dict) else row[1]
+    cursor.execute('''
+        SELECT id
+        FROM sorteo_participantes
+        WHERE estacion_id = %s
+          AND conteo_id IS NULL
+          AND ticket_fecha = %s
+          AND numero_factura = %s
+          AND id <> %s
+        LIMIT 1
+    ''', (estacion_id, ticket_fecha, factura['canonical'], row_id))
+    if cursor.fetchone():
+        raise ValueError('Ya existe otra carga activa con esa fecha y factura.')
+
+    cursor.execute('''
+        UPDATE sorteo_participantes
+        SET numero_factura = %s
+        WHERE id = %s
+    ''', (factura['canonical'], row_id))
+    reset_participante_validation(cursor, row_id)
+    return factura['canonical']
 
 
 def validar_pendientes(estacion_id=None):
@@ -754,6 +820,45 @@ def aprobar_denegado(participante_id):
     return redirect(sorteo_path('/admin'))
 
 
+@app.route('/admin/reprocesar-facturas', methods=['POST'])
+@app.route('/sorteo/admin/reprocesar-facturas', methods=['POST'])
+def reprocesar_facturas():
+    if not admin_required():
+        return jsonify({'ok': False, 'error': 'Sesion expirada.'}), 401
+
+    payload = request.get_json(silent=True) or {}
+    items = payload.get('items') or []
+    if not items:
+        return jsonify({'ok': False, 'error': 'No se recibieron filas para reprocesar.'}), 400
+
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    actualizados = []
+    errores = []
+    try:
+        for item in items:
+            participante_id = item.get('id')
+            numero_factura = item.get('numero_factura')
+            try:
+                canonical = requeue_participante_with_invoice(
+                    c,
+                    session['sorteo_estacion_id'],
+                    int(participante_id),
+                    numero_factura,
+                )
+                actualizados.append({'id': int(participante_id), 'numero_factura': canonical})
+            except Exception as exc:
+                errores.append({'id': participante_id, 'error': str(exc)})
+        conn.commit()
+    except Exception as exc:
+        conn.rollback()
+        conn.close()
+        return jsonify({'ok': False, 'error': str(exc)}), 500
+
+    conn.close()
+    return jsonify({'ok': True, 'actualizados': actualizados, 'errores': errores})
+
+
 @app.route('/admin/exportar-excel')
 @app.route('/sorteo/admin/exportar-excel')
 def exportar_excel():
@@ -913,7 +1018,7 @@ def cliente_sorteo(estacion_id):
                 promo_desde, promo_hasta = get_active_promo_bounds(config)
                 if ticket_fecha < promo_desde or ticket_fecha > promo_hasta:
                     raise ValueError('La fecha del ticket esta fuera de la promocion activa.')
-                factura = normalize_invoice_number(request.form.get('numero_factura'))
+                factura = parse_invoice_from_form(request.form)
                 device_token = (request.form.get('device_token') or '').strip()
                 user_agent = request.headers.get('User-Agent', '')
                 ip_registro = get_client_ip()

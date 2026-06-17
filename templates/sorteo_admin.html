@@ -57,6 +57,10 @@
         table { width:100%; min-width:1100px; border-collapse:collapse; }
         th, td { padding:12px 14px; border-bottom:1px solid #1e3a56; font-size:13px; text-align:left; vertical-align:top; }
         th { background:#16304a; color:#c6d6e7; font-size:11px; text-transform:uppercase; letter-spacing:.4px; }
+        .icon-btn { min-width:38px; padding:8px 10px; }
+        .invoice-inline { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+        .invoice-inline input[type="text"] { width:150px; min-height:38px; padding:8px 10px; border:1px solid var(--line); border-radius:10px; font-size:13px; background:#081521; color:var(--ink); }
+        .row-check { width:18px; height:18px; accent-color:#22c55e; }
         .empty { padding:42px 20px; text-align:center; color:var(--muted); }
         .muted-note { color:var(--muted); font-size:13px; line-height:1.45; }
         .link-box { display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:12px 14px; border-radius:14px; background:#081521; border:1px solid var(--line); }
@@ -109,9 +113,9 @@
             totales: {{ totales|tojson }},
             sellerRanking: [{% for row in seller_ranking %}{ vendedor: {{ row['vendedor']|tojson }}, facturasAprobadas: {{ row['facturas_aprobadas']|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
             pendientes: [{% for p in pendientes %}{ id: {{ p['id']|tojson }}, fecha: {{ (p['ticket_fecha']|string)|tojson }}, factura: {{ p['numero_factura']|tojson }}, cliente: {{ ((p['nombre'] ~ ' ' ~ p['apellido']) ~ (p['dni'] and (' / ' ~ p['dni']) or ''))|tojson }}, telefono: {{ p['telefono']|tojson }}, email: {{ p['email']|tojson }}, detalle: {{ (p['detalle_validacion'] or 'Esperando validacion.')|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
-            dudosos: [{% for p in dudosos %}{ id: {{ p['id']|tojson }}, fecha: {{ (p['ticket_fecha']|string)|tojson }}, factura: {{ (p['factura_real'] or p['numero_factura'])|tojson }}, vendedor: {{ (p['vendedor'] or '')|tojson }}, combustible: {{ (p['combustible'] or '')|tojson }}, litros: {{ (p['litros'] if p['litros'] is not none else '')|tojson }}, medioPago: {{ (p['medio_pago'] or '')|tojson }}, chances: {{ (p['chances'] or '')|tojson }}, deviceToken: {{ (p['device_token'] or '')|tojson }}, ip: {{ (p['ip_registro'] or '')|tojson }}, detalle: {{ (p['detalle_validacion'] or '')|tojson }}, cliente: {{ ((p['nombre'] ~ ' ' ~ p['apellido']) ~ (p['dni'] and (' / ' ~ p['dni']) or ''))|tojson }}, telefono: {{ p['telefono']|tojson }}, email: {{ p['email']|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
+            dudosos: [{% for p in dudosos %}{ id: {{ p['id']|tojson }}, fecha: {{ (p['ticket_fecha']|string)|tojson }}, factura: {{ (p['factura_real'] or p['numero_factura'])|tojson }}, numeroFacturaEditable: {{ p['numero_factura']|tojson }}, vendedor: {{ (p['vendedor'] or '')|tojson }}, combustible: {{ (p['combustible'] or '')|tojson }}, litros: {{ (p['litros'] if p['litros'] is not none else '')|tojson }}, medioPago: {{ (p['medio_pago'] or '')|tojson }}, chances: {{ (p['chances'] or '')|tojson }}, deviceToken: {{ (p['device_token'] or '')|tojson }}, ip: {{ (p['ip_registro'] or '')|tojson }}, detalle: {{ (p['detalle_validacion'] or '')|tojson }}, cliente: {{ ((p['nombre'] ~ ' ' ~ p['apellido']) ~ (p['dni'] and (' / ' ~ p['dni']) or ''))|tojson }}, telefono: {{ p['telefono']|tojson }}, email: {{ p['email']|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
             aprobados: [{% for p in aprobados %}{ id: {{ p['id']|tojson }}, estado: {{ p['estado']|tojson }}, fecha: {{ (p['ticket_fecha']|string)|tojson }}, factura: {{ (p['factura_real'] or p['numero_factura'])|tojson }}, tipo: {{ (((p['tipo_comprobante'] or '') ~ ' ' ~ (p['letra_fiscal'] or ''))|trim)|tojson }}, vendedor: {{ (p['vendedor'] or '')|tojson }}, combustible: {{ (p['combustible'] or '')|tojson }}, litros: {{ (p['litros'] if p['litros'] is not none else '')|tojson }}, medioPago: {{ (p['medio_pago'] or '')|tojson }}, appYpf: {{ yes_no_blank(p['pago_app_ypf'])|tojson }}, chances: {{ (p['chances'] or '')|tojson }}, cliente: {{ ((p['nombre'] ~ ' ' ~ p['apellido']) ~ (p['dni'] and (' / ' ~ p['dni']) or ''))|tojson }}, telefono: {{ p['telefono']|tojson }}, email: {{ p['email']|tojson }}, detalle: {{ (p['detalle_validacion'] or '')|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
-            denegados: [{% for p in denegados %}{ id: {{ p['id']|tojson }}, estado: {{ p['estado']|tojson }}, fecha: {{ (p['ticket_fecha']|string)|tojson }}, factura: {{ (p['factura_real'] or p['numero_factura'])|tojson }}, tipo: {{ (((p['tipo_comprobante'] or '') ~ ' ' ~ (p['letra_fiscal'] or ''))|trim)|tojson }}, vendedor: {{ (p['vendedor'] or '')|tojson }}, combustible: {{ (p['combustible'] or '')|tojson }}, litros: {{ (p['litros'] if p['litros'] is not none else '')|tojson }}, medioPago: {{ (p['medio_pago'] or '')|tojson }}, cliente: {{ ((p['nombre'] ~ ' ' ~ p['apellido']) ~ (p['dni'] and (' / ' ~ p['dni']) or ''))|tojson }}, telefono: {{ p['telefono']|tojson }}, email: {{ p['email']|tojson }}, detalle: {{ (p['detalle_validacion'] or '')|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
+            denegados: [{% for p in denegados %}{ id: {{ p['id']|tojson }}, estado: {{ p['estado']|tojson }}, fecha: {{ (p['ticket_fecha']|string)|tojson }}, factura: {{ (p['factura_real'] or p['numero_factura'])|tojson }}, numeroFacturaEditable: {{ p['numero_factura']|tojson }}, tipo: {{ (((p['tipo_comprobante'] or '') ~ ' ' ~ (p['letra_fiscal'] or ''))|trim)|tojson }}, vendedor: {{ (p['vendedor'] or '')|tojson }}, combustible: {{ (p['combustible'] or '')|tojson }}, litros: {{ (p['litros'] if p['litros'] is not none else '')|tojson }}, medioPago: {{ (p['medio_pago'] or '')|tojson }}, cliente: {{ ((p['nombre'] ~ ' ' ~ p['apellido']) ~ (p['dni'] and (' / ' ~ p['dni']) or ''))|tojson }}, telefono: {{ p['telefono']|tojson }}, email: {{ p['email']|tojson }}, detalle: {{ (p['detalle_validacion'] or '')|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
             conteos: [{% for c in conteos %}{ id: {{ c['id']|tojson }}, fecha: {{ (c['iniciado_en'] and (c['iniciado_en']|string))|tojson }}, total: {{ c['total']|tojson }}, aprobados: {{ c['aprobados']|tojson }}, denegados: {{ c['denegados']|tojson }}, pendientes: {{ c['pendientes']|tojson }}, dudosos: {{ (c['dudosos'] or 0)|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}]
         };
     </script>
@@ -123,15 +127,55 @@
             const { useState } = React;
             const e = React.createElement;
             const data = window.SORTEO_ADMIN_DATA;
+
             function submitForm(id) { const form = document.getElementById(id); if (form) form.submit(); }
             function exportHref(query) { return data.basePath + '/admin/exportar-excel' + query; }
+
             function InfoTable(props) {
                 const rows = props.rows || [];
                 return e('div', { className: 'table-shell' },
-                    e('div', { className: 'table-toolbar' }, e('div', null, e('h3', { style: { margin: 0 } }, props.title), e('div', { className: 'muted-note' }, props.subtitle || '')), props.toolbar || null),
-                    rows.length ? e('div', { className: 'table-wrap' }, e('table', null, e('thead', null, e('tr', null, props.columns.map(col => e('th', { key: col.key }, col.label)))), e('tbody', null, rows.map((row, index) => e('tr', { key: index }, props.columns.map(col => e('td', { key: col.key }, col.render ? col.render(row) : (row[col.key] ?? '')))))))) : e('div', { className: 'empty' }, props.emptyText || 'No hay datos.')
+                    e('div', { className: 'table-toolbar' },
+                        e('div', null, e('h3', { style: { margin: 0 } }, props.title), e('div', { className: 'muted-note' }, props.subtitle || '')),
+                        props.toolbar || null
+                    ),
+                    rows.length
+                        ? e('div', { className: 'table-wrap' },
+                            e('table', null,
+                                e('thead', null, e('tr', null, props.columns.map(function (col) { return e('th', { key: col.key }, col.label); }))),
+                                e('tbody', null, rows.map(function (row, index) {
+                                    return e('tr', { key: row.id || index }, props.columns.map(function (col) {
+                                        return e('td', { key: col.key }, col.render ? col.render(row) : (row[col.key] ?? ''));
+                                    }));
+                                }))
+                            )
+                        )
+                        : e('div', { className: 'empty' }, props.emptyText || 'No hay datos.')
                 );
             }
+
+            function normalizeInvoiceForEdit(value) {
+                const raw = String(value || '');
+                const parts = raw.split('-');
+                const branchRaw = String(parts[0] || '').replace(/\D+/g, '');
+                const serialRaw = String(parts.slice(1).join('') || '').replace(/\D+/g, '');
+                let branch = branchRaw.replace(/^0+/, '');
+                if (branch && branch.length > 2) branch = branch.replace(/0+$/, '') || branch;
+                branch = branch.replace(/^0+/, '') || '0';
+                const serial = serialRaw.replace(/^0+/, '') || '0';
+                return branch + '-' + serial;
+            }
+
+            async function reprocessEditedInvoices(items) {
+                const response = await window.fetch(data.basePath + '/admin/reprocesar-facturas', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items: items })
+                });
+                const payload = await response.json();
+                if (!response.ok || !payload.ok) throw new Error((payload && payload.error) || 'No se pudo reprocesar.');
+                return payload;
+            }
+
             function OverviewTab() {
                 const [minimoLitros, setMinimoLitros] = useState(String(data.config.minimoLitros ?? 0));
                 const [consultaAutomaticaHora, setConsultaAutomaticaHora] = useState(data.config.consultaAutomaticaHora || '04:00');
@@ -151,15 +195,15 @@
                     if (window.confirm('Se archivaran aprobados, denegados, pendientes y dudosos actuales para comenzar una nueva promocion.')) submitForm('promo-form');
                 }
                 return e('div', { className: 'stack' },
-                    e('div', { className: 'panel-copy' }, 'La promoción valida por fecha + número de factura. Los litros mínimos aplican por igual a Super, Infinia, Diesel 500 e Infinia Diesel.'),
+                    e('div', { className: 'panel-copy' }, 'La promocion valida por fecha y numero de factura. Los litros minimos aplican por igual a Super, Infinia, Diesel 500 e Infinia Diesel.'),
                     e('div', { className: 'cards-grid' },
                         e('div', { className: 'panel-card stack' },
                             e('h3', null, 'Configuracion y promocion'),
                             e('form', { className: 'stack', onSubmit: saveConfig },
-                                e('div', { className: 'field' }, e('label', null, 'Litros minimos para aprobar'), e('input', { type: 'number', min: '0', step: '0.001', value: minimoLitros, onChange: ev => setMinimoLitros(ev.target.value) })),
-                                e('div', { className: 'field' }, e('label', null, 'Consulta automatica diaria'), e('input', { type: 'time', value: consultaAutomaticaHora, onChange: ev => setConsultaAutomaticaHora(ev.target.value || '04:00') })),
-                                e('div', { className: 'field' }, e('label', null, 'Promocion desde'), e('input', { type: 'date', value: promocionDesde, onChange: ev => setPromocionDesde(ev.target.value) })),
-                                e('div', { className: 'field' }, e('label', null, 'Promocion hasta'), e('input', { type: 'date', value: promocionHasta, onChange: ev => setPromocionHasta(ev.target.value) })),
+                                e('div', { className: 'field' }, e('label', null, 'Litros minimos para aprobar'), e('input', { type: 'number', min: '0', step: '0.001', value: minimoLitros, onChange: function (ev) { setMinimoLitros(ev.target.value); } })),
+                                e('div', { className: 'field' }, e('label', null, 'Consulta automatica diaria'), e('input', { type: 'time', value: consultaAutomaticaHora, onChange: function (ev) { setConsultaAutomaticaHora(ev.target.value || '04:00'); } })),
+                                e('div', { className: 'field' }, e('label', null, 'Promocion desde'), e('input', { type: 'date', value: promocionDesde, onChange: function (ev) { setPromocionDesde(ev.target.value); } })),
+                                e('div', { className: 'field' }, e('label', null, 'Promocion hasta'), e('input', { type: 'date', value: promocionHasta, onChange: function (ev) { setPromocionHasta(ev.target.value); } })),
                                 e('div', { className: 'inline-actions' },
                                     e('button', { type: 'submit', className: 'btn btn-primary' }, 'Guardar configuracion'),
                                     e('button', { type: 'button', className: 'btn btn-dark', onClick: nuevaPromo }, 'Comenzar nueva promocion')
@@ -168,16 +212,18 @@
                         ),
                         e('div', { className: 'panel-card stack' },
                             e('h3', null, 'Controles'),
-                            e('p', null, 'Las consultas manuales y automáticas solo toman pendientes. Los dudosos quedan en revisión manual.'),
+                            e('p', null, 'Las consultas manuales y automaticas solo toman pendientes. Los dudosos quedan en revision manual.'),
                             e('div', { className: 'inline-actions' },
-                                e('button', { type: 'button', className: 'btn btn-success', onClick: () => submitForm('forzar-form') }, 'Forzar consulta'),
-                                data.config.detenido ? e('button', { type: 'button', className: 'btn btn-primary', onClick: () => submitForm('reanudar-form') }, 'Reanudar') : e('button', { type: 'button', className: 'btn btn-danger', onClick: () => submitForm('detener-form') }, 'Detener')
+                                e('button', { type: 'button', className: 'btn btn-success', onClick: function () { submitForm('forzar-form'); } }, 'Forzar consulta'),
+                                data.config.detenido
+                                    ? e('button', { type: 'button', className: 'btn btn-primary', onClick: function () { submitForm('reanudar-form'); } }, 'Reanudar')
+                                    : e('button', { type: 'button', className: 'btn btn-danger', onClick: function () { submitForm('detener-form'); } }, 'Detener')
                             ),
                             e('p', { className: 'muted-note' }, 'Ultima consulta: ' + (data.config.ultimaConsulta || 'sin consultas') + '. Proxima ventana diaria: ' + (data.config.consultaAutomaticaHora || '04:00') + '. DEBO: ' + data.estacion.deboHost + '. Remitos: ' + (data.estacion.deboAllowRemitos ? 'permitidos' : 'denegados') + '.')
                         ),
                         e('div', { className: 'panel-card stack' },
                             e('h3', null, 'Fraude y exportaciones'),
-                            e('p', null, 'Si el mismo dispositivo supera dos registros durante la promoción, el cupón queda como dudoso para revisión manual.'),
+                            e('p', null, 'Si el mismo dispositivo supera dos registros durante la promocion, el cupon queda como dudoso para revision manual.'),
                             e('div', { className: 'inline-actions' },
                                 e('a', { className: 'btn btn-primary', href: exportHref('?estado=APROBADO'), title: 'Exporta una fila por cada participante aprobado.' }, 'Excel aprobados'),
                                 e('a', { className: 'btn btn-primary', href: exportHref('?estado=APROBADO&ponderado=1'), title: 'Exporta el padron del sorteo duplicando o triplicando filas segun las chances.' }, 'Excel sorteo'),
@@ -190,7 +236,13 @@
                     e('div', { className: 'cards-grid' },
                         e('div', { className: 'panel-card stack' },
                             e('h3', null, 'QR y formulario publico'),
-                            e('div', { className: 'qr-box' }, data.qr ? e('img', { src: data.qr, alt: 'QR sorteo' }) : null, e('div', { className: 'stack' }, e('div', { className: 'link-box' }, e('a', { href: data.publicUrl, target: '_blank', rel: 'noreferrer' }, data.publicUrl)), data.qr ? e('a', { className: 'btn btn-primary', href: data.qr, download: 'qr-sorteo-electrodomesticos.png' }, 'Descargar QR') : null))
+                            e('div', { className: 'qr-box' },
+                                data.qr ? e('img', { src: data.qr, alt: 'QR sorteo' }) : null,
+                                e('div', { className: 'stack' },
+                                    e('div', { className: 'link-box' }, e('a', { href: data.publicUrl, target: '_blank', rel: 'noreferrer' }, data.publicUrl)),
+                                    data.qr ? e('a', { className: 'btn btn-primary', href: data.qr, download: 'qr-sorteo-electrodomesticos.png' }, 'Descargar QR') : null
+                                )
+                            )
                         ),
                         e('div', { className: 'panel-card stack' },
                             e('h3', null, 'Glosario de chances'),
@@ -203,60 +255,193 @@
                     )
                 );
             }
-            const PendingTab = () => e(InfoTable, { title:'Pendientes', subtitle:'Solo fecha + factura. Todavía no pasaron por validación.', rows:data.pendientes, emptyText:'No hay pendientes.', toolbar:e('div',{className:'inline-actions'}, e('button',{type:'button', className:'btn btn-success', onClick:()=>submitForm('forzar-form')},'Consultar pendientes ahora')), columns:[{key:'fecha',label:'Fecha'},{key:'factura',label:'Factura'},{key:'cliente',label:'Cliente'},{key:'telefono',label:'Telefono'},{key:'email',label:'Email'},{key:'detalle',label:'Detalle'}] });
-            const ApprovedTab = () => e(InfoTable, { title:'Aprobados', subtitle:'Padrón válido listo para exportar.', rows:data.aprobados, emptyText:'No hay aprobados.', toolbar:e('div',{className:'inline-actions'}, e('a',{className:'btn btn-primary',href:exportHref('?estado=APROBADO'),title:'Exporta una fila por cada participante aprobado.'},'Exportar aprobados'), e('a',{className:'btn btn-primary',href:exportHref('?estado=APROBADO&ponderado=1'),title:'Exporta el padron del sorteo duplicando o triplicando filas segun las chances.'},'Exportar sorteo')), columns:[{key:'estado',label:'Estado',render:row=>e('span',{className:'badge '+row.estado},row.estado)},{key:'fecha',label:'Fecha'},{key:'factura',label:'Factura'},{key:'tipo',label:'Tipo'},{key:'vendedor',label:'Vendedor'},{key:'combustible',label:'Combustible'},{key:'litros',label:'Litros'},{key:'medioPago',label:'Medio pago'},{key:'appYpf',label:'App YPF'},{key:'chances',label:'Chances'},{key:'cliente',label:'Cliente'},{key:'telefono',label:'Telefono'},{key:'email',label:'Email'},{key:'detalle',label:'Detalle'}] });
-            const DeniedTab = () => e(InfoTable, { title:'Denegados', subtitle:'Facturas no válidas o que no alcanzaron los litros mínimos. Si hay una excepción real, podés aprobarla manualmente.', rows:data.denegados, emptyText:'No hay denegados.', toolbar:e('div',{className:'inline-actions'}, e('a',{className:'btn btn-primary',href:exportHref('?estado=DENEGADO'),title:'Exporta solo facturas rechazadas.'},'Exportar denegados')), columns:[{key:'estado',label:'Estado',render:row=>e('span',{className:'badge '+row.estado},row.estado)},{key:'fecha',label:'Fecha'},{key:'factura',label:'Factura'},{key:'tipo',label:'Tipo'},{key:'vendedor',label:'Vendedor'},{key:'combustible',label:'Combustible'},{key:'litros',label:'Litros'},{key:'medioPago',label:'Medio pago'},{key:'cliente',label:'Cliente'},{key:'telefono',label:'Telefono'},{key:'email',label:'Email'},{key:'detalle',label:'Detalle'},{key:'acciones',label:'Acciones',render:row=>e('button',{type:'button',className:'btn btn-success btn-xs',onClick:()=>submitForm('aprobar-denegado-'+row.id)},'Aprobar')}] });
-            const RankingTab = () => e(InfoTable, { title:'Ranking de vendedores', subtitle:'Cada factura aprobada suma 1 punto.', rows:data.sellerRanking, emptyText:'Todavia no hay facturas aprobadas.', toolbar:e('div',{className:'inline-actions'}, e('a',{className:'btn btn-violet',href:data.basePath + '/admin/exportar-ranking',title:'Exporta el ranking de vendedores segun facturas aprobadas.'},'Exportar ranking')), columns:[{key:'vendedor',label:'Vendedor'},{key:'facturasAprobadas',label:'Facturas aprobadas'}] });
-            const ArchiveTab = () => e(InfoTable, { title:'Archivados', subtitle:'Cada nueva promoción archiva aprobados, denegados, pendientes y dudosos. También se exportan a Excel.', rows:data.conteos, emptyText:'Todavia no hay promociones archivadas.', toolbar:e('div',{className:'inline-actions'}, e('a',{className:'btn btn-primary',href:exportHref('?todo=1'),title:'Exporta promociones ya archivadas con su historial.'},'Exportar archivados')), columns:[{key:'id',label:'ID'},{key:'fecha',label:'Fecha'},{key:'total',label:'Total'},{key:'aprobados',label:'Aprobados'},{key:'denegados',label:'Denegados'},{key:'pendientes',label:'Pendientes'},{key:'dudosos',label:'Dudosos'}] });
-            function SuspiciousTab() {
+
+            function EditableInvoiceReviewTab(props) {
+                const [rows, setRows] = useState((props.rows || []).map(function (row) {
+                    return Object.assign({}, row, { draftFactura: row.numeroFacturaEditable || row.factura || '', editing: false, edited: false });
+                }));
+                const [selectedIds, setSelectedIds] = useState({});
+                const [busy, setBusy] = useState(false);
+                const [errorText, setErrorText] = useState('');
+                const selectedItems = rows.filter(function (row) { return selectedIds[row.id] && row.edited; });
+
+                function updateRow(rowId, changes) {
+                    setRows(function (current) {
+                        return current.map(function (row) { return row.id === rowId ? Object.assign({}, row, changes) : row; });
+                    });
+                }
+
+                function toggleSelect(row) {
+                    if (!row.edited) return;
+                    setSelectedIds(function (current) {
+                        const next = Object.assign({}, current);
+                        if (next[row.id]) delete next[row.id];
+                        else next[row.id] = true;
+                        return next;
+                    });
+                }
+
+                async function processSelected() {
+                    if (!selectedItems.length || busy) return;
+                    setBusy(true);
+                    setErrorText('');
+                    try {
+                        const payload = await reprocessEditedInvoices(selectedItems.map(function (row) {
+                            return { id: row.id, numero_factura: row.draftFactura };
+                        }));
+                        if (payload.errores && payload.errores.length) {
+                            setErrorText(payload.errores.map(function (item) { return 'Fila ' + item.id + ': ' + item.error; }).join(' | '));
+                        }
+                        if (payload.actualizados && payload.actualizados.length) {
+                            window.location.reload();
+                        }
+                    } catch (err) {
+                        setErrorText(err.message || 'No se pudo reprocesar.');
+                    } finally {
+                        setBusy(false);
+                    }
+                }
+
                 return e(InfoTable, {
-                    title:'Dudosos',
-                    subtitle:'Bandeja manual para casos de posible fraude o exceso de registros del mismo dispositivo.',
-                    rows:data.dudosos,
-                    emptyText:'No hay dudosos.',
-                    toolbar:e('div',{className:'inline-actions'}, e('a',{className:'btn btn-primary',href:exportHref('?estado=DUDOSO'),title:'Exporta solo los registros marcados como dudosos.'},'Exportar dudosos')),
-                    columns:[
-                        {key:'fecha',label:'Fecha'},
-                        {key:'factura',label:'Factura'},
-                        {key:'vendedor',label:'Vendedor'},
-                        {key:'combustible',label:'Combustible'},
-                        {key:'litros',label:'Litros'},
-                        {key:'chances',label:'Chances'},
-                        {key:'medioPago',label:'Medio pago'},
-                        {key:'cliente',label:'Cliente'},
-                        {key:'telefono',label:'Telefono'},
-                        {key:'email',label:'Email'},
-                        {key:'deviceToken',label:'Dispositivo'},
-                        {key:'ip',label:'IP'},
-                        {key:'detalle',label:'Detalle'},
-                        {key:'acciones',label:'Acciones',render:row=>e('div',{className:'inline-actions'}, e('button',{type:'button',className:'btn btn-success',onClick:()=>submitForm('aprobar-dudoso-'+row.id)},'Aprobar'), e('button',{type:'button',className:'btn btn-danger',onClick:()=>submitForm('denegar-dudoso-'+row.id)},'Denegar'))}
-                    ]
+                    title: props.title,
+                    subtitle: props.subtitle,
+                    rows: rows,
+                    emptyText: props.emptyText,
+                    toolbar: e('div', { className: 'inline-actions' },
+                        props.exportButton,
+                        e('button', { type: 'button', className: 'btn btn-success', disabled: !selectedItems.length || busy, onClick: processSelected, title: 'Reenvia las filas corregidas a pendientes para validarlas otra vez.' }, busy ? 'Reprocesando...' : 'Mandar a pendientes'),
+                        errorText ? e('div', { className: 'muted-note', style: { maxWidth: '420px', color: '#fecaca' } }, errorText) : null
+                    ),
+                    columns: props.columns.concat([
+                        {
+                            key: 'facturaEditable',
+                            label: 'Factura',
+                            render: function (row) {
+                                return e('div', { className: 'invoice-inline' },
+                                    row.editing
+                                        ? e('input', { type: 'text', value: row.draftFactura, onChange: function (ev) { updateRow(row.id, { draftFactura: normalizeInvoiceForEdit(ev.target.value), edited: true }); } })
+                                        : e('span', null, row.draftFactura || row.factura),
+                                    e('button', { type: 'button', className: 'btn btn-secondary btn-xs icon-btn', title: 'Editar factura', onClick: function () { updateRow(row.id, { editing: !row.editing, draftFactura: normalizeInvoiceForEdit(row.draftFactura || row.factura) }); } }, 'Editar')
+                                );
+                            }
+                        },
+                        {
+                            key: 'seleccion',
+                            label: 'Seleccion',
+                            render: function (row) {
+                                return e('input', { type: 'checkbox', className: 'row-check', checked: !!selectedIds[row.id], disabled: !row.edited, onChange: function () { toggleSelect(row); }, title: row.edited ? 'Marcar para enviar a pendientes' : 'Primero edita la factura' });
+                            }
+                        },
+                        { key: 'acciones', label: 'Acciones', render: props.renderActions }
+                    ])
                 });
             }
+
+            const PendingTab = function () {
+                return e(InfoTable, {
+                    title: 'Pendientes',
+                    subtitle: 'Solo fecha y factura. Todavia no pasaron por validacion.',
+                    rows: data.pendientes,
+                    emptyText: 'No hay pendientes.',
+                    toolbar: e('div', { className: 'inline-actions' }, e('button', { type: 'button', className: 'btn btn-success', onClick: function () { submitForm('forzar-form'); } }, 'Consultar pendientes ahora')),
+                    columns: [{ key: 'fecha', label: 'Fecha' }, { key: 'factura', label: 'Factura' }, { key: 'cliente', label: 'Cliente' }, { key: 'telefono', label: 'Telefono' }, { key: 'email', label: 'Email' }, { key: 'detalle', label: 'Detalle' }]
+                });
+            };
+
+            const ApprovedTab = function () {
+                return e(InfoTable, {
+                    title: 'Aprobados',
+                    subtitle: 'Padron valido listo para exportar.',
+                    rows: data.aprobados,
+                    emptyText: 'No hay aprobados.',
+                    toolbar: e('div', { className: 'inline-actions' },
+                        e('a', { className: 'btn btn-primary', href: exportHref('?estado=APROBADO'), title: 'Exporta una fila por cada participante aprobado.' }, 'Exportar aprobados'),
+                        e('a', { className: 'btn btn-primary', href: exportHref('?estado=APROBADO&ponderado=1'), title: 'Exporta el padron del sorteo duplicando o triplicando filas segun las chances.' }, 'Exportar sorteo')
+                    ),
+                    columns: [{ key: 'estado', label: 'Estado', render: function (row) { return e('span', { className: 'badge ' + row.estado }, row.estado); } }, { key: 'fecha', label: 'Fecha' }, { key: 'factura', label: 'Factura' }, { key: 'tipo', label: 'Tipo' }, { key: 'vendedor', label: 'Vendedor' }, { key: 'combustible', label: 'Combustible' }, { key: 'litros', label: 'Litros' }, { key: 'medioPago', label: 'Medio pago' }, { key: 'appYpf', label: 'App YPF' }, { key: 'chances', label: 'Chances' }, { key: 'cliente', label: 'Cliente' }, { key: 'telefono', label: 'Telefono' }, { key: 'email', label: 'Email' }, { key: 'detalle', label: 'Detalle' }]
+                });
+            };
+
+            const DeniedTab = function () {
+                return e(EditableInvoiceReviewTab, {
+                    title: 'Denegados',
+                    subtitle: 'Podes corregir la factura con el lapiz, marcar las filas corregidas y mandarlas a pendientes para validarlas otra vez.',
+                    rows: data.denegados,
+                    emptyText: 'No hay denegados.',
+                    exportButton: e('a', { className: 'btn btn-primary', href: exportHref('?estado=DENEGADO'), title: 'Exporta solo facturas rechazadas.' }, 'Exportar denegados'),
+                    columns: [{ key: 'estado', label: 'Estado', render: function (row) { return e('span', { className: 'badge ' + row.estado }, row.estado); } }, { key: 'fecha', label: 'Fecha' }, { key: 'tipo', label: 'Tipo' }, { key: 'vendedor', label: 'Vendedor' }, { key: 'combustible', label: 'Combustible' }, { key: 'litros', label: 'Litros' }, { key: 'medioPago', label: 'Medio pago' }, { key: 'cliente', label: 'Cliente' }, { key: 'telefono', label: 'Telefono' }, { key: 'email', label: 'Email' }, { key: 'detalle', label: 'Detalle' }],
+                    renderActions: function (row) { return e('button', { type: 'button', className: 'btn btn-success btn-xs', onClick: function () { submitForm('aprobar-denegado-' + row.id); } }, 'Aprobar'); }
+                });
+            };
+
+            const RankingTab = function () {
+                return e(InfoTable, {
+                    title: 'Ranking de vendedores',
+                    subtitle: 'Cada factura aprobada suma 1 punto.',
+                    rows: data.sellerRanking,
+                    emptyText: 'Todavia no hay facturas aprobadas.',
+                    toolbar: e('div', { className: 'inline-actions' }, e('a', { className: 'btn btn-violet', href: data.basePath + '/admin/exportar-ranking', title: 'Exporta el ranking de vendedores segun facturas aprobadas.' }, 'Exportar ranking')),
+                    columns: [{ key: 'vendedor', label: 'Vendedor' }, { key: 'facturasAprobadas', label: 'Facturas aprobadas' }]
+                });
+            };
+
+            const ArchiveTab = function () {
+                return e(InfoTable, {
+                    title: 'Archivados',
+                    subtitle: 'Cada nueva promocion archiva aprobados, denegados, pendientes y dudosos. Tambien se exportan a Excel.',
+                    rows: data.conteos,
+                    emptyText: 'Todavia no hay promociones archivadas.',
+                    toolbar: e('div', { className: 'inline-actions' }, e('a', { className: 'btn btn-primary', href: exportHref('?todo=1'), title: 'Exporta promociones ya archivadas con su historial.' }, 'Exportar archivados')),
+                    columns: [{ key: 'id', label: 'ID' }, { key: 'fecha', label: 'Fecha' }, { key: 'total', label: 'Total' }, { key: 'aprobados', label: 'Aprobados' }, { key: 'denegados', label: 'Denegados' }, { key: 'pendientes', label: 'Pendientes' }, { key: 'dudosos', label: 'Dudosos' }]
+                });
+            };
+
+            function SuspiciousTab() {
+                return e(EditableInvoiceReviewTab, {
+                    title: 'Dudosos',
+                    subtitle: 'Bandeja manual para posible fraude. Si la factura esta mal cargada, corregila con el lapiz y reenviala a pendientes.',
+                    rows: data.dudosos,
+                    emptyText: 'No hay dudosos.',
+                    exportButton: e('a', { className: 'btn btn-primary', href: exportHref('?estado=DUDOSO'), title: 'Exporta solo los registros marcados como dudosos.' }, 'Exportar dudosos'),
+                    columns: [{ key: 'fecha', label: 'Fecha' }, { key: 'vendedor', label: 'Vendedor' }, { key: 'combustible', label: 'Combustible' }, { key: 'litros', label: 'Litros' }, { key: 'chances', label: 'Chances' }, { key: 'medioPago', label: 'Medio pago' }, { key: 'cliente', label: 'Cliente' }, { key: 'telefono', label: 'Telefono' }, { key: 'email', label: 'Email' }, { key: 'deviceToken', label: 'Dispositivo' }, { key: 'ip', label: 'IP' }, { key: 'detalle', label: 'Detalle' }],
+                    renderActions: function (row) {
+                        return e('div', { className: 'inline-actions' },
+                            e('button', { type: 'button', className: 'btn btn-success', onClick: function () { submitForm('aprobar-dudoso-' + row.id); } }, 'Aprobar'),
+                            e('button', { type: 'button', className: 'btn btn-danger', onClick: function () { submitForm('denegar-dudoso-' + row.id); } }, 'Denegar')
+                        );
+                    }
+                });
+            }
+
             function AdminApp() {
                 const [tab, setTab] = useState('overview');
-                const tabs = [{id:'overview',label:'Resumen'},{id:'pendientes',label:'Pendientes'},{id:'dudosos',label:'Dudosos'},{id:'aprobados',label:'Aprobados'},{id:'denegados',label:'Denegadas'},{id:'ranking',label:'Ranking'},{id:'archivados',label:'Archivados'}];
-                const panels = { overview:e(OverviewTab), pendientes:e(PendingTab), dudosos:e(SuspiciousTab), aprobados:e(ApprovedTab), denegados:e(DeniedTab), ranking:e(RankingTab), archivados:e(ArchiveTab) };
-                const titles = { overview:['Resumen','Configuración, promoción activa, QR, controles y exportaciones.'], pendientes:['Pendientes','Lo que todavía no fue consultado contra DEBO.'], dudosos:['Dudosos','Casos a revisar manualmente antes de aprobar o denegar.'], aprobados:['Aprobados','Participantes válidos listos para el sorteo.'], denegados:['Denegadas','Facturas rechazadas por litros, combustible o datos inválidos.'], ranking:['Ranking','Conteo de vendedores por facturas aprobadas.'], archivados:['Archivados','Historial de promociones anteriores con exportación disponible.'] };
-                return e('div',{className:'app-shell'},
-                    e('section',{className:'hero'},
-                        e('div',{className:'hero-top'},
-                            e('div',null, e('div',{className:'eyebrow'},'Sorteo',' · ',data.config.detenido?'Detenido':'Activo'), e('h1',null,data.nombreEstacion), e('p',null,'Validación por fecha y factura. Los dispositivos que exceden el límite de cargas pasan a revisión manual.')),
-                            e('div',{className:'hero-actions'}, e('a',{className:'btn-danger',href:data.basePath + '/admin/logout'},'Salir'))
+                const tabs = [{ id: 'overview', label: 'Resumen' }, { id: 'pendientes', label: 'Pendientes' }, { id: 'dudosos', label: 'Dudosos' }, { id: 'aprobados', label: 'Aprobados' }, { id: 'denegados', label: 'Denegadas' }, { id: 'ranking', label: 'Ranking' }, { id: 'archivados', label: 'Archivados' }];
+                const panels = { overview: e(OverviewTab), pendientes: e(PendingTab), dudosos: e(SuspiciousTab), aprobados: e(ApprovedTab), denegados: e(DeniedTab), ranking: e(RankingTab), archivados: e(ArchiveTab) };
+                const titles = { overview: ['Resumen', 'Configuracion, promocion activa, QR, controles y exportaciones.'], pendientes: ['Pendientes', 'Lo que todavia no fue consultado contra DEBO.'], dudosos: ['Dudosos', 'Casos a revisar manualmente antes de aprobar o denegar.'], aprobados: ['Aprobados', 'Participantes validos listos para el sorteo.'], denegados: ['Denegadas', 'Facturas rechazadas por litros, combustible o datos invalidos.'], ranking: ['Ranking', 'Conteo de vendedores por facturas aprobadas.'], archivados: ['Archivados', 'Historial de promociones anteriores con exportacion disponible.'] };
+                return e('div', { className: 'app-shell' },
+                    e('section', { className: 'hero' },
+                        e('div', { className: 'hero-top' },
+                            e('div', null,
+                                e('div', { className: 'eyebrow' }, 'Sorteo', ' · ', data.config.detenido ? 'Detenido' : 'Activo'),
+                                e('h1', null, data.nombreEstacion),
+                                e('p', null, 'Validacion por fecha y factura. Los dispositivos que exceden el limite de cargas pasan a revision manual.')
+                            ),
+                            e('div', { className: 'hero-actions' }, e('a', { className: 'btn-danger', href: data.basePath + '/admin/logout' }, 'Salir'))
                         ),
-                        e('div',{className:'stats-grid'},
-                            e('div',{className:'stat-card'}, e('div',{className:'stat-label'},'Pendientes'), e('strong',null,data.totales.pendientes)),
-                            e('div',{className:'stat-card'}, e('div',{className:'stat-label'},'Dudosos'), e('strong',null,data.totales.dudosos)),
-                            e('div',{className:'stat-card'}, e('div',{className:'stat-label'},'Aprobados'), e('strong',null,data.totales.aprobados)),
-                            e('div',{className:'stat-card'}, e('div',{className:'stat-label'},'Denegados'), e('strong',null,data.totales.denegados))
+                        e('div', { className: 'stats-grid' },
+                            e('div', { className: 'stat-card' }, e('div', { className: 'stat-label' }, 'Pendientes'), e('strong', null, data.totales.pendientes)),
+                            e('div', { className: 'stat-card' }, e('div', { className: 'stat-label' }, 'Dudosos'), e('strong', null, data.totales.dudosos)),
+                            e('div', { className: 'stat-card' }, e('div', { className: 'stat-label' }, 'Aprobados'), e('strong', null, data.totales.aprobados)),
+                            e('div', { className: 'stat-card' }, e('div', { className: 'stat-label' }, 'Denegados'), e('strong', null, data.totales.denegados))
                         )
                     ),
-                    e('section',{className:'content-shell'},
-                        e('div',{className:'tabs'}, tabs.map(item=>e('button',{key:item.id,type:'button',className:'tab-btn'+(tab===item.id?' active':''),onClick:()=>setTab(item.id)},item.label))),
-                        e('div',{className:'panel'}, e('h2',null,titles[tab][0]), e('p',{className:'panel-copy'},titles[tab][1]), panels[tab])
+                    e('section', { className: 'content-shell' },
+                        e('div', { className: 'tabs' }, tabs.map(function (item) { return e('button', { key: item.id, type: 'button', className: 'tab-btn' + (tab === item.id ? ' active' : ''), onClick: function () { setTab(item.id); } }, item.label); })),
+                        e('div', { className: 'panel' }, e('h2', null, titles[tab][0]), e('p', { className: 'panel-copy' }, titles[tab][1]), panels[tab])
                     )
                 );
             }
+
             ReactDOM.createRoot(document.getElementById('admin-root')).render(e(AdminApp));
         })();
     </script>

@@ -23,10 +23,13 @@
         .grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:14px; }
         .field { display:flex; flex-direction:column; gap:6px; }
         .field.full { grid-column:1 / -1; }
+        .invoice-grid { display:grid; grid-template-columns:140px 32px minmax(0, 1fr); gap:10px; align-items:end; }
+        .invoice-separator { min-height:50px; display:grid; place-items:center; font-size:24px; font-weight:900; color:var(--blue-dark); }
         label { font-size:12px; text-transform:uppercase; font-weight:800; color:#344054; letter-spacing:.3px; }
         input { width:100%; min-height:50px; border:1px solid #c8d2df; border-radius:12px; padding:13px 14px; font-size:16px; color:var(--ink); background:white; outline:none; transition:border-color .2s, box-shadow .2s; }
         input:focus { border-color:var(--blue); box-shadow:0 0 0 4px rgba(0, 92, 171, .13); }
         .hint { margin:0 0 16px; color:var(--muted); font-size:14px; line-height:1.45; }
+        .invoice-note { margin-top:8px; color:var(--blue-dark); font-size:13px; font-weight:800; line-height:1.45; }
         .alert { margin-bottom:14px; padding:12px 14px; border-radius:12px; font-size:14px; line-height:1.4; }
         .alert.error { background:#fdecea; color:var(--bad); }
         .consent { margin-top:16px; padding:14px; border:1px solid #c8d2df; border-radius:14px; background:#f8fbff; }
@@ -83,9 +86,14 @@
                                     <label>Fecha del ticket</label>
                                     <input type="date" name="fecha_ticket" required>
                                 </div>
-                                <div class="field">
+                                <div class="field full">
                                     <label>Numero de factura</label>
-                                    <input name="numero_factura" placeholder="Ej: 19-828192 o 0019-000828192" autocomplete="off" required>
+                                    <div class="invoice-grid">
+                                        <input name="numero_factura_sucursal" id="numero_factura_sucursal" placeholder="Punto de venta" inputmode="numeric" autocomplete="off" required>
+                                        <div class="invoice-separator">-</div>
+                                        <input name="numero_factura_numero" id="numero_factura_numero" placeholder="Numero de factura" inputmode="numeric" autocomplete="off" required>
+                                    </div>
+                                    <div class="invoice-note">Ingresá números sin los ceros del lado izquierdo. Si escribís de más, el sistema los acomoda: `0019` pasa a `19`, `1900` pasa a `19` y `00023329` pasa a `23329`.</div>
                                 </div>
                                 <div class="field">
                                     <label>Nombre</label>
@@ -142,6 +150,46 @@
             window.setTimeout(function () {
                 window.location.href = window.location.pathname;
             }, 3500);
+        })();
+
+        (function () {
+            const branchInput = document.getElementById('numero_factura_sucursal');
+            const serialInput = document.getElementById('numero_factura_numero');
+            if (!branchInput || !serialInput) return;
+
+            function digitsOnly(value) {
+                return String(value || '').replace(/\D+/g, '');
+            }
+
+            function normalizeBranch(value) {
+                let digits = digitsOnly(value).replace(/^0+/, '');
+                if (!digits) return '';
+                if (digits.length > 2) {
+                    digits = digits.replace(/0+$/, '') || digits;
+                }
+                return digits.replace(/^0+/, '') || '0';
+            }
+
+            function normalizeSerial(value) {
+                const digits = digitsOnly(value).replace(/^0+/, '');
+                return digits || '';
+            }
+
+            branchInput.addEventListener('input', function () {
+                branchInput.value = normalizeBranch(branchInput.value);
+            });
+
+            serialInput.addEventListener('input', function () {
+                serialInput.value = normalizeSerial(serialInput.value);
+            });
+
+            const form = branchInput.form;
+            if (form) {
+                form.addEventListener('submit', function () {
+                    branchInput.value = normalizeBranch(branchInput.value);
+                    serialInput.value = normalizeSerial(serialInput.value);
+                });
+            }
         })();
     </script>
 </body>
