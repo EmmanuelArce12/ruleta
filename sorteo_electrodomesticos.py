@@ -287,7 +287,10 @@ def count_device_registrations(cursor, estacion_id, config, device_token, exclud
         sql += ' AND id <> %s'
         params.append(exclude_id)
     cursor.execute(sql, params)
-    return cursor.fetchone()[0]
+    row = cursor.fetchone()
+    if isinstance(row, dict):
+        return int(row.get('count', 0))
+    return int(row[0]) if row else 0
 
 
 def is_suspicious_device(cursor, participante, config):
@@ -862,6 +865,9 @@ def cliente_sorteo(estacion_id):
                 error = 'Ese ticket ya fue registrado para esta estacion.'
             except ValueError as exc:
                 error = str(exc)
+            except Exception as exc:
+                conn.rollback()
+                error = f'No se pudo registrar la participacion: {exc}'
     conn.close()
     return render_template('sorteo_cliente.html', estacion=estacion, mensaje=mensaje, error=error, detenido=config and config['detenido'])
 
