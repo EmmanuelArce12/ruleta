@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sorteo Electrodomesticos</title>
+    <title>Gran sorteo en {{ estacion['nombre'] }}</title>
     <style>
         :root {
             --blue: #005cab;
@@ -219,7 +219,7 @@
         <div class="page">
             <header class="hero">
                 <div class="brand">{{ estacion['nombre'] }}</div>
-                <h1>Sorteo Electrodomesticos</h1>
+                <h1>Gran sorteo en {{ estacion['nombre'] }}</h1>
                 <p>Registrá tu cupón y quedá participando una vez que el ticket sea validado.</p>
             </header>
             {% if mensaje %}
@@ -357,7 +357,7 @@
                 return e('div', { className: 'page' },
                     e('header', { className: 'hero' },
                         e('div', { className: 'brand' }, data.estacionNombre),
-                        e('h1', null, 'Sorteo Electrodomesticos'),
+                        e('h1', null, 'Gran sorteo en ' + data.estacionNombre),
                         e('p', null, 'Registrá tu cupón y quedá participando una vez que el ticket sea validado.')
                     ),
                     data.mensaje ? e(Thanks) : e(Form)
