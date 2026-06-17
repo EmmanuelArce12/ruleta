@@ -296,94 +296,76 @@
     </script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script type="text/babel">
-        const data = window.SORTEO_DATA;
+    <script>
+        (function () {
+            if (!window.React || !window.ReactDOM || !window.SORTEO_DATA) return;
 
-        function Field({ label, children, full }) {
-            return (
-                <div className={full ? "field full" : "field"}>
-                    <label>{label}</label>
-                    {children}
-                </div>
-            );
-        }
+            const data = window.SORTEO_DATA;
+            const e = React.createElement;
 
-        function Thanks() {
-            return (
-                <main className="shell">
-                    <section className="panel">
-                        <div className="thanks">
-                            <div className="check">✓</div>
-                            <h2>Gracias por participar</h2>
-                            <p>{data.mensaje}</p>
-                        </div>
-                    </section>
-                </main>
-            );
-        }
+            function Field(props) {
+                return e('div', { className: props.full ? 'field full' : 'field' },
+                    e('label', null, props.label),
+                    props.children
+                );
+            }
 
-        function Form() {
-            return (
-                <main className="shell">
-                    <section className="panel">
-                        <div className="panel-head">
-                            <div className="step">1</div>
-                            <div>
-                                <h2>Completá tus datos</h2>
-                                <p>Usá la hora exacta del ticket, incluyendo los segundos.</p>
-                            </div>
-                        </div>
-                        <div className="content">
-                            {data.error && <div className="alert error">{data.error}</div>}
-                            {data.detenido && <div className="alert error">El sorteo se encuentra cerrado.</div>}
-                            <p className="hint">Ejemplo de hora válida: 14:35:09. Estos datos quedan pendientes en administración hasta la validación.</p>
-                            <form method="POST">
-                                <div className="grid">
-                                    <Field label="Fecha del ticket">
-                                        <input type="date" name="fecha_ticket" required />
-                                    </Field>
-                                    <Field label="Hora exacta">
-                                        <input type="text" name="hora_ticket" placeholder="HH:MM:SS" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}" inputMode="numeric" required />
-                                    </Field>
-                                    <Field label="Nombre">
-                                        <input name="nombre" autoComplete="given-name" required />
-                                    </Field>
-                                    <Field label="Apellido">
-                                        <input name="apellido" autoComplete="family-name" required />
-                                    </Field>
-                                    <Field label="Teléfono">
-                                        <input name="telefono" type="tel" autoComplete="tel" required />
-                                    </Field>
-                                    <Field label="Correo electrónico">
-                                        <input name="email" type="email" autoComplete="email" required />
-                                    </Field>
-                                    <Field label="DNI" full>
-                                        <input name="dni" inputMode="numeric" autoComplete="off" />
-                                    </Field>
-                                </div>
-                                <button className="submit" type="submit" disabled={data.detenido}>Enviar participación</button>
-                            </form>
-                        </div>
-                    </section>
-                </main>
-            );
-        }
+            function Thanks() {
+                return e('main', { className: 'shell' },
+                    e('section', { className: 'panel' },
+                        e('div', { className: 'thanks' },
+                            e('div', { className: 'check' }, '✓'),
+                            e('h2', null, 'Gracias por participar'),
+                            e('p', null, data.mensaje)
+                        )
+                    )
+                );
+            }
 
-        function App() {
-            return (
-                <div className="page">
-                    <header className="hero">
-                        <div className="brand">{data.estacionNombre}</div>
-                        <h1>Sorteo Electrodomesticos</h1>
-                        <p>Registrá tu cupón y quedá participando una vez que el ticket sea validado.</p>
-                    </header>
-                    {data.mensaje ? <Thanks /> : <Form />}
-                </div>
-            );
-        }
+            function Form() {
+                return e('main', { className: 'shell' },
+                    e('section', { className: 'panel' },
+                        e('div', { className: 'panel-head' },
+                            e('div', { className: 'step' }, '1'),
+                            e('div', null,
+                                e('h2', null, 'Completá tus datos'),
+                                e('p', null, 'Usá la hora exacta del ticket, incluyendo los segundos.')
+                            )
+                        ),
+                        e('div', { className: 'content' },
+                            data.error ? e('div', { className: 'alert error' }, data.error) : null,
+                            data.detenido ? e('div', { className: 'alert error' }, 'El sorteo se encuentra cerrado.') : null,
+                            e('p', { className: 'hint' }, 'Ejemplo de hora válida: 14:35:09. Estos datos quedan pendientes en administración hasta la validación.'),
+                            e('form', { method: 'POST' },
+                                e('div', { className: 'grid' },
+                                    e(Field, { label: 'Fecha del ticket' }, e('input', { type: 'date', name: 'fecha_ticket', required: true })),
+                                    e(Field, { label: 'Hora exacta' }, e('input', { type: 'text', name: 'hora_ticket', placeholder: 'HH:MM:SS', pattern: '[0-9]{2}:[0-9]{2}:[0-9]{2}', inputMode: 'numeric', required: true })),
+                                    e(Field, { label: 'Nombre' }, e('input', { name: 'nombre', autoComplete: 'given-name', required: true })),
+                                    e(Field, { label: 'Apellido' }, e('input', { name: 'apellido', autoComplete: 'family-name', required: true })),
+                                    e(Field, { label: 'Teléfono' }, e('input', { name: 'telefono', type: 'tel', autoComplete: 'tel', required: true })),
+                                    e(Field, { label: 'Correo electrónico' }, e('input', { name: 'email', type: 'email', autoComplete: 'email', required: true })),
+                                    e(Field, { label: 'DNI', full: true }, e('input', { name: 'dni', inputMode: 'numeric', autoComplete: 'off' }))
+                                ),
+                                e('button', { className: 'submit', type: 'submit', disabled: data.detenido }, 'Enviar participación')
+                            )
+                        )
+                    )
+                );
+            }
 
-        ReactDOM.createRoot(document.getElementById("sorteo-root")).render(<App />);
+            function App() {
+                return e('div', { className: 'page' },
+                    e('header', { className: 'hero' },
+                        e('div', { className: 'brand' }, data.estacionNombre),
+                        e('h1', null, 'Sorteo Electrodomesticos'),
+                        e('p', null, 'Registrá tu cupón y quedá participando una vez que el ticket sea validado.')
+                    ),
+                    data.mensaje ? e(Thanks) : e(Form)
+                );
+            }
+
+            ReactDOM.createRoot(document.getElementById('sorteo-root')).render(e(App));
+        })();
     </script>
 </body>
 </html>
