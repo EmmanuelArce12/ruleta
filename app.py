@@ -70,6 +70,41 @@ def render_superadmin_page(preview_station_id=None, preview_error=None):
     )
 
 
+def save_debo_status(station_id, ok, detail=None):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(
+        """
+        UPDATE estaciones
+        SET debo_status = %s,
+            debo_status_detail = %s,
+            debo_checked_at = CURRENT_TIMESTAMP
+        WHERE id = %s
+        """,
+        ('ok' if ok else 'error', detail, station_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def test_and_store_debo_status(station_id):
+    station = get_station_by_id(station_id)
+    if not station:
+        return False, 'No se encontro la estacion.'
+    if not station_debo_ready(station):
+        detail = 'Falta completar IP, base, usuario o clave DEBO.'
+        save_debo_status(station_id, False, detail)
+        return False, detail
+    try:
+        preview_station_tickets(station, limit=1)
+        save_debo_status(station_id, True, None)
+        return True, None
+    except Exception as exc:
+        detail = f'Error DEBO: {exc}'
+        save_debo_status(station_id, False, detail)
+        return False, detail
+
+
 # ==========================================
 # ENVÍO DE EMAIL
 # ==========================================
@@ -399,6 +434,18 @@ def init_db():
             ALTER TABLE estaciones
             ADD COLUMN IF NOT EXISTS debo_allow_remitos BOOLEAN DEFAULT FALSE
         """)
+        c.execute("""
+            ALTER TABLE estaciones
+            ADD COLUMN IF NOT EXISTS debo_status TEXT
+        """)
+        c.execute("""
+            ALTER TABLE estaciones
+            ADD COLUMN IF NOT EXISTS debo_status_detail TEXT
+        """)
+        c.execute("""
+            ALTER TABLE estaciones
+            ADD COLUMN IF NOT EXISTS debo_checked_at TIMESTAMP
+        """)
 
         conn.close()
 
@@ -520,6 +567,7 @@ def configurar_debo(id):
     )
     conn.commit()
     conn.close()
+    test_and_store_debo_status(id)
     return redirect('/superadmin')
 
 
@@ -527,16 +575,10 @@ def configurar_debo(id):
 def probar_debo(id):
     if not session.get('super_auth'):
         return redirect('/login')
-    station = get_station_by_id(id)
-    if not station:
-        return render_superadmin_page(preview_error='No se encontro la estacion.')
-    if not station_debo_ready(station):
-        return render_superadmin_page(preview_station_id=id, preview_error='Falta completar IP, base, usuario o clave DEBO.')
-    try:
-        preview_station_tickets(station, limit=1)
+    ok, error = test_and_store_debo_status(id)
+    if ok:
         return render_superadmin_page(preview_station_id=id)
-    except Exception as exc:
-        return render_superadmin_page(preview_station_id=id, preview_error=f'Error DEBO: {exc}')
+    return render_superadmin_page(preview_station_id=id, preview_error=error)
 
 @app.route('/superadmin/blanquear_clave/<int:id>', methods=['POST'])
 def blanquear_clave(id):

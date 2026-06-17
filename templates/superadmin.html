@@ -39,6 +39,11 @@
         .status-dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-left:8px; vertical-align:middle; }
         .status-dot.ok { background:#22c55e; }
         .status-dot.off { background:#ef4444; }
+        .status-dot.unknown { background:#94a3b8; }
+        .status-detail { margin-top:10px; padding:10px; border-radius:8px; font-size:12px; line-height:1.4; }
+        .status-detail.ok { background:#14532d; color:#dcfce7; }
+        .status-detail.off { background:#7f1d1d; color:#fee2e2; }
+        .status-detail.unknown { background:#334155; color:#e2e8f0; }
         @media (max-width: 600px) { body { padding: 10px; } h1 { font-size: 20px; } .form-crear button { width: 100%; } }
     </style>
     <script>
@@ -125,9 +130,7 @@
             {% for e in estaciones %}
             <div class="debo-card" id="debo-{{ e['id'] }}">
                 <h3>{{ e['nombre'] }}
-                    {% if preview_station and preview_station['id'] == e['id'] %}
-                    <span class="status-dot {{ 'ok' if preview_ok else 'off' }}"></span>
-                    {% endif %}
+                    <span class="status-dot {{ 'ok' if e['debo_status'] == 'ok' else ('off' if e['debo_status'] == 'error' else 'unknown') }}"></span>
                 </h3>
                 <p style="margin-top:0;">
                     {% if e['debo_host'] and e['debo_user'] and (e['debo_password_encrypted'] or e['debo_password']) %}
@@ -152,6 +155,18 @@
                 <form action="/superadmin/probar_debo/{{ e['id'] }}" method="POST" style="margin-top: 10px;">
                     <button type="submit" class="btn-accion" style="background:#38bdf8;">Probar conexion</button>
                 </form>
+                <div class="status-detail {{ 'ok' if e['debo_status'] == 'ok' else ('off' if e['debo_status'] == 'error' else 'unknown') }}">
+                    {% if e['debo_status'] == 'ok' %}
+                    Conectado.
+                    {% elif e['debo_status'] == 'error' %}
+                    {{ e['debo_status_detail'] or 'Fallo la conexion.' }}
+                    {% else %}
+                    Sin prueba registrada.
+                    {% endif %}
+                    {% if e['debo_checked_at'] %}
+                    <div style="margin-top:6px;">Ultima prueba: {{ e['debo_checked_at'] }}</div>
+                    {% endif %}
+                </div>
             </div>
             {% endfor %}
         </div>
