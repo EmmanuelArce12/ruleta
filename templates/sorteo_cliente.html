@@ -29,6 +29,10 @@
         .hint { margin:0 0 16px; color:var(--muted); font-size:14px; line-height:1.45; }
         .alert { margin-bottom:14px; padding:12px 14px; border-radius:12px; font-size:14px; line-height:1.4; }
         .alert.error { background:#fdecea; color:var(--bad); }
+        .consent { margin-top:16px; padding:14px; border:1px solid #c8d2df; border-radius:14px; background:#f8fbff; }
+        .consent label { display:flex; gap:12px; align-items:flex-start; font-size:14px; font-weight:700; text-transform:none; letter-spacing:0; color:var(--ink); }
+        .consent input { width:18px; min-height:auto; height:18px; margin-top:2px; padding:0; flex:0 0 auto; }
+        .consent span { line-height:1.45; }
         .submit { width:100%; min-height:54px; margin-top:18px; border:none; border-radius:14px; background:linear-gradient(135deg, var(--blue), #0b75ce); color:white; font-weight:800; font-size:16px; cursor:pointer; box-shadow:0 12px 24px rgba(0, 92, 171, .24); }
         .submit:disabled { cursor:not-allowed; opacity:.55; box-shadow:none; }
         .thanks { padding:clamp(28px, 8vw, 48px) 22px; text-align:center; }
@@ -103,6 +107,12 @@
                                     <label>DNI</label>
                                     <input name="dni" inputmode="numeric" autocomplete="off">
                                 </div>
+                            </div>
+                            <div class="consent">
+                                <label>
+                                    <input type="checkbox" name="acepta_promociones" value="1" required>
+                                    <span>Autorizo recibir futuras promociones y novedades de la estacion por correo electronico y/o mensaje.</span>
+                                </label>
                             </div>
                             <button class="submit" type="submit" {% if detenido %}disabled{% endif %}>Enviar participacion</button>
                         </form>

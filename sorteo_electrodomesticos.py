@@ -88,6 +88,7 @@ def init_db():
             dni TEXT,
             telefono TEXT NOT NULL,
             email TEXT NOT NULL,
+            acepta_promociones BOOLEAN DEFAULT FALSE,
             estado TEXT DEFAULT 'PENDIENTE',
             combustible TEXT,
             litros NUMERIC(10, 3),
@@ -114,6 +115,7 @@ def init_db():
     c.execute("UPDATE sorteo_participantes SET ticket_fecha = COALESCE(ticket_fecha, ticket_hora::date) WHERE ticket_fecha IS NULL")
     c.execute("ALTER TABLE sorteo_participantes ALTER COLUMN ticket_fecha SET NOT NULL")
     c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS ticket_hora TIMESTAMP")
+    c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS acepta_promociones BOOLEAN DEFAULT FALSE")
     c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS pago_electronico BOOLEAN")
     c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS medio_pago TEXT")
     c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS payment_type TEXT")
@@ -798,6 +800,7 @@ def exportar_excel():
         'DNI',
         'Telefono',
         'Email',
+        'Acepta promociones',
         'Detalle',
         'Consultado',
         'Conteo',
@@ -827,6 +830,7 @@ def exportar_excel():
             row['dni'] or '',
             row['telefono'],
             row['email'],
+            'Si' if row.get('acepta_promociones') else 'No',
             row['detalle_validacion'] or '',
             str(row['consulta_at'])[:19] if row['consulta_at'] else '',
             row['conteo_id'],
@@ -899,6 +903,8 @@ def cliente_sorteo(estacion_id):
             error = 'El sorteo se encuentra cerrado.'
         else:
             try:
+                if request.form.get('acepta_promociones') != '1':
+                    raise ValueError('Necesitas aceptar el contacto por promociones futuras para participar.')
                 ticket_fecha = parse_ticket_date(request.form['fecha_ticket'])
                 promo_desde, promo_hasta = get_active_promo_bounds(config)
                 if ticket_fecha < promo_desde or ticket_fecha > promo_hasta:
@@ -912,8 +918,8 @@ def cliente_sorteo(estacion_id):
                 detalle = 'Esperando validacion.' if not sospecha else 'Esperando validacion. El dispositivo sera revisado si la factura matchea.'
                 c.execute('''
                     INSERT INTO sorteo_participantes
-                    (estacion_id, ticket_fecha, ticket_hora, numero_factura, nombre, apellido, dni, telefono, email, estado, device_token, ip_registro, user_agent, sospecha_dispositivo, detalle_validacion)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    (estacion_id, ticket_fecha, ticket_hora, numero_factura, nombre, apellido, dni, telefono, email, acepta_promociones, estado, device_token, ip_registro, user_agent, sospecha_dispositivo, detalle_validacion)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ''', (
                     estacion_id,
                     ticket_fecha,
@@ -924,6 +930,7 @@ def cliente_sorteo(estacion_id):
                     request.form.get('dni', '').strip(),
                     request.form['telefono'].strip(),
                     request.form['email'].strip().lower(),
+                    True,
                     estado_inicial,
                     device_token,
                     ip_registro,
