@@ -436,6 +436,10 @@ def init_db():
         """)
         c.execute("""
             ALTER TABLE estaciones
+            ADD COLUMN IF NOT EXISTS debo_fuel_station_id TEXT
+        """)
+        c.execute("""
+            ALTER TABLE estaciones
             ADD COLUMN IF NOT EXISTS debo_status TEXT
         """)
         c.execute("""
@@ -544,6 +548,7 @@ def configurar_debo(id):
     debo_host = (request.form.get('debo_host') or '').strip()
     debo_database = (request.form.get('debo_database') or 'DEBO').strip() or 'DEBO'
     debo_user = (request.form.get('debo_user') or '').strip()
+    debo_fuel_station_id = (request.form.get('debo_fuel_station_id') or '').strip()
     raw_password = (request.form.get('debo_password') or '').strip()
     debo_allow_remitos = request.form.get('debo_allow_remitos') == 'on'
     debo_password_encrypted = actual.get('debo_password_encrypted') or ''
@@ -558,12 +563,13 @@ def configurar_debo(id):
         SET debo_host = %s,
             debo_database = %s,
             debo_user = %s,
+            debo_fuel_station_id = %s,
             debo_allow_remitos = %s,
             debo_password = NULL,
             debo_password_encrypted = %s
         WHERE id = %s
         """,
-        (debo_host, debo_database, debo_user, debo_allow_remitos, debo_password_encrypted, id),
+        (debo_host, debo_database, debo_user, debo_fuel_station_id, debo_allow_remitos, debo_password_encrypted, id),
     )
     conn.commit()
     conn.close()

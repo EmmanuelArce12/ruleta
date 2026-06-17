@@ -143,6 +143,7 @@
                     <input type="text" name="debo_host" value="{{ e['debo_host'] or '' }}" placeholder="IP DEBO, ej: 10.100.2.253">
                     <input type="text" name="debo_database" value="{{ e['debo_database'] or 'DEBO' }}" placeholder="Base, por defecto DEBO">
                     <input type="text" name="debo_user" value="{{ e['debo_user'] or '' }}" placeholder="Usuario DEBO">
+                    <input type="text" name="debo_fuel_station_id" value="{{ e['debo_fuel_station_id'] or '' }}" placeholder="APIES / Fuel Station ID, ej: 00739 o 00760">
                     <input type="password" name="debo_password" placeholder="{% if e['debo_password_encrypted'] or e['debo_password'] %}Dejar vacio para conservar la clave actual{% else %}Clave DEBO{% endif %}">
                     <label class="debo-check">
                         <input type="checkbox" name="debo_allow_remitos" {% if e['debo_allow_remitos'] %}checked{% endif %}>

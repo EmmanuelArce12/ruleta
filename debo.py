@@ -60,6 +60,13 @@ ORDER BY f.FEC DESC, numero_factura DESC, combustible
 """
 
 
+def normalize_fuel_station_id(value: str | None) -> str:
+    digits = ''.join(ch for ch in (value or '') if ch.isdigit())
+    if not digits:
+        return ''
+    return digits.zfill(5)
+
+
 def preview_sql(limit: int = 15) -> str:
     safe_limit = max(1, min(int(limit), 100))
     return DEFAULT_FACTURACION_SQL.replace("TOP (15)", f"TOP ({safe_limit})", 1)
@@ -68,6 +75,9 @@ def preview_sql(limit: int = 15) -> str:
 def ticket_lookup_sql(include_remitos: bool = False, same_day_only: bool = False) -> str:
     tco_condition = "1 = 1" if include_remitos else "f.TCO <> 'RE'"
     time_condition = "CAST(f.FEC AS DATETIME) >= ? AND CAST(f.FEC AS DATETIME) < ?" if same_day_only else "f.FEC = ?"
+    station_payment_match = """
+          AND RIGHT('00000' + LTRIM(RTRIM(p.fuel_station_id)), 5) = '__FUEL_STATION_ID__'
+    """
     return f"""
 WITH FacturaObjetivo AS (
     SELECT TOP (1)
@@ -93,7 +103,7 @@ WITH FacturaObjetivo AS (
             p.payment_type
         FROM dbo.A_MERCADOPAGO_META_YPF p
         WHERE p.FEC = f.FEC
-          AND RIGHT(LTRIM(RTRIM(p.fuel_station_id)), 3) = RIGHT('000' + CAST(f.SUC AS VARCHAR(10)), 3)
+__STATION_PAYMENT_MATCH__
           AND ABS(CAST(f.TOT AS DECIMAL(18,2)) - CAST(p.total_payment_amount AS DECIMAL(18,2))) < 0.05
         ORDER BY
             CASE WHEN p.payment_type = 'YPF_ACCOUNT_MONEY' THEN 0 ELSE 1 END,
@@ -186,6 +196,16 @@ GROUP BY
 """
 
 
+def build_ticket_lookup_sql(station: dict, include_remitos: bool = False, same_day_only: bool = False) -> str:
+    sql = ticket_lookup_sql(include_remitos=include_remitos, same_day_only=same_day_only)
+    fuel_station_id = normalize_fuel_station_id(station.get("debo_fuel_station_id"))
+    if fuel_station_id:
+        station_payment_match = f"          AND RIGHT('00000' + LTRIM(RTRIM(p.fuel_station_id)), 5) = '{fuel_station_id}'"
+    else:
+        station_payment_match = "          AND RIGHT(LTRIM(RTRIM(p.fuel_station_id)), 3) = RIGHT('000' + CAST(f.SUC AS VARCHAR(10)), 3)"
+    return sql.replace("__STATION_PAYMENT_MATCH__", station_payment_match)
+
+
 def station_debo_ready(station: dict | None) -> bool:
     return bool(
         station
@@ -260,7 +280,7 @@ def validate_ticket_identity(
     rounded_time = round_to_smalldatetime(ticket_hora)
     rows = run_query(
         station,
-        ticket_lookup_sql(include_remitos=include_remitos),
+        build_ticket_lookup_sql(station, include_remitos=include_remitos),
         (rounded_time, int(sucursal), int(numero)),
     )
     if rows:
@@ -271,7 +291,7 @@ def validate_ticket_identity(
     day_end = day_start + timedelta(days=1)
     same_day_rows = run_query(
         station,
-        ticket_lookup_sql(include_remitos=include_remitos, same_day_only=True),
+        build_ticket_lookup_sql(station, include_remitos=include_remitos, same_day_only=True),
         (day_start, day_end, int(sucursal), int(numero)),
     )
     if same_day_rows:
@@ -292,7 +312,7 @@ def validate_ticket_invoice_on_date(
     day_end = day_start + timedelta(days=1)
     rows = run_query(
         station,
-        ticket_lookup_sql(include_remitos=include_remitos, same_day_only=True),
+        build_ticket_lookup_sql(station, include_remitos=include_remitos, same_day_only=True),
         (day_start, day_end, int(sucursal), int(numero)),
     )
     if not rows:
