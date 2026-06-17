@@ -449,6 +449,14 @@
             <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-top: 0;">
                 Desde este panel podes abrir el administrador del sorteo para ver el QR imprimible, el historial de participantes, exportar Excel, forzar consulta, detener el sorteo e iniciar conteo.
             </p>
+            <p style="color: var(--text-muted); font-size: 13px; line-height: 1.5; margin-top: -4px;">
+                Estado DEBO de esta estación:
+                {% if estacion['debo_host'] and estacion['debo_user'] and (estacion['debo_password_encrypted'] or estacion['debo_password']) %}
+                <strong style="color:#27ae60;">configurado</strong> en {{ estacion['debo_host'] }}
+                {% else %}
+                <strong style="color:#e74c3c;">sin configurar</strong>. Pedile a superusuario que cargue IP, usuario y clave DEBO.
+                {% endif %}
+            </p>
             <a href="/sorteo/admin" class="btn-accion btn-export" target="_blank" style="margin-right: 10px; background: linear-gradient(145deg, #f1c40f, #f39c12); color: #1f2933;">
                 Abrir sorteo electrodomesticos
             </a>

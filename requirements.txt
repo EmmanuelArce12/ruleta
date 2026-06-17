@@ -5,3 +5,5 @@ openpyxl
 gunicorn
 python-dotenv
 qrcode[pil]
+pyodbc
+cryptography

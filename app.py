@@ -15,6 +15,8 @@ from datetime import date
 from io import BytesIO
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from debo import SQLSERVER_DRIVER, preview_station_tickets, station_debo_ready
+from secure_config import encrypt_secret
 
 load_dotenv()
 
@@ -40,6 +42,32 @@ MI_CORREO_GLOBAL = "echeverriaehijosaforadores@gmail.com"
 
 def get_db():
     return psycopg2.connect(DATABASE_URL)
+
+
+def get_station_by_id(station_id):
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute("SELECT * FROM estaciones WHERE id = %s", (station_id,))
+    row = c.fetchone()
+    conn.close()
+    return row
+
+
+def render_superadmin_page(preview_station_id=None, preview_rows=None, preview_error=None):
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute("SELECT * FROM estaciones ORDER BY id DESC")
+    estaciones = c.fetchall()
+    conn.close()
+    preview_station = next((e for e in estaciones if e["id"] == preview_station_id), None)
+    return render_template(
+        "superadmin.html",
+        estaciones=estaciones,
+        preview_station=preview_station,
+        preview_rows=preview_rows or [],
+        preview_error=preview_error,
+        sqlserver_driver=SQLSERVER_DRIVER,
+    )
 
 
 # ==========================================
@@ -347,6 +375,26 @@ def init_db():
             ALTER TABLE estaciones
             ADD COLUMN IF NOT EXISTS limite_giros INTEGER DEFAULT 0
         """)
+        c.execute("""
+            ALTER TABLE estaciones
+            ADD COLUMN IF NOT EXISTS debo_host TEXT
+        """)
+        c.execute("""
+            ALTER TABLE estaciones
+            ADD COLUMN IF NOT EXISTS debo_database TEXT DEFAULT 'DEBO'
+        """)
+        c.execute("""
+            ALTER TABLE estaciones
+            ADD COLUMN IF NOT EXISTS debo_user TEXT
+        """)
+        c.execute("""
+            ALTER TABLE estaciones
+            ADD COLUMN IF NOT EXISTS debo_password TEXT
+        """)
+        c.execute("""
+            ALTER TABLE estaciones
+            ADD COLUMN IF NOT EXISTS debo_password_encrypted TEXT
+        """)
 
         conn.close()
 
@@ -396,10 +444,7 @@ def logout_superadmin(): session.pop('super_auth', None); return redirect('/logi
 @app.route('/superadmin')
 def superadmin():
     if not session.get('super_auth'): return redirect('/login')
-    conn = get_db(); c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    c.execute("SELECT * FROM estaciones ORDER BY id DESC")
-    estaciones = c.fetchall(); conn.close()
-    return render_template('superadmin.html', estaciones=estaciones)
+    return render_superadmin_page()
 
 @app.route('/superadmin/crear_estacion', methods=['POST'])
 def crear_estacion():
@@ -435,6 +480,57 @@ def borrar_estacion(id):
     c.execute('DELETE FROM premios WHERE estacion_id = %s', (id,)); c.execute('DELETE FROM vendedores WHERE estacion_id = %s', (id,)); c.execute('DELETE FROM canjes WHERE estacion_id = %s', (id,)); c.execute('DELETE FROM estaciones WHERE id = %s', (id,))
     conn.commit(); conn.close()
     return redirect('/superadmin')
+
+
+@app.route('/superadmin/configurar_debo/<int:id>', methods=['POST'])
+def configurar_debo(id):
+    if not session.get('super_auth'):
+        return redirect('/login')
+    actual = get_station_by_id(id)
+    if not actual:
+        return redirect('/superadmin')
+
+    debo_host = (request.form.get('debo_host') or '').strip()
+    debo_database = (request.form.get('debo_database') or 'DEBO').strip() or 'DEBO'
+    debo_user = (request.form.get('debo_user') or '').strip()
+    raw_password = (request.form.get('debo_password') or '').strip()
+    debo_password_encrypted = actual.get('debo_password_encrypted') or ''
+    if raw_password:
+        debo_password_encrypted = encrypt_secret(raw_password)
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(
+        """
+        UPDATE estaciones
+        SET debo_host = %s,
+            debo_database = %s,
+            debo_user = %s,
+            debo_password = NULL,
+            debo_password_encrypted = %s
+        WHERE id = %s
+        """,
+        (debo_host, debo_database, debo_user, debo_password_encrypted, id),
+    )
+    conn.commit()
+    conn.close()
+    return redirect('/superadmin')
+
+
+@app.route('/superadmin/probar_debo/<int:id>', methods=['POST'])
+def probar_debo(id):
+    if not session.get('super_auth'):
+        return redirect('/login')
+    station = get_station_by_id(id)
+    if not station:
+        return render_superadmin_page(preview_error='No se encontro la estacion.')
+    if not station_debo_ready(station):
+        return render_superadmin_page(preview_station_id=id, preview_error='Falta completar IP, base, usuario o clave DEBO.')
+    try:
+        rows = preview_station_tickets(station, limit=15)
+        return render_superadmin_page(preview_station_id=id, preview_rows=rows)
+    except Exception as exc:
+        return render_superadmin_page(preview_station_id=id, preview_error=f'Error DEBO: {exc}')
 
 @app.route('/superadmin/blanquear_clave/<int:id>', methods=['POST'])
 def blanquear_clave(id):

@@ -27,6 +27,19 @@
         .nombre-container { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
         .btn-editar { background: none; border: none; cursor: pointer; font-size: 16px; padding: 2px 5px; border-radius: 4px; transition: 0.2s; }
         .btn-editar:hover { background: #f0f0f0; }
+        .debo-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:16px; }
+        .debo-card { background:#0f172a; border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px; }
+        .debo-card h3 { margin:0 0 12px; color:#f8fafc; font-size:18px; }
+        .debo-form { display:grid; gap:10px; }
+        .debo-form input { width:100%; }
+        .debo-actions { display:flex; gap:8px; flex-wrap:wrap; }
+        .status-chip { display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px; font-weight:bold; }
+        .status-ok { background:#14532d; color:#dcfce7; }
+        .status-off { background:#7f1d1d; color:#fee2e2; }
+        .preview-table { width:100%; border-collapse: collapse; background:#fff; color:#111827; min-width:900px; }
+        .preview-table th, .preview-table td { padding:10px; border-bottom:1px solid #e5e7eb; text-align:left; font-size:13px; }
+        .preview-table th { background:#e2e8f0; font-size:11px; text-transform:uppercase; }
+        .preview-error { background:#7f1d1d; color:#fee2e2; padding:12px; border-radius:8px; margin-top:12px; }
         
         @media (max-width: 600px) { body { padding: 10px; } h1 { font-size: 20px; } .form-crear button { width: 100%; } }
     </style>
@@ -104,6 +117,69 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    <div class="card">
+        <h2 style="margin-top: 0; font-size: 18px;">Conexiones DEBO por estación</h2>
+        <p style="color:#cbd5e1; font-size:13px; line-height:1.5;">Acá se centralizan IP pública o privada, base, usuario y clave DEBO. El botón <strong>Probar conexión</strong> ejecuta una consulta de muestra de tickets de playa sin modificar nada.</p>
+        <p style="color:#94a3b8; font-size:12px;">Driver esperado en el servidor: {{ sqlserver_driver }}</p>
+        <div class="debo-grid">
+            {% for e in estaciones %}
+            <div class="debo-card" id="debo-{{ e['id'] }}">
+                <h3>{{ e['nombre'] }}</h3>
+                <p style="margin-top:0;">
+                    {% if e['debo_host'] and e['debo_user'] and (e['debo_password_encrypted'] or e['debo_password']) %}
+                    <span class="status-chip status-ok">Configurado</span>
+                    {% else %}
+                    <span class="status-chip status-off">Sin configurar</span>
+                    {% endif %}
+                </p>
+                <form action="/superadmin/configurar_debo/{{ e['id'] }}" method="POST" class="debo-form">
+                    <input type="text" name="debo_host" value="{{ e['debo_host'] or '' }}" placeholder="IP DEBO, ej: 10.100.2.253">
+                    <input type="text" name="debo_database" value="{{ e['debo_database'] or 'DEBO' }}" placeholder="Base, por defecto DEBO">
+                    <input type="text" name="debo_user" value="{{ e['debo_user'] or '' }}" placeholder="Usuario DEBO">
+                    <input type="password" name="debo_password" placeholder="{% if e['debo_password_encrypted'] or e['debo_password'] %}Dejar vacío para conservar la clave actual{% else %}Clave DEBO{% endif %}">
+                    <div class="debo-actions">
+                        <button type="submit" class="btn-accion" style="background:#22c55e;">Guardar DEBO</button>
+                    </div>
+                </form>
+                <form action="/superadmin/probar_debo/{{ e['id'] }}" method="POST" style="margin-top: 10px;">
+                    <button type="submit" class="btn-accion" style="background:#38bdf8;">Probar conexión</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% if preview_station %}
+        <div style="margin-top: 20px;">
+            <h3 style="margin-bottom: 8px;">Muestra DEBO: {{ preview_station['nombre'] }}</h3>
+            {% if preview_error %}
+            <div class="preview-error">{{ preview_error }}</div>
+            {% else %}
+            <div class="table-responsive" style="margin-top: 12px;">
+                <table class="preview-table">
+                    <thead>
+                        <tr><th>Fecha hora</th><th>Factura</th><th>Vendedor</th><th>Combustible</th><th>Litros</th><th>Tipo</th><th>Letra</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for row in preview_rows %}
+                        <tr>
+                            <td>{{ row['fecha_hora_ticket'] }}</td>
+                            <td>{{ row['numero_factura'] }}</td>
+                            <td>{{ row['vendedor'] }}</td>
+                            <td>{{ row['combustible'] }}</td>
+                            <td>{{ row['litros'] }}</td>
+                            <td>{{ row['tipo_comprobante'] }}</td>
+                            <td>{{ row['letra_fiscal'] }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="7">La consulta conectó pero no devolvió tickets de muestra.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
 </body>
 </html>

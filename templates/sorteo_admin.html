@@ -70,13 +70,15 @@
                     <input type="number" name="intervalo_horas" min="1" value="{{ config['intervalo_horas'] or 4 }}">
                     <button type="submit">Guardar</button>
                 </form>
-                <p class="hint">La consulta real usa FACTURACION_SQL. Configurada: {{ 'si' if facturacion_configurada else 'no' }}.</p>
+                <p class="hint">La conexión DEBO se administra desde superusuario. Esta estación apunta a: <strong>{{ estacion['debo_host'] or 'sin configurar' }}</strong>.</p>
+                <p class="hint">Driver esperado en servidor: {{ sqlserver_driver }}. Conexión cargada: {{ 'si' if facturacion_configurada else 'no' }}.</p>
             </section>
 
             <section>
                 <h2>Controles</h2>
                 <div class="btn-row">
                     <form action="{{ base_path }}/admin/forzar-consulta" method="POST"><button class="btn-ok" type="submit">Forzar consulta</button></form>
+                    <form action="{{ base_path }}/admin/consulta-directa" method="POST"><button type="submit">Consulta directa DEBO</button></form>
                     {% if config['detenido'] %}
                     <form action="{{ base_path }}/admin/reanudar" method="POST"><button type="submit">Reanudar</button></form>
                     {% else %}
@@ -87,6 +89,33 @@
                 <p class="hint">Ultima consulta: {{ config['ultima_consulta'] or 'sin consultas' }}.</p>
             </section>
         </div>
+
+        <section>
+            <h2>Muestra DEBO</h2>
+            {% if preview_error %}
+            <p class="hint" style="color:#b42318; font-weight:700;">{{ preview_error }}</p>
+            {% endif %}
+            <div class="table-wrap">
+                <table style="min-width: 900px;">
+                    <thead><tr><th>Fecha hora</th><th>Factura</th><th>Vendedor</th><th>Combustible</th><th>Litros</th><th>Tipo</th><th>Letra</th></tr></thead>
+                    <tbody>
+                        {% for row in preview_rows %}
+                        <tr>
+                            <td>{{ row['fecha_hora_ticket'] }}</td>
+                            <td>{{ row['numero_factura'] }}</td>
+                            <td>{{ row['vendedor'] }}</td>
+                            <td>{{ row['combustible'] }}</td>
+                            <td>{{ row['litros'] }}</td>
+                            <td>{{ row['tipo_comprobante'] }}</td>
+                            <td>{{ row['letra_fiscal'] }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="7">Usá "Consulta directa DEBO" para ver una muestra de tickets de playa de esta estación.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
         <section>
             <h2>Participantes activos</h2>

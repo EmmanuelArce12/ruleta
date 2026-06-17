@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, jsonify, redirect, session, R
 from werkzeug.security import check_password_hash
 from datetime import datetime, timedelta
 from io import BytesIO
-from urllib.parse import quote_plus
 import os
 import threading
 import time
@@ -18,13 +17,13 @@ except ImportError:
     qrcode = None
 
 from dotenv import load_dotenv
+from debo import DEFAULT_FACTURACION_SQL, SQLSERVER_DRIVER, preview_station_tickets, station_debo_ready, validate_ticket_second
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SORTEO_SECRET_KEY') or os.environ.get('FLASK_SECRET_KEY', 'clave_sorteo_electrodomesticos')
 DATABASE_URL = os.environ.get('DATABASE_URL')
-FACTURACION_DATABASE_URL = os.environ.get('FACTURACION_DATABASE_URL') or DATABASE_URL
 FACTURACION_SQL = os.environ.get('FACTURACION_SQL')
 PUBLIC_BASE_URL = os.environ.get('SORTEO_PUBLIC_BASE_URL', '').rstrip('/')
 SYNC_INTERVAL_MINUTES = int(os.environ.get('SORTEO_SYNC_INTERVAL_MINUTES', '240'))
@@ -35,8 +34,22 @@ def get_db():
     return psycopg2.connect(DATABASE_URL)
 
 
-def get_facturacion_db():
-    return psycopg2.connect(FACTURACION_DATABASE_URL)
+def get_sorteo_config(estacion_id):
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute('SELECT * FROM sorteo_config WHERE estacion_id = %s', (estacion_id,))
+    row = c.fetchone()
+    conn.close()
+    return row
+
+
+def get_station(estacion_id):
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute('SELECT * FROM estaciones WHERE id = %s', (estacion_id,))
+    row = c.fetchone()
+    conn.close()
+    return row
 
 
 def init_db():
@@ -139,24 +152,49 @@ def parse_ticket_time(fecha, hora):
     return datetime.strptime(f'{fecha} {hora}', '%Y-%m-%d %H:%M:%S')
 
 
+def facturacion_sql():
+    return FACTURACION_SQL or DEFAULT_FACTURACION_SQL
+
+
 def consultar_facturacion(estacion_id, ticket_hora, numero_factura):
-    if not FACTURACION_SQL:
-        return None, 'Falta configurar FACTURACION_SQL en el entorno.'
+    station = get_station(estacion_id)
+    if not station_debo_ready(station):
+        return None, 'Falta configurar IP, base, usuario o clave de DEBO para esta estacion.'
+    if not facturacion_sql().strip():
+        return None, 'Falta configurar la consulta de facturacion.'
+    try:
+        return validate_ticket_second(station, ticket_hora, sql=facturacion_sql())
+    except Exception as exc:
+        return None, f'Error consultando DEBO: {exc}'
 
-    conn = get_facturacion_db()
+
+def build_admin_context(eid, preview_rows=None, preview_error=None):
+    conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    params = {
-        'estacion_id': estacion_id,
-        'ticket_hora': ticket_hora,
-        'numero_factura': numero_factura,
-    }
-    c.execute(FACTURACION_SQL, params)
-    row = c.fetchone()
+    c.execute('SELECT * FROM sorteo_config WHERE estacion_id = %s', (eid,))
+    config = c.fetchone()
+    c.execute('SELECT * FROM estaciones WHERE id = %s', (eid,))
+    station = c.fetchone()
+    c.execute('SELECT * FROM sorteo_participantes WHERE estacion_id = %s AND conteo_id IS NULL ORDER BY creado_en DESC', (eid,))
+    participantes = c.fetchall()
+    c.execute('SELECT * FROM sorteo_conteos WHERE estacion_id = %s ORDER BY iniciado_en DESC LIMIT 10', (eid,))
+    conteos = c.fetchall()
     conn.close()
-
-    if not row:
-        return None, 'No se encontro una factura que coincida con numero y hora exacta.'
-    return dict(row), None
+    url = public_url(eid)
+    return {
+        'nombre_estacion': session['sorteo_estacion_nombre'],
+        'config': config,
+        'estacion': station,
+        'participantes': participantes,
+        'conteos': conteos,
+        'public_url': url,
+        'qr': qr_data_url(url),
+        'facturacion_configurada': station_debo_ready(station),
+        'base_path': SORTEO_BASE_PATH,
+        'sqlserver_driver': SQLSERVER_DRIVER,
+        'preview_rows': preview_rows or [],
+        'preview_error': preview_error,
+    }
 
 
 def validar_pendientes(estacion_id=None):
@@ -278,19 +316,7 @@ def admin():
         return redirect(sorteo_path('/admin/login'))
     eid = session['sorteo_estacion_id']
     ensure_config(eid)
-    conn = get_db()
-    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    c.execute('SELECT * FROM sorteo_config WHERE estacion_id = %s', (eid,))
-    config = c.fetchone()
-    c.execute('SELECT * FROM sorteo_participantes WHERE estacion_id = %s AND conteo_id IS NULL ORDER BY creado_en DESC', (eid,))
-    participantes = c.fetchall()
-    c.execute('SELECT * FROM sorteo_conteos WHERE estacion_id = %s ORDER BY iniciado_en DESC LIMIT 10', (eid,))
-    conteos = c.fetchall()
-    conn.close()
-    url = public_url(eid)
-    return render_template('sorteo_admin.html', nombre_estacion=session['sorteo_estacion_nombre'], config=config,
-                           participantes=participantes, conteos=conteos, public_url=url, qr=qr_data_url(url),
-                           facturacion_configurada=bool(FACTURACION_SQL), base_path=SORTEO_BASE_PATH)
+    return render_template('sorteo_admin.html', **build_admin_context(eid))
 
 
 @app.route('/admin/config', methods=['POST'])
@@ -311,6 +337,22 @@ def configurar():
     conn.commit()
     conn.close()
     return redirect(sorteo_path('/admin'))
+
+
+@app.route('/admin/consulta-directa', methods=['POST'])
+@app.route('/sorteo/admin/consulta-directa', methods=['POST'])
+def consulta_directa():
+    if not admin_required():
+        return redirect(sorteo_path('/admin/login'))
+    eid = session['sorteo_estacion_id']
+    station = get_station(eid)
+    if not station_debo_ready(station):
+        return render_template('sorteo_admin.html', **build_admin_context(eid, preview_error='DEBO no esta configurado para esta estacion.'))
+    try:
+        rows = preview_station_tickets(station, limit=15)
+        return render_template('sorteo_admin.html', **build_admin_context(eid, preview_rows=rows))
+    except Exception as exc:
+        return render_template('sorteo_admin.html', **build_admin_context(eid, preview_error=f'Error DEBO: {exc}'))
 
 
 @app.route('/admin/forzar-consulta', methods=['POST'])
