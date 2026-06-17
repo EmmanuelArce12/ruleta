@@ -92,6 +92,9 @@ def init_db():
             combustible TEXT,
             litros NUMERIC(10, 3),
             pago_app_ypf BOOLEAN,
+            pago_electronico BOOLEAN,
+            medio_pago TEXT,
+            payment_type TEXT,
             vendedor TEXT,
             factura_real TEXT,
             chances INTEGER DEFAULT 1,
@@ -111,6 +114,9 @@ def init_db():
     c.execute("UPDATE sorteo_participantes SET ticket_fecha = COALESCE(ticket_fecha, ticket_hora::date) WHERE ticket_fecha IS NULL")
     c.execute("ALTER TABLE sorteo_participantes ALTER COLUMN ticket_fecha SET NOT NULL")
     c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS ticket_hora TIMESTAMP")
+    c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS pago_electronico BOOLEAN")
+    c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS medio_pago TEXT")
+    c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS payment_type TEXT")
     c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS vendedor TEXT")
     c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS factura_real TEXT")
     c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS chances INTEGER DEFAULT 1")
@@ -404,6 +410,9 @@ def reset_participante_validation(cursor, participante_id, estado='PENDIENTE', d
             combustible = NULL,
             litros = NULL,
             pago_app_ypf = NULL,
+            pago_electronico = NULL,
+            medio_pago = NULL,
+            payment_type = NULL,
             vendedor = NULL,
             factura_real = NULL,
             chances = 0,
@@ -450,6 +459,8 @@ def validar_pendientes(estacion_id=None):
         estado, detalle = classify_ticket_match(factura, participante['minimo_litros'])
         combustible = factura.get('combustible')
         pago_app_ypf = bool(factura.get('pago_app_ypf'))
+        pago_electronico = bool(factura.get('pago_electronico'))
+        medio_pago = factura.get('medio_pago') or ('App YPF' if pago_app_ypf else 'Contado / no electronico')
         chances = compute_chances(combustible, pago_app_ypf) if estado == 'APROBADO' else 0
         sospecha_dispositivo = is_suspicious_device(c, participante, participante)
 
@@ -463,6 +474,9 @@ def validar_pendientes(estacion_id=None):
                 combustible = %s,
                 litros = %s,
                 pago_app_ypf = %s,
+                pago_electronico = %s,
+                medio_pago = %s,
+                payment_type = %s,
                 vendedor = %s,
                 factura_real = %s,
                 chances = %s,
@@ -477,6 +491,9 @@ def validar_pendientes(estacion_id=None):
             combustible,
             factura.get('litros'),
             pago_app_ypf,
+            pago_electronico,
+            medio_pago,
+            factura.get('payment_type'),
             factura.get('vendedor'),
             factura.get('numero_factura'),
             chances,
@@ -769,6 +786,7 @@ def exportar_excel():
         'Vendedor',
         'Combustible',
         'Litros',
+        'Medio pago',
         'App YPF',
         'Chances',
         'Device token',
@@ -797,6 +815,7 @@ def exportar_excel():
             row['vendedor'] or '',
             row['combustible'] or '',
             row['litros'],
+            row.get('medio_pago') or '',
             yes_no_blank(row['pago_app_ypf']),
             row['chances'] or '',
             row.get('device_token') or '',
@@ -825,6 +844,35 @@ def exportar_excel():
         salida.getvalue(),
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         headers={'Content-Disposition': f'attachment;filename=sorteo_{suffix}.xlsx'},
+    )
+
+
+@app.route('/admin/exportar-ranking')
+@app.route('/sorteo/admin/exportar-ranking')
+def exportar_ranking():
+    if not admin_required():
+        return redirect(sorteo_path('/admin/login'))
+    eid = session['sorteo_estacion_id']
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    rows = query_participantes(c, eid, archived=False)
+    conn.close()
+    ranking = build_seller_ranking([row for row in rows if row['estado'] == 'APROBADO'])
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Ranking Vendedores'
+    ws.append(['Puesto', 'Vendedor', 'Facturas aprobadas'])
+    for index, row in enumerate(ranking, start=1):
+        ws.append([index, row['vendedor'], row['facturas_aprobadas']])
+
+    salida = BytesIO()
+    wb.save(salida)
+    salida.seek(0)
+    return Response(
+        salida.getvalue(),
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': 'attachment;filename=sorteo_ranking_vendedores.xlsx'},
     )
 
 

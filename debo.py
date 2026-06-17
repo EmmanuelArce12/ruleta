@@ -77,22 +77,28 @@ WITH FacturaObjetivo AS (
         f.TCO,
         f.TIP,
         RTRIM(v.NomVen) AS vendedor,
+        pm.payment_type AS payment_type,
+        CAST(CASE WHEN pm.payment_type IS NOT NULL THEN 1 ELSE 0 END AS bit) AS pago_electronico,
         CAST(
             CASE
-                WHEN EXISTS (
-                    SELECT 1
-                    FROM dbo.A_MERCADOPAGO_META_YPF p
-                    WHERE p.FEC = f.FEC
-                      AND RIGHT(LTRIM(RTRIM(p.fuel_station_id)), 3) = RIGHT('000' + CAST(f.SUC AS VARCHAR(10)), 3)
-                      AND ABS(CAST(f.TOT AS DECIMAL(18,2)) - CAST(p.total_payment_amount AS DECIMAL(18,2))) < 0.05
-                      AND p.payment_type = 'YPF_ACCOUNT_MONEY'
-                ) THEN 1
+                WHEN pm.payment_type = 'YPF_ACCOUNT_MONEY' THEN 1
                 ELSE 0
             END
         AS bit) AS pago_app_ypf
     FROM dbo.AMAEFACT f
     LEFT JOIN dbo.VENDEDORES v
         ON f.OPE = v.CodVen
+    OUTER APPLY (
+        SELECT TOP (1)
+            p.payment_type
+        FROM dbo.A_MERCADOPAGO_META_YPF p
+        WHERE p.FEC = f.FEC
+          AND RIGHT(LTRIM(RTRIM(p.fuel_station_id)), 3) = RIGHT('000' + CAST(f.SUC AS VARCHAR(10)), 3)
+          AND ABS(CAST(f.TOT AS DECIMAL(18,2)) - CAST(p.total_payment_amount AS DECIMAL(18,2))) < 0.05
+        ORDER BY
+            CASE WHEN p.payment_type = 'YPF_ACCOUNT_MONEY' THEN 0 ELSE 1 END,
+            p.payment_type
+    ) pm
     WHERE f.ANU = ''
       AND f.LUG = 1
       AND {time_condition}
@@ -107,6 +113,8 @@ Lineas AS (
         CAST(fo.SUC AS VARCHAR(10)) + '-' + CAST(fo.NCO AS VARCHAR(20)) AS numero_factura,
         fo.vendedor,
         fo.pago_app_ypf,
+        fo.pago_electronico,
+        fo.payment_type,
         fo.TCO AS tipo_comprobante,
         fo.TIP AS letra_fiscal,
         CASE
@@ -153,6 +161,13 @@ SELECT
     END AS combustible,
     CAST(SUM(litros_linea) AS DECIMAL(18,4)) AS litros,
     pago_app_ypf,
+    pago_electronico,
+    CASE
+        WHEN pago_app_ypf = 1 THEN 'App YPF'
+        WHEN pago_electronico = 1 AND payment_type IS NOT NULL THEN 'Pago electronico: ' + payment_type
+        ELSE 'Contado / no electronico'
+    END AS medio_pago,
+    payment_type,
     tipo_comprobante,
     letra_fiscal,
     SUM(es_promo) AS promo_lineas,
@@ -164,6 +179,8 @@ GROUP BY
     numero_factura,
     vendedor,
     pago_app_ypf,
+    pago_electronico,
+    payment_type,
     tipo_comprobante,
     letra_fiscal
 """
