@@ -23,11 +23,12 @@
         .grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:14px; }
         .field { display:flex; flex-direction:column; gap:6px; }
         .field.full { grid-column:1 / -1; }
-        .invoice-grid { display:grid; grid-template-columns:140px 32px minmax(0, 1fr); gap:10px; align-items:end; }
+        .invoice-grid { display:grid; grid-template-columns:140px 32px minmax(0, 1fr) 52px; gap:10px; align-items:end; }
         .invoice-separator { min-height:50px; display:grid; place-items:center; font-size:24px; font-weight:900; color:var(--blue-dark); }
+        .help-trigger { min-height:50px; border:none; border-radius:12px; background:linear-gradient(135deg, #f4c542, #ffd86b); color:#10233f; font-size:26px; font-weight:900; cursor:pointer; box-shadow:0 10px 20px rgba(244, 197, 66, .28); }
         label { font-size:12px; text-transform:uppercase; font-weight:800; color:#344054; letter-spacing:.3px; }
-        input { width:100%; min-height:50px; border:1px solid #c8d2df; border-radius:12px; padding:13px 14px; font-size:16px; color:var(--ink); background:white; outline:none; transition:border-color .2s, box-shadow .2s; }
-        input:focus { border-color:var(--blue); box-shadow:0 0 0 4px rgba(0, 92, 171, .13); }
+        input, select { width:100%; min-height:50px; border:1px solid #c8d2df; border-radius:12px; padding:13px 14px; font-size:16px; color:var(--ink); background:white; outline:none; transition:border-color .2s, box-shadow .2s; }
+        input:focus, select:focus { border-color:var(--blue); box-shadow:0 0 0 4px rgba(0, 92, 171, .13); }
         .hint { margin:0 0 16px; color:var(--muted); font-size:14px; line-height:1.45; }
         .invoice-note { margin-top:8px; color:var(--blue-dark); font-size:13px; font-weight:800; line-height:1.45; }
         .alert { margin-bottom:14px; padding:12px 14px; border-radius:12px; font-size:14px; line-height:1.4; }
@@ -43,7 +44,11 @@
         .thanks h2 { margin:0 0 10px; color:var(--ok); font-size:clamp(26px, 7vw, 38px); }
         .thanks p { margin:0 auto; max-width:520px; color:#344054; line-height:1.55; }
         .thanks small { display:block; margin-top:12px; color:var(--muted); }
-        @media (max-width: 620px) { .shell { width:min(100% - 20px, 760px); } .panel { border-radius:16px; } .panel-head { align-items:flex-start; } .grid { grid-template-columns:1fr; } .content { padding:16px; } input { min-height:52px; } }
+        .help-popover { position:fixed; right:18px; bottom:18px; width:min(320px, calc(100% - 28px)); padding:14px; border-radius:18px; background:rgba(255,255,255,.98); border:1px solid #c8d2df; box-shadow:0 24px 60px rgba(16, 42, 67, .28); opacity:0; pointer-events:none; transform:translateY(10px); transition:opacity .2s ease, transform .2s ease; z-index:30; }
+        .help-popover.visible { opacity:1; pointer-events:auto; transform:translateY(0); }
+        .help-popover img { width:100%; border-radius:12px; display:block; }
+        .help-popover strong { display:block; margin-bottom:10px; color:var(--blue-dark); }
+        @media (max-width: 620px) { .shell { width:min(100% - 20px, 760px); } .panel { border-radius:16px; } .panel-head { align-items:flex-start; } .grid { grid-template-columns:1fr; } .content { padding:16px; } input, select { min-height:52px; } .invoice-grid { grid-template-columns:1fr 24px 1fr 48px; } }
     </style>
 </head>
 <body>
@@ -52,13 +57,13 @@
             <header class="hero">
                 <div class="brand">{{ estacion['nombre'] }}</div>
                 <h1>Gran sorteo en {{ estacion['nombre'] }}</h1>
-                <p>Registrá tu cupón con fecha y número de factura. Si el sistema detecta muchas cargas desde el mismo dispositivo, puede dejarlo en revisión.</p>
+                <p>Registra tu cupon con fecha y numero de factura. Si el sistema detecta muchas cargas desde el mismo dispositivo, puede dejarlo en revision.</p>
             </header>
             {% if mensaje %}
             <main class="shell">
                 <section class="panel">
                     <div class="thanks">
-                        <div class="check">✓</div>
+                        <div class="check">OK</div>
                         <h2>Gracias por participar</h2>
                         <p>{{ mensaje }}</p>
                         <small>En unos segundos vas a volver al formulario.</small>
@@ -71,14 +76,14 @@
                     <div class="panel-head">
                         <div class="step">1</div>
                         <div>
-                            <h2>Completá tus datos</h2>
-                            <p>Usá la fecha del ticket y el número de factura exactamente como aparecen impresos.</p>
+                            <h2>Completa tus datos</h2>
+                            <p>Usa la fecha del ticket y el numero de factura exactamente como aparecen impresos.</p>
                         </div>
                     </div>
                     <div class="content">
                         {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
                         {% if detenido %}<div class="alert error">El sorteo se encuentra cerrado.</div>{% endif %}
-                        <p class="hint">Si una misma persona o dispositivo intenta cargar demasiadas facturas dentro de la misma promoción, el cupón puede quedar en revisión manual.</p>
+                        <p class="hint">Si una misma persona o dispositivo intenta cargar demasiadas facturas dentro de la misma promocion, el cupon puede quedar en revision manual.</p>
                         <form method="POST">
                             <input type="hidden" name="device_token" id="device_token">
                             <div class="grid">
@@ -89,11 +94,21 @@
                                 <div class="field full">
                                     <label>Numero de factura</label>
                                     <div class="invoice-grid">
+                                        {% if allowed_branches %}
+                                        <select name="numero_factura_sucursal" id="numero_factura_sucursal" required>
+                                            <option value="">Punto de venta</option>
+                                            {% for branch in allowed_branches %}
+                                            <option value="{{ branch }}">{{ branch }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        {% else %}
                                         <input name="numero_factura_sucursal" id="numero_factura_sucursal" placeholder="Punto de venta" inputmode="numeric" autocomplete="off" required>
+                                        {% endif %}
                                         <div class="invoice-separator">-</div>
                                         <input name="numero_factura_numero" id="numero_factura_numero" placeholder="Numero de factura" inputmode="numeric" autocomplete="off" required>
+                                        <button type="button" class="help-trigger" id="factura-help-trigger" aria-label="Ayuda para encontrar la factura">?</button>
                                     </div>
-                                    <div class="invoice-note">Ingresá números sin los ceros del lado izquierdo. Si escribís de más, el sistema los acomoda: `0019` pasa a `19`, `1900` pasa a `19` y `00023329` pasa a `23329`.</div>
+                                    <div class="invoice-note">Ingresa correctamente el numero de factura sin los ceros. Si tenes dudas, presiona sobre el signo de pregunta.</div>
                                 </div>
                                 <div class="field">
                                     <label>Nombre</label>
@@ -130,6 +145,10 @@
             {% endif %}
         </div>
     </div>
+    <div class="help-popover" id="factura-help-popover" aria-hidden="true">
+        <strong>Busca estos datos en tu ticket</strong>
+        <img src="{{ factura_help_image }}" alt="Ejemplo de ticket con fecha, hora y numero de factura marcados">
+    </div>
 
     <script>
         (function () {
@@ -156,6 +175,7 @@
             const branchInput = document.getElementById('numero_factura_sucursal');
             const serialInput = document.getElementById('numero_factura_numero');
             if (!branchInput || !serialInput) return;
+            const branchSelect = branchInput.tagName === 'SELECT';
 
             function digitsOnly(value) {
                 return String(value || '').replace(/\D+/g, '');
@@ -164,9 +184,7 @@
             function normalizeBranch(value) {
                 let digits = digitsOnly(value).replace(/^0+/, '');
                 if (!digits) return '';
-                if (digits.length > 2) {
-                    digits = digits.replace(/0+$/, '') || digits;
-                }
+                if (digits.length > 2) digits = digits.replace(/0+$/, '') || digits;
                 return digits.replace(/^0+/, '') || '0';
             }
 
@@ -175,9 +193,11 @@
                 return digits || '';
             }
 
-            branchInput.addEventListener('input', function () {
-                branchInput.value = normalizeBranch(branchInput.value);
-            });
+            if (!branchSelect) {
+                branchInput.addEventListener('input', function () {
+                    branchInput.value = normalizeBranch(branchInput.value);
+                });
+            }
 
             serialInput.addEventListener('input', function () {
                 serialInput.value = normalizeSerial(serialInput.value);
@@ -186,10 +206,42 @@
             const form = branchInput.form;
             if (form) {
                 form.addEventListener('submit', function () {
-                    branchInput.value = normalizeBranch(branchInput.value);
+                    if (!branchSelect) branchInput.value = normalizeBranch(branchInput.value);
                     serialInput.value = normalizeSerial(serialInput.value);
                 });
             }
+        })();
+
+        (function () {
+            const trigger = document.getElementById('factura-help-trigger');
+            const popover = document.getElementById('factura-help-popover');
+            if (!trigger || !popover) return;
+            let timer = null;
+
+            function hidePopover() {
+                popover.classList.remove('visible');
+                popover.setAttribute('aria-hidden', 'true');
+                if (timer) {
+                    window.clearTimeout(timer);
+                    timer = null;
+                }
+            }
+
+            function showPopover(ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                popover.classList.add('visible');
+                popover.setAttribute('aria-hidden', 'false');
+                if (timer) window.clearTimeout(timer);
+                timer = window.setTimeout(hidePopover, 3000);
+            }
+
+            trigger.addEventListener('click', showPopover);
+            popover.addEventListener('click', function (ev) { ev.stopPropagation(); });
+            document.addEventListener('click', hidePopover);
+            document.addEventListener('keydown', function (ev) {
+                if (ev.key === 'Escape') hidePopover();
+            });
         })();
     </script>
 </body>

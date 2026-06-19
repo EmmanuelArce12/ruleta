@@ -35,6 +35,11 @@ PROMO_COMBUSTIBLES = {'Super', 'Diesel 500', 'Infinia', 'Infinia Diesel'}
 INF_INFINIA = {'Infinia', 'Infinia Diesel'}
 ACTIVE_STATES = ('PENDIENTE', 'DUDOSO', 'APROBADO', 'DENEGADO')
 
+ALLOWED_BRANCHES_BY_STATION = {
+    'echeverria': {'17', '18', '19'},
+    'satragno': {'16', '17', '18', '25', '26'},
+}
+
 
 def get_db():
     return psycopg2.connect(DATABASE_URL)
@@ -56,6 +61,14 @@ def get_station(estacion_id):
     row = c.fetchone()
     conn.close()
     return row
+
+
+def get_allowed_invoice_branches(station: dict | None) -> list[str]:
+    name = ((station or {}).get('nombre') or '').strip().lower()
+    for key, branches in ALLOWED_BRANCHES_BY_STATION.items():
+        if key in name:
+            return sorted(branches, key=lambda value: int(value))
+    return []
 
 
 def init_db():
@@ -352,6 +365,7 @@ def consultar_facturacion(estacion_id, ticket_fecha, numero_factura):
         return None, 'Falta configurar IP, base, usuario o clave de DEBO para esta estacion.'
     try:
         factura = normalize_invoice_number(numero_factura)
+        validate_allowed_invoice_branch(get_station(estacion_id), factura)
     except ValueError as exc:
         return None, str(exc)
     try:
@@ -440,6 +454,12 @@ def build_admin_context(eid):
     }
 
 
+def validate_allowed_invoice_branch(station: dict | None, factura: dict):
+    allowed = get_allowed_invoice_branches(station)
+    if allowed and str(factura['sucursal']) not in allowed:
+        raise ValueError('El punto de venta no corresponde a esta estacion.')
+
+
 def reset_participante_validation(cursor, participante_id, estado='PENDIENTE', detalle='Esperando validacion.'):
     cursor.execute('''
         UPDATE sorteo_participantes
@@ -461,7 +481,7 @@ def reset_participante_validation(cursor, participante_id, estado='PENDIENTE', d
     ''', (estado, detalle, participante_id))
 
 
-def requeue_participante_with_invoice(cursor, estacion_id, participante_id, numero_factura):
+def requeue_participante_with_invoice(cursor, estacion_id, participante_id, numero_factura, ticket_fecha=None):
     factura = normalize_invoice_number(numero_factura)
     cursor.execute('''
         SELECT id, ticket_fecha
@@ -476,7 +496,8 @@ def requeue_participante_with_invoice(cursor, estacion_id, participante_id, nume
         raise ValueError('El registro ya no esta disponible para reproceso.')
 
     row_id = row['id'] if isinstance(row, dict) else row[0]
-    ticket_fecha = row['ticket_fecha'] if isinstance(row, dict) else row[1]
+    current_ticket_fecha = row['ticket_fecha'] if isinstance(row, dict) else row[1]
+    target_ticket_fecha = parse_ticket_date(ticket_fecha) if ticket_fecha else current_ticket_fecha
     cursor.execute('''
         SELECT id
         FROM sorteo_participantes
@@ -486,17 +507,19 @@ def requeue_participante_with_invoice(cursor, estacion_id, participante_id, nume
           AND numero_factura = %s
           AND id <> %s
         LIMIT 1
-    ''', (estacion_id, ticket_fecha, factura['canonical'], row_id))
+    ''', (estacion_id, target_ticket_fecha, factura['canonical'], row_id))
     if cursor.fetchone():
         raise ValueError('Ya existe otra carga activa con esa fecha y factura.')
 
     cursor.execute('''
         UPDATE sorteo_participantes
-        SET numero_factura = %s
+        SET numero_factura = %s,
+            ticket_fecha = %s,
+            ticket_hora = %s
         WHERE id = %s
-    ''', (factura['canonical'], row_id))
+    ''', (factura['canonical'], target_ticket_fecha, datetime.combine(target_ticket_fecha, datetime.min.time()), row_id))
     reset_participante_validation(cursor, row_id)
-    return factura['canonical']
+    return factura['canonical'], str(target_ticket_fecha)
 
 
 def validar_pendientes(estacion_id=None):
@@ -843,14 +866,16 @@ def reprocesar_facturas():
         for item in items:
             participante_id = item.get('id')
             numero_factura = item.get('numero_factura')
+            ticket_fecha = item.get('ticket_fecha')
             try:
-                canonical = requeue_participante_with_invoice(
+                canonical, normalized_fecha = requeue_participante_with_invoice(
                     c,
                     session['sorteo_estacion_id'],
                     int(participante_id),
                     numero_factura,
+                    ticket_fecha=ticket_fecha,
                 )
-                actualizados.append({'id': int(participante_id), 'numero_factura': canonical})
+                actualizados.append({'id': int(participante_id), 'numero_factura': canonical, 'ticket_fecha': normalized_fecha})
             except Exception as exc:
                 errores.append({'id': participante_id, 'error': str(exc)})
         conn.commit()
@@ -1043,6 +1068,7 @@ def cliente_sorteo(estacion_id):
                 if ticket_fecha < promo_desde or ticket_fecha > promo_hasta:
                     raise ValueError('La fecha del ticket esta fuera de la promocion activa.')
                 factura = parse_invoice_from_form(request.form)
+                validate_allowed_invoice_branch(estacion, factura)
                 device_token = (request.form.get('device_token') or '').strip()
                 user_agent = request.headers.get('User-Agent', '')
                 ip_registro = get_client_ip()
@@ -1082,7 +1108,15 @@ def cliente_sorteo(estacion_id):
                 conn.rollback()
                 error = f'No se pudo registrar la participacion: {exc}'
     conn.close()
-    return render_template('sorteo_cliente.html', estacion=estacion, mensaje=mensaje, error=error, detenido=config and config['detenido'])
+    return render_template(
+        'sorteo_cliente.html',
+        estacion=estacion,
+        mensaje=mensaje,
+        error=error,
+        detenido=config and config['detenido'],
+        allowed_branches=get_allowed_invoice_branches(estacion),
+        factura_help_image='/static/img/factura-ayuda-sorteo.png',
+    )
 
 
 init_db()

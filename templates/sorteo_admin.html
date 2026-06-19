@@ -59,7 +59,9 @@
         th { background:#16304a; color:#c6d6e7; font-size:11px; text-transform:uppercase; letter-spacing:.4px; }
         .icon-btn { min-width:38px; padding:8px 10px; }
         .invoice-inline { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+        .date-inline { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
         .invoice-inline input[type="text"] { width:150px; min-height:38px; padding:8px 10px; border:1px solid var(--line); border-radius:10px; font-size:13px; background:#081521; color:var(--ink); }
+        .date-inline input[type="date"] { width:155px; min-height:38px; padding:8px 10px; border:1px solid var(--line); border-radius:10px; font-size:13px; background:#081521; color:var(--ink); }
         .row-check { width:18px; height:18px; accent-color:#22c55e; }
         .empty { padding:42px 20px; text-align:center; color:var(--muted); }
         .muted-note { color:var(--muted); font-size:13px; line-height:1.45; }
@@ -118,9 +120,9 @@
             totales: {{ totales|tojson }},
             sellerRanking: [{% for row in seller_ranking %}{ vendedor: {{ row['vendedor']|tojson }}, facturasAprobadas: {{ row['facturas_aprobadas']|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
             pendientes: [{% for p in pendientes %}{ id: {{ p['id']|tojson }}, fecha: {{ (p['ticket_fecha']|string)|tojson }}, factura: {{ p['numero_factura']|tojson }}, cliente: {{ ((p['nombre'] ~ ' ' ~ p['apellido']) ~ (p['dni'] and (' / ' ~ p['dni']) or ''))|tojson }}, telefono: {{ p['telefono']|tojson }}, email: {{ p['email']|tojson }}, detalle: {{ (p['detalle_validacion'] or 'Esperando validacion.')|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
-            dudosos: [{% for p in dudosos %}{ id: {{ p['id']|tojson }}, fecha: {{ (p['ticket_fecha']|string)|tojson }}, factura: {{ (p['factura_real'] or p['numero_factura'])|tojson }}, numeroFacturaEditable: {{ p['numero_factura']|tojson }}, vendedor: {{ (p['vendedor'] or '')|tojson }}, combustible: {{ (p['combustible'] or '')|tojson }}, litros: {{ (p['litros'] if p['litros'] is not none else '')|tojson }}, medioPago: {{ (p['medio_pago'] or '')|tojson }}, chances: {{ (p['chances'] or '')|tojson }}, deviceToken: {{ (p['device_token'] or '')|tojson }}, ip: {{ (p['ip_registro'] or '')|tojson }}, detalle: {{ (p['detalle_validacion'] or '')|tojson }}, cliente: {{ ((p['nombre'] ~ ' ' ~ p['apellido']) ~ (p['dni'] and (' / ' ~ p['dni']) or ''))|tojson }}, telefono: {{ p['telefono']|tojson }}, email: {{ p['email']|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
+            dudosos: [{% for p in dudosos %}{ id: {{ p['id']|tojson }}, fecha: {{ (p['ticket_fecha']|string)|tojson }}, fechaEditable: {{ (p['ticket_fecha']|string)|tojson }}, factura: {{ (p['factura_real'] or p['numero_factura'])|tojson }}, numeroFacturaEditable: {{ p['numero_factura']|tojson }}, vendedor: {{ (p['vendedor'] or '')|tojson }}, combustible: {{ (p['combustible'] or '')|tojson }}, litros: {{ (p['litros'] if p['litros'] is not none else '')|tojson }}, medioPago: {{ (p['medio_pago'] or '')|tojson }}, chances: {{ (p['chances'] or '')|tojson }}, deviceToken: {{ (p['device_token'] or '')|tojson }}, ip: {{ (p['ip_registro'] or '')|tojson }}, detalle: {{ (p['detalle_validacion'] or '')|tojson }}, cliente: {{ ((p['nombre'] ~ ' ' ~ p['apellido']) ~ (p['dni'] and (' / ' ~ p['dni']) or ''))|tojson }}, telefono: {{ p['telefono']|tojson }}, email: {{ p['email']|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
             aprobados: [{% for p in aprobados %}{ id: {{ p['id']|tojson }}, estado: {{ p['estado']|tojson }}, fecha: {{ (p['ticket_fecha']|string)|tojson }}, factura: {{ (p['factura_real'] or p['numero_factura'])|tojson }}, tipo: {{ (((p['tipo_comprobante'] or '') ~ ' ' ~ (p['letra_fiscal'] or ''))|trim)|tojson }}, vendedor: {{ (p['vendedor'] or '')|tojson }}, combustible: {{ (p['combustible'] or '')|tojson }}, litros: {{ (p['litros'] if p['litros'] is not none else '')|tojson }}, medioPago: {{ (p['medio_pago'] or '')|tojson }}, appYpf: {{ yes_no_blank(p['pago_app_ypf'])|tojson }}, chances: {{ (p['chances'] or '')|tojson }}, cliente: {{ ((p['nombre'] ~ ' ' ~ p['apellido']) ~ (p['dni'] and (' / ' ~ p['dni']) or ''))|tojson }}, telefono: {{ p['telefono']|tojson }}, email: {{ p['email']|tojson }}, detalle: {{ (p['detalle_validacion'] or '')|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
-            denegados: [{% for p in denegados %}{ id: {{ p['id']|tojson }}, estado: {{ p['estado']|tojson }}, fecha: {{ (p['ticket_fecha']|string)|tojson }}, factura: {{ (p['factura_real'] or p['numero_factura'])|tojson }}, numeroFacturaEditable: {{ p['numero_factura']|tojson }}, tipo: {{ (((p['tipo_comprobante'] or '') ~ ' ' ~ (p['letra_fiscal'] or ''))|trim)|tojson }}, vendedor: {{ (p['vendedor'] or '')|tojson }}, combustible: {{ (p['combustible'] or '')|tojson }}, litros: {{ (p['litros'] if p['litros'] is not none else '')|tojson }}, medioPago: {{ (p['medio_pago'] or '')|tojson }}, cliente: {{ ((p['nombre'] ~ ' ' ~ p['apellido']) ~ (p['dni'] and (' / ' ~ p['dni']) or ''))|tojson }}, telefono: {{ p['telefono']|tojson }}, email: {{ p['email']|tojson }}, detalle: {{ (p['detalle_validacion'] or '')|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
+            denegados: [{% for p in denegados %}{ id: {{ p['id']|tojson }}, estado: {{ p['estado']|tojson }}, fecha: {{ (p['ticket_fecha']|string)|tojson }}, fechaEditable: {{ (p['ticket_fecha']|string)|tojson }}, factura: {{ (p['factura_real'] or p['numero_factura'])|tojson }}, numeroFacturaEditable: {{ p['numero_factura']|tojson }}, tipo: {{ (((p['tipo_comprobante'] or '') ~ ' ' ~ (p['letra_fiscal'] or ''))|trim)|tojson }}, vendedor: {{ (p['vendedor'] or '')|tojson }}, combustible: {{ (p['combustible'] or '')|tojson }}, litros: {{ (p['litros'] if p['litros'] is not none else '')|tojson }}, medioPago: {{ (p['medio_pago'] or '')|tojson }}, cliente: {{ ((p['nombre'] ~ ' ' ~ p['apellido']) ~ (p['dni'] and (' / ' ~ p['dni']) or ''))|tojson }}, telefono: {{ p['telefono']|tojson }}, email: {{ p['email']|tojson }}, detalle: {{ (p['detalle_validacion'] or '')|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
             conteos: [{% for c in conteos %}{ id: {{ c['id']|tojson }}, fecha: {{ (c['iniciado_en'] and (c['iniciado_en']|string))|tojson }}, total: {{ c['total']|tojson }}, aprobados: {{ c['aprobados']|tojson }}, denegados: {{ c['denegados']|tojson }}, pendientes: {{ c['pendientes']|tojson }}, dudosos: {{ (c['dudosos'] or 0)|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}]
         };
     </script>
@@ -263,7 +265,7 @@
 
             function EditableInvoiceReviewTab(props) {
                 const [rows, setRows] = useState((props.rows || []).map(function (row) {
-                    return Object.assign({}, row, { draftFactura: row.numeroFacturaEditable || row.factura || '', editing: false, edited: false });
+                    return Object.assign({}, row, { draftFactura: row.numeroFacturaEditable || row.factura || '', draftFecha: row.fechaEditable || row.fecha || '', editing: false, edited: false });
                 }));
                 const [selectedIds, setSelectedIds] = useState({});
                 const [busy, setBusy] = useState(false);
@@ -291,7 +293,7 @@
                     setErrorText('');
                     try {
                         const payload = await reprocessEditedInvoices(selectedItems.map(function (row) {
-                            return { id: row.id, numero_factura: row.draftFactura };
+                            return { id: row.id, numero_factura: row.draftFactura, ticket_fecha: row.draftFecha };
                         }));
                         if (payload.errores && payload.errores.length) {
                             setErrorText(payload.errores.map(function (item) { return 'Fila ' + item.id + ': ' + item.error; }).join(' | '));
@@ -318,6 +320,18 @@
                     ),
                     columns: props.columns.concat([
                         {
+                            key: 'fechaEditable',
+                            label: 'Fecha',
+                            render: function (row) {
+                                return e('div', { className: 'date-inline' },
+                                    row.editing
+                                        ? e('input', { type: 'date', value: row.draftFecha, onChange: function (ev) { updateRow(row.id, { draftFecha: ev.target.value, edited: true }); } })
+                                        : e('span', null, row.draftFecha || row.fecha),
+                                    e('button', { type: 'button', className: 'btn btn-secondary btn-xs icon-btn', title: 'Editar fecha', onClick: function () { updateRow(row.id, { editing: !row.editing, draftFecha: row.draftFecha || row.fecha, draftFactura: normalizeInvoiceForEdit(row.draftFactura || row.factura) }); } }, 'Editar')
+                                );
+                            }
+                        },
+                        {
                             key: 'facturaEditable',
                             label: 'Factura',
                             render: function (row) {
@@ -325,7 +339,7 @@
                                     row.editing
                                         ? e('input', { type: 'text', value: row.draftFactura, onChange: function (ev) { updateRow(row.id, { draftFactura: normalizeInvoiceForEdit(ev.target.value), edited: true }); } })
                                         : e('span', null, row.draftFactura || row.factura),
-                                    e('button', { type: 'button', className: 'btn btn-secondary btn-xs icon-btn', title: 'Editar factura', onClick: function () { updateRow(row.id, { editing: !row.editing, draftFactura: normalizeInvoiceForEdit(row.draftFactura || row.factura) }); } }, 'Editar')
+                                    e('button', { type: 'button', className: 'btn btn-secondary btn-xs icon-btn', title: 'Editar factura', onClick: function () { updateRow(row.id, { editing: !row.editing, draftFecha: row.draftFecha || row.fecha, draftFactura: normalizeInvoiceForEdit(row.draftFactura || row.factura) }); } }, 'Editar')
                                 );
                             }
                         },
