@@ -169,12 +169,14 @@ def init_db():
             denegados INTEGER DEFAULT 0,
             pendientes INTEGER DEFAULT 0,
             dudosos INTEGER DEFAULT 0,
-            snapshot_json TEXT
+            snapshot_json TEXT,
+            ranking_json TEXT
         )
     ''')
     c.execute("ALTER TABLE sorteo_conteos ADD COLUMN IF NOT EXISTS dudosos INTEGER DEFAULT 0")
     c.execute("ALTER TABLE sorteo_conteos ADD COLUMN IF NOT EXISTS promocion_desde DATE")
     c.execute("ALTER TABLE sorteo_conteos ADD COLUMN IF NOT EXISTS promocion_hasta DATE")
+    c.execute("ALTER TABLE sorteo_conteos ADD COLUMN IF NOT EXISTS ranking_json TEXT")
     c.execute('''
         CREATE INDEX IF NOT EXISTS idx_sorteo_participantes_estacion_activo
         ON sorteo_participantes(estacion_id, conteo_id, creado_en DESC)
@@ -657,6 +659,14 @@ def append_archive_summary_sheet(workbook, conteo):
     return ws
 
 
+def append_archive_ranking_sheet(workbook, ranking_rows):
+    ws = workbook.create_sheet(title='Ranking')
+    ws.append(['Puesto', 'Vendedor', 'Facturas aprobadas'])
+    for index, row in enumerate(ranking_rows or [], start=1):
+        ws.append([index, row.get('vendedor') or 'Sin vendedor', row.get('facturas_aprobadas') or 0])
+    return ws
+
+
 def build_admin_context(eid):
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -997,15 +1007,17 @@ def archive_current_promo(cursor, eid):
     cursor.execute('SELECT promocion_desde, promocion_hasta FROM sorteo_config WHERE estacion_id = %s', (eid,))
     config = cursor.fetchone() or {}
     rows = query_participantes(cursor, eid, archived=False)
+    ranking_rows = build_seller_ranking([row for row in rows if row['estado'] == 'APROBADO'])
     total = len(rows)
     aprobados = sum(1 for row in rows if row['estado'] == 'APROBADO')
     denegados = sum(1 for row in rows if row['estado'] == 'DENEGADO')
     pendientes = sum(1 for row in rows if row['estado'] == 'PENDIENTE')
     dudosos = sum(1 for row in rows if row['estado'] == 'DUDOSO')
     snapshot = json.dumps([dict(row) for row in rows], default=str, ensure_ascii=False)
+    ranking_json = json.dumps(ranking_rows, default=str, ensure_ascii=False)
     cursor.execute('''
-        INSERT INTO sorteo_conteos (estacion_id, promocion_desde, promocion_hasta, total, aprobados, denegados, pendientes, dudosos, snapshot_json)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+        INSERT INTO sorteo_conteos (estacion_id, promocion_desde, promocion_hasta, total, aprobados, denegados, pendientes, dudosos, snapshot_json, ranking_json)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
     ''', (
         eid,
         config.get('promocion_desde'),
@@ -1016,6 +1028,7 @@ def archive_current_promo(cursor, eid):
         pendientes,
         dudosos,
         snapshot,
+        ranking_json,
     ))
     conteo_id = cursor.fetchone()['id']
     cursor.execute('UPDATE sorteo_participantes SET conteo_id = %s WHERE estacion_id = %s AND conteo_id IS NULL', (conteo_id, eid))
@@ -1279,6 +1292,11 @@ def exportar_archivado(conteo_id):
         rows = json.loads(snapshot)
     except Exception:
         rows = []
+    ranking_snapshot = conteo.get('ranking_json') or '[]'
+    try:
+        ranking_rows = json.loads(ranking_snapshot)
+    except Exception:
+        ranking_rows = []
 
     grouped = {
         'APROBADO': [row for row in rows if (row.get('estado') or '').upper() == 'APROBADO'],
@@ -1286,10 +1304,13 @@ def exportar_archivado(conteo_id):
         'PENDIENTE': [row for row in rows if (row.get('estado') or '').upper() == 'PENDIENTE'],
         'DUDOSO': [row for row in rows if (row.get('estado') or '').upper() == 'DUDOSO'],
     }
+    if not ranking_rows:
+        ranking_rows = build_seller_ranking(grouped['APROBADO'])
 
     wb = openpyxl.Workbook()
     wb.remove(wb.active)
     append_archive_summary_sheet(wb, conteo)
+    append_archive_ranking_sheet(wb, ranking_rows)
     append_export_sheet(wb, 'Aprobados', grouped['APROBADO'], ponderado=False)
     append_export_sheet(wb, 'Denegados', grouped['DENEGADO'], ponderado=False)
     append_export_sheet(wb, 'Pendientes', grouped['PENDIENTE'], ponderado=False)
