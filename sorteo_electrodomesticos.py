@@ -20,7 +20,12 @@ except ImportError:
     qrcode = None
 
 from dotenv import load_dotenv
-from debo import SQLSERVER_DRIVER, station_debo_ready, validate_ticket_invoice_on_date
+from debo import (
+    SQLSERVER_DRIVER,
+    fetch_ticket_lines_on_date,
+    station_debo_ready,
+    validate_ticket_invoice_on_date,
+)
 
 load_dotenv()
 
@@ -408,6 +413,30 @@ def consultar_facturacion(estacion_id, ticket_fecha, numero_factura):
         return None, f'Error consultando DEBO: {exc}'
 
 
+def consultar_detalle_ticket(estacion_id, ticket_fecha, numero_factura):
+    station = get_station(estacion_id)
+    if not station_debo_ready(station):
+        return None, 'Falta configurar IP, base, usuario o clave de DEBO para esta estacion.'
+    try:
+        factura = normalize_invoice_number(numero_factura)
+        validate_allowed_invoice_branch(get_station(estacion_id), factura)
+    except ValueError as exc:
+        return None, str(exc)
+    try:
+        rows = fetch_ticket_lines_on_date(
+            station,
+            datetime.combine(ticket_fecha, datetime.min.time()),
+            factura['sucursal'],
+            factura['numero'],
+            include_remitos=bool(station.get('debo_allow_remitos')),
+        )
+    except Exception as exc:
+        return None, f'Error consultando DEBO: {exc}'
+    if not rows:
+        return None, 'No se encontro el detalle del ticket para esa fecha y numero.'
+    return rows, None
+
+
 def classify_ticket_match(factura, minimo_litros):
     promo_lineas = int(factura.get('promo_lineas') or 0)
     minimum = float(minimo_litros or 0)
@@ -519,6 +548,20 @@ def build_seller_ranking(rows):
         {'vendedor': vendedor, 'facturas_aprobadas': total}
         for vendedor, total in sorted(ranking.items(), key=lambda item: (-item[1], item[0]))
     ]
+
+
+def format_ticket_detail_rows(rows):
+    formatted = []
+    for row in rows or []:
+        quantity = decimal_to_float(row.get('cantidad'))
+        formatted.append({
+            'sector': row.get('sector'),
+            'articulo': row.get('articulo'),
+            'producto': row.get('producto') or 'Sin descripcion',
+            'cantidad': round(quantity, 4),
+            'es_combustible_participante': bool(row.get('es_combustible_participante')),
+        })
+    return formatted
 
 
 def build_admin_context(eid):
@@ -1022,6 +1065,43 @@ def eliminar_participante(participante_id):
     conn.commit()
     conn.close()
     return redirect(sorteo_path('/admin'))
+
+
+@app.route('/admin/participante/<int:participante_id>/detalle-ticket')
+@app.route('/sorteo/admin/participante/<int:participante_id>/detalle-ticket')
+def detalle_ticket_participante(participante_id):
+    if not admin_required():
+        return jsonify({'ok': False, 'error': 'Sesion expirada.'}), 401
+
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute('''
+        SELECT id, estacion_id, ticket_fecha, numero_factura, factura_real
+        FROM sorteo_participantes
+        WHERE id = %s
+          AND estacion_id = %s
+    ''', (participante_id, session['sorteo_estacion_id']))
+    row = c.fetchone()
+    conn.close()
+
+    if not row:
+        return jsonify({'ok': False, 'error': 'Participante no encontrado.'}), 404
+
+    numero_factura = row.get('factura_real') or row.get('numero_factura')
+    detalle_rows, error = consultar_detalle_ticket(
+        row['estacion_id'],
+        row['ticket_fecha'],
+        numero_factura,
+    )
+    if error:
+        return jsonify({'ok': False, 'error': error}), 400
+
+    return jsonify({
+        'ok': True,
+        'fecha': str(row['ticket_fecha']),
+        'factura': numero_factura,
+        'items': format_ticket_detail_rows(detalle_rows),
+    })
 
 
 @app.route('/admin/exportar-excel')

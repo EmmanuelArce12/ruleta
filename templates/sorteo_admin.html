@@ -184,7 +184,7 @@
             }
 
             function formatCompositionDetails(row) {
-                if (!row.composicionTicket) return 'Sin detalle de composicion.';
+                if (!row.composicionTicket) return 'Sin detalle de composicion guardado.';
                 try {
                     const parsed = JSON.parse(row.composicionTicket);
                     const items = parsed.items || [];
@@ -197,16 +197,54 @@
                 }
             }
 
+            function formatTicketItems(payload, row) {
+                const lines = [];
+                lines.push('Factura: ' + ((payload && payload.factura) || row.factura || ''));
+                lines.push('Fecha: ' + ((payload && payload.fecha) || row.fecha || ''));
+                lines.push('');
+                const items = (payload && payload.items) || [];
+                if (!items.length) {
+                    lines.push(formatCompositionDetails(row));
+                    return lines.join('\n');
+                }
+                items.forEach(function (item) {
+                    const badge = item.es_combustible_participante ? ' [combustible participante]' : '';
+                    lines.push(
+                        'Sec ' + String(item.sector ?? '') +
+                        ' | Art ' + String(item.articulo ?? '') +
+                        ' | ' + String(item.producto || 'Sin descripcion') +
+                        ' | Cantidad: ' + Number(item.cantidad || 0).toFixed(4) +
+                        badge
+                    );
+                });
+                return lines.join('\n');
+            }
+
+            async function showTicketDetails(row) {
+                const response = await window.fetch(data.basePath + '/admin/participante/' + row.id + '/detalle-ticket');
+                const payload = await response.json();
+                if (!response.ok || !payload.ok) {
+                    const fallback = formatCompositionDetails(row);
+                    window.alert((payload && payload.error ? payload.error + '\n\n' : '') + fallback);
+                    return;
+                }
+                window.alert(formatTicketItems(payload, row));
+            }
+
             function renderCombustibleWithDetail(row) {
-                const hasDetail = Boolean(row.composicionTicket) || row.combustible === 'Mixto';
+                const hasDetail = Boolean(row.factura || row.numeroFacturaEditable);
                 return e('div', { className: 'inline-actions' },
                     e('span', null, row.combustible || ''),
                     hasDetail ? e('button', {
                         type: 'button',
                         className: 'btn btn-secondary btn-xs icon-btn',
-                        title: 'Ver detalle del ticket mixto',
-                        onClick: function () {
-                            window.alert(formatCompositionDetails(row));
+                        title: 'Ver detalle completo del ticket',
+                        onClick: async function () {
+                            try {
+                                await showTicketDetails(row);
+                            } catch (error) {
+                                window.alert(error && error.message ? error.message : 'No se pudo cargar el detalle del ticket.');
+                            }
                         }
                     }, 'Ver') : null
                 );

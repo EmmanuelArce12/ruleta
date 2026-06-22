@@ -219,6 +219,58 @@ def build_ticket_lookup_sql(station: dict, include_remitos: bool = False, same_d
     return ticket_lookup_sql(include_remitos=include_remitos, same_day_only=same_day_only)
 
 
+def ticket_lines_sql(include_remitos: bool = False) -> str:
+    tco_condition = "1 = 1" if include_remitos else "f.TCO <> 'RE'"
+    return f"""
+WITH FacturaObjetivo AS (
+    SELECT TOP (1)
+        f.FEC AS fecha_hora_ticket,
+        f.SUC,
+        f.NCO,
+        f.TCO,
+        f.TIP
+    FROM dbo.AMAEFACT f
+    WHERE f.ANU = ''
+      AND f.LUG = 1
+      AND CAST(f.FEC AS DATETIME) >= ?
+      AND CAST(f.FEC AS DATETIME) < ?
+      AND f.SUC = ?
+      AND f.NCO = ?
+      AND {tco_condition}
+    ORDER BY f.FEC DESC
+)
+SELECT
+    d.SEC AS sector,
+    d.ART AS articulo,
+    COALESCE(
+        RTRIM(art.DetArt),
+        CASE
+            WHEN d.SEC = 0 AND d.ART = 1 THEN 'Super'
+            WHEN d.SEC = 0 AND d.ART = 2 THEN 'Infinia Diesel'
+            WHEN d.SEC = 0 AND d.ART = 3 THEN 'Diesel 500'
+            WHEN d.SEC = 0 AND d.ART = 4 THEN 'Infinia'
+            ELSE 'Sin descripcion'
+        END
+    ) AS producto,
+    CAST(d.CAN AS DECIMAL(18,4)) AS cantidad,
+    CAST(CASE WHEN d.SEC = 0 AND d.ART IN (1, 2, 3, 4) THEN 1 ELSE 0 END AS bit) AS es_combustible_participante
+FROM FacturaObjetivo fo
+INNER JOIN dbo.AMOVSTOC d
+    ON fo.SUC = d.PVE
+   AND fo.NCO = d.NCO
+   AND fo.TIP = d.TIP
+   AND fo.TCO = d.TCO
+LEFT JOIN dbo.ARTICULOS art
+    ON d.SEC = art.CodSec
+   AND d.ART = art.CodArt
+WHERE d.LUG = 1
+ORDER BY
+    CASE WHEN d.SEC = 0 AND d.ART IN (1, 2, 3, 4) THEN 0 ELSE 1 END,
+    d.SEC,
+    d.ART
+"""
+
+
 def station_debo_ready(station: dict | None) -> bool:
     return bool(
         station
@@ -331,3 +383,21 @@ def validate_ticket_invoice_on_date(
     if not rows:
         return None, "No se encontro una factura para esa fecha y numero."
     return rows[0], None
+
+
+def fetch_ticket_lines_on_date(
+    station: dict,
+    ticket_date: datetime,
+    sucursal: int,
+    numero: int,
+    include_remitos: bool = False,
+):
+    from datetime import datetime as _dt, timedelta
+
+    day_start = _dt(ticket_date.year, ticket_date.month, ticket_date.day)
+    day_end = day_start + timedelta(days=1)
+    return run_query(
+        station,
+        ticket_lines_sql(include_remitos=include_remitos),
+        (day_start, day_end, int(sucursal), int(numero)),
+    )
