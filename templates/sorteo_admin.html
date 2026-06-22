@@ -198,7 +198,7 @@
             }
 
             function renderCombustibleWithDetail(row) {
-                const hasDetail = row.composicionTicket && row.detalle && row.detalle.indexOf('Mezcla') >= 0;
+                const hasDetail = Boolean(row.composicionTicket) || row.combustible === 'Mixto';
                 return e('div', { className: 'inline-actions' },
                     e('span', null, row.combustible || ''),
                     hasDetail ? e('button', {
