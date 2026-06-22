@@ -193,6 +193,10 @@ SELECT
     COALESCE(payment_type, payment_origin) AS payment_type,
     tipo_comprobante,
     letra_fiscal,
+    CAST(SUM(CASE WHEN combustible_linea = 'Super' THEN litros_linea ELSE 0 END) AS DECIMAL(18,4)) AS super_litros,
+    CAST(SUM(CASE WHEN combustible_linea = 'Infinia' THEN litros_linea ELSE 0 END) AS DECIMAL(18,4)) AS infinia_litros,
+    CAST(SUM(CASE WHEN combustible_linea = 'Diesel 500' THEN litros_linea ELSE 0 END) AS DECIMAL(18,4)) AS diesel_500_litros,
+    CAST(SUM(CASE WHEN combustible_linea = 'Infinia Diesel' THEN litros_linea ELSE 0 END) AS DECIMAL(18,4)) AS infinia_diesel_litros,
     SUM(es_promo) AS promo_lineas,
     SUM(es_no_valida) AS lineas_no_validas,
     MAX(base_chances) AS base_chances

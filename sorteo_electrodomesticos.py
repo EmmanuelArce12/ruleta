@@ -34,6 +34,12 @@ SORTEO_BASE_PATH = os.environ.get('SORTEO_BASE_PATH', '/sorteo').rstrip('/')
 PROMO_COMBUSTIBLES = {'Super', 'Diesel 500', 'Infinia', 'Infinia Diesel'}
 INF_INFINIA = {'Infinia', 'Infinia Diesel'}
 ACTIVE_STATES = ('PENDIENTE', 'DUDOSO', 'APROBADO', 'DENEGADO')
+PROMO_COMBUSTIBLE_KEYS = (
+    ('super_litros', 'Super', 'nafta'),
+    ('infinia_litros', 'Infinia', 'nafta'),
+    ('diesel_500_litros', 'Diesel 500', 'diesel'),
+    ('infinia_diesel_litros', 'Infinia Diesel', 'diesel'),
+)
 
 ALLOWED_BRANCHES_BY_STATION = {
     'echeverria': {'17', '18', '19'},
@@ -145,6 +151,7 @@ def init_db():
     c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS ip_registro TEXT")
     c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS user_agent TEXT")
     c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS sospecha_dispositivo BOOLEAN DEFAULT FALSE")
+    c.execute("ALTER TABLE sorteo_participantes ADD COLUMN IF NOT EXISTS composicion_ticket TEXT")
     c.execute('''
         CREATE TABLE IF NOT EXISTS sorteo_conteos (
             id SERIAL PRIMARY KEY,
@@ -303,6 +310,27 @@ def compute_chances(combustible, pago_app_ypf):
     return min(3, base + (1 if pago_app_ypf else 0))
 
 
+def build_ticket_composition(factura):
+    items = []
+    family_totals = {'nafta': 0.0, 'diesel': 0.0}
+    for key, label, family in PROMO_COMBUSTIBLE_KEYS:
+        liters = decimal_to_float(factura.get(key))
+        if liters > 0:
+            items.append({'combustible': label, 'litros': round(liters, 4), 'familia': family})
+            family_totals[family] += liters
+    return {'items': items, 'family_totals': family_totals}
+
+
+def serialize_ticket_composition(factura):
+    return json.dumps(build_ticket_composition(factura), ensure_ascii=False)
+
+
+def mixed_ticket_detail(factura):
+    composition = build_ticket_composition(factura)
+    parts = [f"{item['combustible']}: {item['litros']:.4f} lt" for item in composition['items']]
+    return ' | '.join(parts)
+
+
 def technical_validation_error(message):
     return message.startswith('Falta configurar') or message.startswith('Error consultando DEBO:')
 
@@ -382,13 +410,96 @@ def consultar_facturacion(estacion_id, ticket_fecha, numero_factura):
 
 def classify_ticket_match(factura, minimo_litros):
     promo_lineas = int(factura.get('promo_lineas') or 0)
-    combustible = factura.get('combustible')
-    litros = decimal_to_float(factura.get('litros'))
-    if promo_lineas <= 0 or combustible not in PROMO_COMBUSTIBLES:
-        return 'DENEGADO', 'La factura no corresponde a un combustible participante.'
-    if litros < float(minimo_litros or 0):
-        return 'DENEGADO', f'Litros insuficientes: {litros:.3f} de minimo {float(minimo_litros or 0):.3f}.'
-    return 'APROBADO', 'Validado correctamente por combustible participante, aunque la factura tenga otros conceptos.'
+    minimum = float(minimo_litros or 0)
+    composition = build_ticket_composition(factura)
+    items = composition['items']
+    family_totals = composition['family_totals']
+    total_promo_liters = sum(item['litros'] for item in items)
+    pago_app_ypf = bool(factura.get('pago_app_ypf'))
+
+    if promo_lineas <= 0 or not items:
+        return {
+            'estado': 'DENEGADO',
+            'detalle': 'La factura no corresponde a un combustible participante.',
+            'combustible': factura.get('combustible'),
+            'litros': decimal_to_float(factura.get('litros')),
+            'chances': 0,
+            'composicion_ticket': serialize_ticket_composition(factura),
+        }
+
+    qualifiers = [family for family, liters in family_totals.items() if liters >= minimum]
+    non_zero_families = [family for family, liters in family_totals.items() if liters > 0]
+
+    if not qualifiers:
+        if len(non_zero_families) > 1:
+            return {
+                'estado': 'DENEGADO',
+                'detalle': f"Mezcla nafta y diesel no permitida. {mixed_ticket_detail(factura)}.",
+                'combustible': 'Mixto',
+                'litros': total_promo_liters,
+                'chances': 0,
+                'composicion_ticket': serialize_ticket_composition(factura),
+            }
+        return {
+            'estado': 'DENEGADO',
+            'detalle': f'Litros insuficientes: {total_promo_liters:.3f} de minimo {minimum:.3f}.',
+            'combustible': factura.get('combustible'),
+            'litros': total_promo_liters,
+            'chances': 0,
+            'composicion_ticket': serialize_ticket_composition(factura),
+        }
+
+    if len(qualifiers) > 1:
+        return {
+            'estado': 'DENEGADO',
+            'detalle': f"Mezcla nafta y diesel no permitida. {mixed_ticket_detail(factura)}.",
+            'combustible': 'Mixto',
+            'litros': total_promo_liters,
+            'chances': 0,
+            'composicion_ticket': serialize_ticket_composition(factura),
+        }
+
+    qualifying_family = qualifiers[0]
+    family_items = [item for item in items if item['familia'] == qualifying_family]
+    family_labels = {item['combustible'] for item in family_items}
+    family_liters = sum(item['litros'] for item in family_items)
+
+    if qualifying_family == 'nafta':
+        if family_labels == {'Infinia'}:
+            combustible = 'Infinia'
+            base_chances = 2
+        elif family_labels == {'Super'}:
+            combustible = 'Super'
+            base_chances = 1
+        else:
+            combustible = 'Nafta mixta'
+            base_chances = 1
+    else:
+        if family_labels == {'Infinia Diesel'}:
+            combustible = 'Infinia Diesel'
+            base_chances = 2
+        elif family_labels == {'Diesel 500'}:
+            combustible = 'Diesel 500'
+            base_chances = 1
+        else:
+            combustible = 'Diesel mixto'
+            base_chances = 1
+
+    chances = min(3, base_chances + (1 if pago_app_ypf else 0))
+    detalle = 'Validado correctamente por combustible participante.'
+    if len(non_zero_families) > 1:
+        detalle = f"Validado por {combustible}. La otra familia no suma por mezcla. {mixed_ticket_detail(factura)}."
+    elif len(family_labels) > 1:
+        detalle = f"Validado por suma de la misma familia. {mixed_ticket_detail(factura)}."
+
+    return {
+        'estado': 'APROBADO',
+        'detalle': detalle,
+        'combustible': combustible,
+        'litros': family_liters,
+        'chances': chances,
+        'composicion_ticket': serialize_ticket_composition(factura),
+    }
 
 
 def query_participantes(cursor, eid, archived=False):
@@ -475,6 +586,7 @@ def reset_participante_validation(cursor, participante_id, estado='PENDIENTE', d
             chances = 0,
             tipo_comprobante = NULL,
             letra_fiscal = NULL,
+            composicion_ticket = NULL,
             detalle_validacion = %s,
             consulta_at = CURRENT_TIMESTAMP
         WHERE id = %s
@@ -554,12 +666,14 @@ def validar_pendientes(estacion_id=None):
             reset_participante_validation(c, participante['id'], estado=nuevo_estado, detalle=error)
             continue
 
-        estado, detalle = classify_ticket_match(factura, participante['minimo_litros'])
-        combustible = factura.get('combustible')
+        evaluation = classify_ticket_match(factura, participante['minimo_litros'])
+        estado = evaluation['estado']
+        detalle = evaluation['detalle']
+        combustible = evaluation['combustible']
         pago_app_ypf = bool(factura.get('pago_app_ypf'))
         pago_electronico = bool(factura.get('pago_electronico'))
         medio_pago = factura.get('medio_pago') or ('App YPF' if pago_app_ypf else 'Contado / no electronico')
-        chances = compute_chances(combustible, pago_app_ypf) if estado == 'APROBADO' else 0
+        chances = evaluation['chances'] if estado == 'APROBADO' else 0
         sospecha_dispositivo = is_suspicious_device(c, participante, participante)
 
         if estado == 'APROBADO' and sospecha_dispositivo:
@@ -580,6 +694,7 @@ def validar_pendientes(estacion_id=None):
                 chances = %s,
                 tipo_comprobante = %s,
                 letra_fiscal = %s,
+                composicion_ticket = %s,
                 sospecha_dispositivo = %s,
                 detalle_validacion = %s,
                 consulta_at = CURRENT_TIMESTAMP
@@ -587,7 +702,7 @@ def validar_pendientes(estacion_id=None):
         ''', (
             estado,
             combustible,
-            factura.get('litros'),
+            evaluation['litros'],
             pago_app_ypf,
             pago_electronico,
             medio_pago,
@@ -597,6 +712,7 @@ def validar_pendientes(estacion_id=None):
             chances,
             factura.get('tipo_comprobante'),
             factura.get('letra_fiscal'),
+            evaluation.get('composicion_ticket'),
             sospecha_dispositivo,
             detalle,
             participante['id'],
@@ -833,7 +949,7 @@ def aprobar_denegado(participante_id):
     ''', (participante_id, session['sorteo_estacion_id']))
     row = c.fetchone()
     if row:
-        chances = compute_chances(row.get('combustible'), bool(row.get('pago_app_ypf'))) if row.get('combustible') in PROMO_COMBUSTIBLES else 1
+        chances = compute_chances(row.get('combustible'), bool(row.get('pago_app_ypf'))) if row.get('combustible') else 1
         c.execute('''
             UPDATE sorteo_participantes
             SET estado = 'APROBADO',
