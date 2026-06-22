@@ -68,6 +68,26 @@
         .link-box { display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:12px 14px; border-radius:14px; background:#081521; border:1px solid var(--line); }
         .qr-box { display:flex; gap:18px; align-items:center; flex-wrap:wrap; }
         .qr-box img { width:150px; height:150px; object-fit:contain; border-radius:16px; border:1px solid var(--line); background:white; padding:12px; }
+        .modal-overlay { position:fixed; inset:0; background:rgba(3, 10, 18, 0.76); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; padding:20px; z-index:9999; }
+        .modal-card { width:min(760px, 100%); max-height:min(80vh, 900px); overflow:auto; background:linear-gradient(180deg, #11263c 0%, #0b1b2d 100%); border:1px solid rgba(121, 168, 220, 0.34); border-radius:22px; box-shadow:0 32px 80px rgba(0,0,0,0.42); }
+        .modal-header { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; padding:20px 22px 14px; border-bottom:1px solid rgba(93, 130, 170, 0.26); }
+        .modal-header h3 { margin:0; font-size:22px; color:var(--ink); }
+        .modal-header p { margin:4px 0 0; color:var(--muted); line-height:1.45; }
+        .modal-close { width:42px; height:42px; border-radius:12px; border:1px solid rgba(255,255,255,0.18); background:rgba(255,255,255,0.05); color:white; font-size:20px; font-weight:700; cursor:pointer; }
+        .modal-body { padding:18px 22px 22px; display:grid; gap:16px; }
+        .detail-meta { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; }
+        .detail-chip { border-radius:14px; padding:12px 14px; background:#0a1726; border:1px solid var(--line); }
+        .detail-chip strong { display:block; font-size:12px; text-transform:uppercase; letter-spacing:.4px; color:#9bb4ce; margin-bottom:6px; }
+        .detail-list { display:grid; gap:10px; }
+        .detail-row { border-radius:16px; padding:14px; background:rgba(8,21,33,0.92); border:1px solid rgba(53, 88, 123, 0.78); }
+        .detail-row-top { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; flex-wrap:wrap; }
+        .detail-row-title { font-weight:800; color:var(--ink); }
+        .detail-row-subtitle { margin-top:4px; color:var(--muted); font-size:13px; }
+        .detail-row-badges { display:flex; gap:8px; flex-wrap:wrap; }
+        .detail-badge { display:inline-flex; align-items:center; border-radius:999px; padding:5px 10px; font-size:12px; font-weight:800; }
+        .detail-badge.ok { background:rgba(22, 163, 74, 0.18); color:#86efac; border:1px solid rgba(34, 197, 94, 0.35); }
+        .detail-badge.neutral { background:rgba(148, 163, 184, 0.12); color:#dbeafe; border:1px solid rgba(148, 163, 184, 0.22); }
+        .detail-empty { border-radius:16px; padding:20px; background:#0a1726; border:1px solid var(--line); color:var(--muted); text-align:center; }
         @media (max-width: 900px) { .app-shell { padding:14px; } .hero { border-radius:20px; padding:20px; } .content-shell { border-radius:20px; } .panel { padding:16px; } .tabs { padding:14px 14px 0; } .tab-btn { min-width:unset; flex:1 1 calc(50% - 10px); } }
         @media (max-width: 640px) { .hero-actions, .inline-actions { width:100%; } .hero-actions a, .hero-actions button, .inline-actions .btn { width:100%; } .tab-btn { flex:1 1 100%; border-radius:12px; } .tab-btn.active { border-bottom-color:var(--line); } }
     </style>
@@ -131,7 +151,7 @@
     <script>
         (function () {
             if (!window.React || !window.ReactDOM || !window.SORTEO_ADMIN_DATA) return;
-            const { useState } = React;
+            const { useEffect, useState } = React;
             const e = React.createElement;
             const data = window.SORTEO_ADMIN_DATA;
 
@@ -197,27 +217,8 @@
                 }
             }
 
-            function formatTicketItems(payload, row) {
-                const lines = [];
-                lines.push('Factura: ' + ((payload && payload.factura) || row.factura || ''));
-                lines.push('Fecha: ' + ((payload && payload.fecha) || row.fecha || ''));
-                lines.push('');
-                const items = (payload && payload.items) || [];
-                if (!items.length) {
-                    lines.push(formatCompositionDetails(row));
-                    return lines.join('\n');
-                }
-                items.forEach(function (item) {
-                    const badge = item.es_combustible_participante ? ' [combustible participante]' : '';
-                    lines.push(
-                        'Sec ' + String(item.sector ?? '') +
-                        ' | Art ' + String(item.articulo ?? '') +
-                        ' | ' + String(item.producto || 'Sin descripcion') +
-                        ' | Cantidad: ' + Number(item.cantidad || 0).toFixed(4) +
-                        badge
-                    );
-                });
-                return lines.join('\n');
+            function emitTicketDetailModal(detail) {
+                window.dispatchEvent(new CustomEvent('sorteo:ticket-detail', { detail: detail }));
             }
 
             async function showTicketDetails(row) {
@@ -225,10 +226,24 @@
                 const payload = await response.json();
                 if (!response.ok || !payload.ok) {
                     const fallback = formatCompositionDetails(row);
-                    window.alert((payload && payload.error ? payload.error + '\n\n' : '') + fallback);
+                    emitTicketDetailModal({
+                        title: 'Detalle del ticket',
+                        subtitle: payload && payload.error ? payload.error : 'No se pudo cargar el detalle completo.',
+                        factura: row.factura || '',
+                        fecha: row.fecha || '',
+                        items: [],
+                        fallbackText: fallback
+                    });
                     return;
                 }
-                window.alert(formatTicketItems(payload, row));
+                emitTicketDetailModal({
+                    title: 'Detalle del ticket',
+                    subtitle: 'Composicion completa del comprobante consultado en DEBO.',
+                    factura: (payload && payload.factura) || row.factura || '',
+                    fecha: (payload && payload.fecha) || row.fecha || '',
+                    items: (payload && payload.items) || [],
+                    fallbackText: formatCompositionDetails(row)
+                });
             }
 
             function renderCombustibleWithDetail(row) {
@@ -243,10 +258,60 @@
                             try {
                                 await showTicketDetails(row);
                             } catch (error) {
-                                window.alert(error && error.message ? error.message : 'No se pudo cargar el detalle del ticket.');
+                                emitTicketDetailModal({
+                                    title: 'Detalle del ticket',
+                                    subtitle: error && error.message ? error.message : 'No se pudo cargar el detalle del ticket.',
+                                    factura: row.factura || '',
+                                    fecha: row.fecha || '',
+                                    items: [],
+                                    fallbackText: formatCompositionDetails(row)
+                                });
                             }
                         }
                     }, 'Ver') : null
+                );
+            }
+
+            function TicketDetailModal(props) {
+                const detail = props.detail;
+                if (!detail) return null;
+                return e('div', {
+                        className: 'modal-overlay',
+                        onClick: function (event) {
+                            if (event.target === event.currentTarget) props.onClose();
+                        }
+                    },
+                    e('div', { className: 'modal-card', role: 'dialog', 'aria-modal': 'true', 'aria-label': detail.title || 'Detalle del ticket' },
+                        e('div', { className: 'modal-header' },
+                            e('div', null,
+                                e('h3', null, detail.title || 'Detalle del ticket'),
+                                e('p', null, detail.subtitle || '')
+                            ),
+                            e('button', { type: 'button', className: 'modal-close', onClick: props.onClose, 'aria-label': 'Cerrar detalle' }, '×')
+                        ),
+                        e('div', { className: 'modal-body' },
+                            e('div', { className: 'detail-meta' },
+                                e('div', { className: 'detail-chip' }, e('strong', null, 'Factura'), e('span', null, detail.factura || '-')),
+                                e('div', { className: 'detail-chip' }, e('strong', null, 'Fecha'), e('span', null, detail.fecha || '-'))
+                            ),
+                            detail.items && detail.items.length
+                                ? e('div', { className: 'detail-list' }, detail.items.map(function (item, index) {
+                                    return e('div', { className: 'detail-row', key: index },
+                                        e('div', { className: 'detail-row-top' },
+                                            e('div', null,
+                                                e('div', { className: 'detail-row-title' }, item.producto || 'Sin descripcion'),
+                                                e('div', { className: 'detail-row-subtitle' }, 'Sector ' + String(item.sector ?? '-') + ' · Art ' + String(item.articulo ?? '-'))
+                                            ),
+                                            e('div', { className: 'detail-row-badges' },
+                                                e('span', { className: 'detail-badge neutral' }, Number(item.cantidad || 0).toFixed(4) + ' u.'),
+                                                item.es_combustible_participante ? e('span', { className: 'detail-badge ok' }, 'Combustible participante') : null
+                                            )
+                                        )
+                                    );
+                                }))
+                                : e('div', { className: 'detail-empty' }, detail.fallbackText || 'Sin detalle disponible.')
+                        )
+                    )
                 );
             }
 
@@ -502,9 +567,24 @@
 
             function AdminApp() {
                 const [tab, setTab] = useState('overview');
+                const [ticketDetail, setTicketDetail] = useState(null);
                 const tabs = [{ id: 'overview', label: 'Resumen' }, { id: 'pendientes', label: 'Pendientes' }, { id: 'dudosos', label: 'Dudosos' }, { id: 'aprobados', label: 'Aprobados' }, { id: 'denegados', label: 'Denegadas' }, { id: 'ranking', label: 'Ranking' }, { id: 'archivados', label: 'Archivados' }];
                 const panels = { overview: e(OverviewTab), pendientes: e(PendingTab), dudosos: e(SuspiciousTab), aprobados: e(ApprovedTab), denegados: e(DeniedTab), ranking: e(RankingTab), archivados: e(ArchiveTab) };
                 const titles = { overview: ['Resumen', 'Configuracion, promocion activa, QR, controles y exportaciones.'], pendientes: ['Pendientes', 'Lo que todavia no fue consultado contra DEBO.'], dudosos: ['Dudosos', 'Casos a revisar manualmente antes de aprobar o denegar.'], aprobados: ['Aprobados', 'Participantes validos listos para el sorteo.'], denegados: ['Denegadas', 'Facturas rechazadas por litros, combustible o datos invalidos.'], ranking: ['Ranking', 'Conteo de vendedores por facturas aprobadas.'], archivados: ['Archivados', 'Historial de promociones anteriores con exportacion disponible.'] };
+                useEffect(function () {
+                    function handleOpen(event) {
+                        setTicketDetail(event.detail || null);
+                    }
+                    function handleKeyDown(event) {
+                        if (event.key === 'Escape') setTicketDetail(null);
+                    }
+                    window.addEventListener('sorteo:ticket-detail', handleOpen);
+                    window.addEventListener('keydown', handleKeyDown);
+                    return function () {
+                        window.removeEventListener('sorteo:ticket-detail', handleOpen);
+                        window.removeEventListener('keydown', handleKeyDown);
+                    };
+                }, []);
                 return e('div', { className: 'app-shell' },
                     e('section', { className: 'hero' },
                         e('div', { className: 'hero-top' },
@@ -525,7 +605,8 @@
                     e('section', { className: 'content-shell' },
                         e('div', { className: 'tabs' }, tabs.map(function (item) { return e('button', { key: item.id, type: 'button', className: 'tab-btn' + (tab === item.id ? ' active' : ''), onClick: function () { setTab(item.id); } }, item.label); })),
                         e('div', { className: 'panel' }, e('h2', null, titles[tab][0]), e('p', { className: 'panel-copy' }, titles[tab][1]), panels[tab])
-                    )
+                    ),
+                    e(TicketDetailModal, { detail: ticketDetail, onClose: function () { setTicketDetail(null); } })
                 );
             }
 
