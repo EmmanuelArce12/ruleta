@@ -143,7 +143,7 @@
             dudosos: [{% for p in dudosos %}{ id: {{ p['id']|tojson }}, fecha: {{ (p['ticket_fecha']|string)|tojson }}, fechaEditable: {{ (p['ticket_fecha']|string)|tojson }}, factura: {{ (p['factura_real'] or p['numero_factura'])|tojson }}, numeroFacturaEditable: {{ p['numero_factura']|tojson }}, vendedor: {{ (p['vendedor'] or '')|tojson }}, combustible: {{ (p['combustible'] or '')|tojson }}, litros: {{ (p['litros'] if p['litros'] is not none else '')|tojson }}, medioPago: {{ (p['medio_pago'] or '')|tojson }}, chances: {{ (p['chances'] or '')|tojson }}, deviceToken: {{ (p['device_token'] or '')|tojson }}, ip: {{ (p['ip_registro'] or '')|tojson }}, detalle: {{ (p['detalle_validacion'] or '')|tojson }}, composicionTicket: {{ (p['composicion_ticket'] or '')|tojson }}, cliente: {{ ((p['nombre'] ~ ' ' ~ p['apellido']) ~ (p['dni'] and (' / ' ~ p['dni']) or ''))|tojson }}, telefono: {{ p['telefono']|tojson }}, email: {{ p['email']|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
             aprobados: [{% for p in aprobados %}{ id: {{ p['id']|tojson }}, estado: {{ p['estado']|tojson }}, fecha: {{ (p['ticket_fecha']|string)|tojson }}, factura: {{ (p['factura_real'] or p['numero_factura'])|tojson }}, tipo: {{ (((p['tipo_comprobante'] or '') ~ ' ' ~ (p['letra_fiscal'] or ''))|trim)|tojson }}, vendedor: {{ (p['vendedor'] or '')|tojson }}, combustible: {{ (p['combustible'] or '')|tojson }}, litros: {{ (p['litros'] if p['litros'] is not none else '')|tojson }}, medioPago: {{ (p['medio_pago'] or '')|tojson }}, appYpf: {{ yes_no_blank(p['pago_app_ypf'])|tojson }}, chances: {{ (p['chances'] or '')|tojson }}, cliente: {{ ((p['nombre'] ~ ' ' ~ p['apellido']) ~ (p['dni'] and (' / ' ~ p['dni']) or ''))|tojson }}, telefono: {{ p['telefono']|tojson }}, email: {{ p['email']|tojson }}, detalle: {{ (p['detalle_validacion'] or '')|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
             denegados: [{% for p in denegados %}{ id: {{ p['id']|tojson }}, estado: {{ p['estado']|tojson }}, fecha: {{ (p['ticket_fecha']|string)|tojson }}, fechaEditable: {{ (p['ticket_fecha']|string)|tojson }}, factura: {{ (p['factura_real'] or p['numero_factura'])|tojson }}, numeroFacturaEditable: {{ p['numero_factura']|tojson }}, tipo: {{ (((p['tipo_comprobante'] or '') ~ ' ' ~ (p['letra_fiscal'] or ''))|trim)|tojson }}, vendedor: {{ (p['vendedor'] or '')|tojson }}, combustible: {{ (p['combustible'] or '')|tojson }}, litros: {{ (p['litros'] if p['litros'] is not none else '')|tojson }}, medioPago: {{ (p['medio_pago'] or '')|tojson }}, composicionTicket: {{ (p['composicion_ticket'] or '')|tojson }}, cliente: {{ ((p['nombre'] ~ ' ' ~ p['apellido']) ~ (p['dni'] and (' / ' ~ p['dni']) or ''))|tojson }}, telefono: {{ p['telefono']|tojson }}, email: {{ p['email']|tojson }}, detalle: {{ (p['detalle_validacion'] or '')|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
-            conteos: [{% for c in conteos %}{ id: {{ c['id']|tojson }}, fecha: {{ (c['iniciado_en'] and (c['iniciado_en']|string))|tojson }}, total: {{ c['total']|tojson }}, aprobados: {{ c['aprobados']|tojson }}, denegados: {{ c['denegados']|tojson }}, pendientes: {{ c['pendientes']|tojson }}, dudosos: {{ (c['dudosos'] or 0)|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}]
+            conteos: [{% for c in conteos %}{ id: {{ c['id']|tojson }}, fecha: {{ (c['iniciado_en'] and (c['iniciado_en']|string))|tojson }}, promocionDesde: {{ (c['promocion_desde'] and (c['promocion_desde']|string) or '')|tojson }}, promocionHasta: {{ (c['promocion_hasta'] and (c['promocion_hasta']|string) or '')|tojson }}, total: {{ c['total']|tojson }}, aprobados: {{ c['aprobados']|tojson }}, denegados: {{ c['denegados']|tojson }}, pendientes: {{ c['pendientes']|tojson }}, dudosos: {{ (c['dudosos'] or 0)|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}]
         };
     </script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -539,11 +539,33 @@
             const ArchiveTab = function () {
                 return e(InfoTable, {
                     title: 'Archivados',
-                    subtitle: 'Cada nueva promocion archiva aprobados, denegados, pendientes y dudosos. Tambien se exportan a Excel.',
+                    subtitle: 'Cada nueva promocion archiva aprobados, denegados, pendientes y dudosos. Cada fila descarga su promocion en un Excel separado por solapas y con fechas de vigencia.',
                     rows: data.conteos,
                     emptyText: 'Todavia no hay promociones archivadas.',
-                    toolbar: e('div', { className: 'inline-actions' }, e('a', { className: 'btn btn-primary', href: exportHref('?todo=1'), title: 'Exporta promociones ya archivadas con su historial.' }, 'Exportar archivados')),
-                    columns: [{ key: 'id', label: 'ID' }, { key: 'fecha', label: 'Fecha' }, { key: 'total', label: 'Total' }, { key: 'aprobados', label: 'Aprobados' }, { key: 'denegados', label: 'Denegados' }, { key: 'pendientes', label: 'Pendientes' }, { key: 'dudosos', label: 'Dudosos' }]
+                    columns: [
+                        { key: 'id', label: 'ID' },
+                        { key: 'fecha', label: 'Fecha archivado' },
+                        { key: 'promocionDesde', label: 'Promocion desde' },
+                        { key: 'promocionHasta', label: 'Promocion hasta' },
+                        { key: 'total', label: 'Total' },
+                        { key: 'aprobados', label: 'Aprobados' },
+                        { key: 'denegados', label: 'Denegados' },
+                        { key: 'pendientes', label: 'Pendientes' },
+                        { key: 'dudosos', label: 'Dudosos' },
+                        {
+                            key: 'acciones',
+                            label: 'Descarga',
+                            render: function (row) {
+                                return e('div', { className: 'inline-actions' },
+                                    e('a', {
+                                        className: 'btn btn-primary btn-xs',
+                                        href: data.basePath + '/admin/exportar-archivado/' + row.id,
+                                        title: 'Descarga esta promocion archivada en hojas separadas: resumen, aprobados, denegados, pendientes y dudosos.'
+                                    }, '↓ Descargar')
+                                );
+                            }
+                        }
+                    ]
                 });
             };
 

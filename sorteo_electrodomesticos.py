@@ -162,6 +162,8 @@ def init_db():
             id SERIAL PRIMARY KEY,
             estacion_id INTEGER REFERENCES estaciones(id) ON DELETE CASCADE,
             iniciado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            promocion_desde DATE,
+            promocion_hasta DATE,
             total INTEGER DEFAULT 0,
             aprobados INTEGER DEFAULT 0,
             denegados INTEGER DEFAULT 0,
@@ -171,6 +173,8 @@ def init_db():
         )
     ''')
     c.execute("ALTER TABLE sorteo_conteos ADD COLUMN IF NOT EXISTS dudosos INTEGER DEFAULT 0")
+    c.execute("ALTER TABLE sorteo_conteos ADD COLUMN IF NOT EXISTS promocion_desde DATE")
+    c.execute("ALTER TABLE sorteo_conteos ADD COLUMN IF NOT EXISTS promocion_hasta DATE")
     c.execute('''
         CREATE INDEX IF NOT EXISTS idx_sorteo_participantes_estacion_activo
         ON sorteo_participantes(estacion_id, conteo_id, creado_en DESC)
@@ -564,6 +568,95 @@ def format_ticket_detail_rows(rows):
     return formatted
 
 
+EXPORT_HEADERS = [
+    'Registro',
+    'Estado',
+    'Fecha ticket',
+    'Factura cliente',
+    'Factura DEBO',
+    'Tipo',
+    'Letra',
+    'Vendedor',
+    'Combustible',
+    'Litros',
+    'Medio pago',
+    'App YPF',
+    'Chances',
+    'Device token',
+    'IP',
+    'User agent',
+    'Sospecha dispositivo',
+    'Nombre',
+    'Apellido',
+    'DNI',
+    'Telefono',
+    'Email',
+    'Acepta promociones',
+    'Detalle',
+    'Consultado',
+    'Conteo',
+    'Repeticion exportada',
+]
+
+
+def build_export_values(row, repetition=''):
+    return [
+        str(row.get('creado_en') or '')[:19],
+        row.get('estado') or '',
+        str(row.get('ticket_fecha') or ''),
+        row.get('numero_factura') or '',
+        row.get('factura_real') or '',
+        row.get('tipo_comprobante') or '',
+        row.get('letra_fiscal') or '',
+        row.get('vendedor') or '',
+        row.get('combustible') or '',
+        row.get('litros'),
+        row.get('medio_pago') or '',
+        yes_no_blank(row.get('pago_app_ypf')),
+        row.get('chances') or '',
+        row.get('device_token') or '',
+        row.get('ip_registro') or '',
+        row.get('user_agent') or '',
+        'Si' if row.get('sospecha_dispositivo') else 'No',
+        row.get('nombre') or '',
+        row.get('apellido') or '',
+        row.get('dni') or '',
+        row.get('telefono') or '',
+        row.get('email') or '',
+        'Si' if row.get('acepta_promociones') else 'No',
+        row.get('detalle_validacion') or '',
+        str(row.get('consulta_at') or '')[:19] if row.get('consulta_at') else '',
+        row.get('conteo_id'),
+        repetition,
+    ]
+
+
+def append_export_sheet(workbook, title, rows, ponderado=False):
+    ws = workbook.create_sheet(title=title)
+    ws.append(EXPORT_HEADERS)
+    for row in rows:
+        repeats = max(int(row.get('chances') or 1), 1) if ponderado and (row.get('estado') == 'APROBADO') else 1
+        for idx in range(repeats):
+            repetition = idx + 1 if ponderado and (row.get('estado') == 'APROBADO') else ''
+            ws.append(build_export_values(row, repetition=repetition))
+    return ws
+
+
+def append_archive_summary_sheet(workbook, conteo):
+    ws = workbook.create_sheet(title='Resumen')
+    ws.append(['Campo', 'Valor'])
+    ws.append(['Archivado ID', conteo.get('id')])
+    ws.append(['Fecha archivado', str(conteo.get('iniciado_en') or '')[:19]])
+    ws.append(['Promocion desde', str(conteo.get('promocion_desde') or '')])
+    ws.append(['Promocion hasta', str(conteo.get('promocion_hasta') or '')])
+    ws.append(['Total', conteo.get('total') or 0])
+    ws.append(['Aprobados', conteo.get('aprobados') or 0])
+    ws.append(['Denegados', conteo.get('denegados') or 0])
+    ws.append(['Pendientes', conteo.get('pendientes') or 0])
+    ws.append(['Dudosos', conteo.get('dudosos') or 0])
+    return ws
+
+
 def build_admin_context(eid):
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -901,6 +994,8 @@ def reanudar():
 
 
 def archive_current_promo(cursor, eid):
+    cursor.execute('SELECT promocion_desde, promocion_hasta FROM sorteo_config WHERE estacion_id = %s', (eid,))
+    config = cursor.fetchone() or {}
     rows = query_participantes(cursor, eid, archived=False)
     total = len(rows)
     aprobados = sum(1 for row in rows if row['estado'] == 'APROBADO')
@@ -909,9 +1004,19 @@ def archive_current_promo(cursor, eid):
     dudosos = sum(1 for row in rows if row['estado'] == 'DUDOSO')
     snapshot = json.dumps([dict(row) for row in rows], default=str, ensure_ascii=False)
     cursor.execute('''
-        INSERT INTO sorteo_conteos (estacion_id, total, aprobados, denegados, pendientes, dudosos, snapshot_json)
-        VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
-    ''', (eid, total, aprobados, denegados, pendientes, dudosos, snapshot))
+        INSERT INTO sorteo_conteos (estacion_id, promocion_desde, promocion_hasta, total, aprobados, denegados, pendientes, dudosos, snapshot_json)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+    ''', (
+        eid,
+        config.get('promocion_desde'),
+        config.get('promocion_hasta'),
+        total,
+        aprobados,
+        denegados,
+        pendientes,
+        dudosos,
+        snapshot,
+    ))
     conteo_id = cursor.fetchone()['id']
     cursor.execute('UPDATE sorteo_participantes SET conteo_id = %s WHERE estacion_id = %s AND conteo_id IS NULL', (conteo_id, eid))
 
@@ -1131,65 +1236,9 @@ def exportar_excel():
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = 'Sorteo Electrodomesticos'
-    ws.append([
-        'Registro',
-        'Estado',
-        'Fecha ticket',
-        'Factura cliente',
-        'Factura DEBO',
-        'Tipo',
-        'Letra',
-        'Vendedor',
-        'Combustible',
-        'Litros',
-        'Medio pago',
-        'App YPF',
-        'Chances',
-        'Device token',
-        'IP',
-        'User agent',
-        'Sospecha dispositivo',
-        'Nombre',
-        'Apellido',
-        'DNI',
-        'Telefono',
-        'Email',
-        'Acepta promociones',
-        'Detalle',
-        'Consultado',
-        'Conteo',
-        'Repeticion exportada',
-    ])
+    ws.append(EXPORT_HEADERS)
     for row, repetition in export_rows:
-        ws.append([
-            str(row['creado_en'])[:19],
-            row['estado'],
-            str(row['ticket_fecha']),
-            row['numero_factura'],
-            row['factura_real'] or '',
-            row['tipo_comprobante'] or '',
-            row['letra_fiscal'] or '',
-            row['vendedor'] or '',
-            row['combustible'] or '',
-            row['litros'],
-            row.get('medio_pago') or '',
-            yes_no_blank(row['pago_app_ypf']),
-            row['chances'] or '',
-            row.get('device_token') or '',
-            row.get('ip_registro') or '',
-            row.get('user_agent') or '',
-            'Si' if row.get('sospecha_dispositivo') else 'No',
-            row['nombre'],
-            row['apellido'],
-            row['dni'] or '',
-            row['telefono'],
-            row['email'],
-            'Si' if row.get('acepta_promociones') else 'No',
-            row['detalle_validacion'] or '',
-            str(row['consulta_at'])[:19] if row['consulta_at'] else '',
-            row['conteo_id'],
-            repetition if ponderado and row['estado'] == 'APROBADO' else '',
-        ])
+        ws.append(build_export_values(row, repetition if ponderado and row['estado'] == 'APROBADO' else ''))
     salida = BytesIO()
     wb.save(salida)
     salida.seek(0)
@@ -1202,6 +1251,58 @@ def exportar_excel():
         salida.getvalue(),
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         headers={'Content-Disposition': f'attachment;filename=sorteo_{suffix}.xlsx'},
+    )
+
+
+@app.route('/admin/exportar-archivado/<int:conteo_id>')
+@app.route('/sorteo/admin/exportar-archivado/<int:conteo_id>')
+def exportar_archivado(conteo_id):
+    if not admin_required():
+        return redirect(sorteo_path('/admin/login'))
+
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute('''
+        SELECT *
+        FROM sorteo_conteos
+        WHERE id = %s
+          AND estacion_id = %s
+    ''', (conteo_id, session['sorteo_estacion_id']))
+    conteo = c.fetchone()
+    conn.close()
+
+    if not conteo:
+        return 'Archivado no encontrado.', 404
+
+    snapshot = conteo.get('snapshot_json') or '[]'
+    try:
+        rows = json.loads(snapshot)
+    except Exception:
+        rows = []
+
+    grouped = {
+        'APROBADO': [row for row in rows if (row.get('estado') or '').upper() == 'APROBADO'],
+        'DENEGADO': [row for row in rows if (row.get('estado') or '').upper() == 'DENEGADO'],
+        'PENDIENTE': [row for row in rows if (row.get('estado') or '').upper() == 'PENDIENTE'],
+        'DUDOSO': [row for row in rows if (row.get('estado') or '').upper() == 'DUDOSO'],
+    }
+
+    wb = openpyxl.Workbook()
+    wb.remove(wb.active)
+    append_archive_summary_sheet(wb, conteo)
+    append_export_sheet(wb, 'Aprobados', grouped['APROBADO'], ponderado=False)
+    append_export_sheet(wb, 'Denegados', grouped['DENEGADO'], ponderado=False)
+    append_export_sheet(wb, 'Pendientes', grouped['PENDIENTE'], ponderado=False)
+    append_export_sheet(wb, 'Dudosos', grouped['DUDOSO'], ponderado=False)
+
+    salida = BytesIO()
+    wb.save(salida)
+    salida.seek(0)
+    fecha_archivo = str(conteo.get('iniciado_en') or '')[:10] or 'archivado'
+    return Response(
+        salida.getvalue(),
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': f'attachment;filename=sorteo_archivado_{conteo_id}_{fecha_archivo}.xlsx'},
     )
 
 
