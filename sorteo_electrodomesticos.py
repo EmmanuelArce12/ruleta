@@ -687,6 +687,7 @@ def build_admin_context(eid):
 
     return {
         'nombre_estacion': session['sorteo_estacion_nombre'],
+        'admin_notice': session.pop('sorteo_admin_notice', None),
         'config': config,
         'estacion': station,
         'aprobados': aprobados,
@@ -802,6 +803,10 @@ def validar_pendientes(estacion_id=None):
     pendientes = c.fetchall()
 
     for participante in pendientes:
+        promo_config = {
+            'promocion_desde': participante.get('promocion_desde'),
+            'promocion_hasta': participante.get('promocion_hasta'),
+        }
         factura, error = consultar_facturacion(
             participante['estacion_id'],
             participante['ticket_fecha'],
@@ -820,7 +825,7 @@ def validar_pendientes(estacion_id=None):
         pago_electronico = bool(factura.get('pago_electronico'))
         medio_pago = factura.get('medio_pago') or ('App YPF' if pago_app_ypf else 'Contado / no electronico')
         chances = evaluation['chances'] if estado == 'APROBADO' else 0
-        sospecha_dispositivo = is_suspicious_device(c, participante, participante)
+        sospecha_dispositivo = is_suspicious_device(c, participante, promo_config)
 
         if estado == 'APROBADO' and sospecha_dispositivo:
             estado = 'DUDOSO'
@@ -973,7 +978,11 @@ def configurar():
 def forzar_consulta():
     if not admin_required():
         return redirect(sorteo_path('/admin/login'))
-    validar_pendientes(session['sorteo_estacion_id'])
+    try:
+        procesados = validar_pendientes(session['sorteo_estacion_id'])
+        session['sorteo_admin_notice'] = f'Consulta forzada ejecutada. Pendientes revisados: {procesados}.'
+    except Exception as exc:
+        session['sorteo_admin_notice'] = f'Error al forzar la consulta: {exc}'
     return redirect(sorteo_path('/admin'))
 
 

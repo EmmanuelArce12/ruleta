@@ -88,6 +88,7 @@
         .detail-badge.ok { background:rgba(22, 163, 74, 0.18); color:#86efac; border:1px solid rgba(34, 197, 94, 0.35); }
         .detail-badge.neutral { background:rgba(148, 163, 184, 0.12); color:#dbeafe; border:1px solid rgba(148, 163, 184, 0.22); }
         .detail-empty { border-radius:16px; padding:20px; background:#0a1726; border:1px solid var(--line); color:var(--muted); text-align:center; }
+        .admin-notice { margin-top:16px; padding:13px 15px; border-radius:14px; background:rgba(147, 197, 253, 0.12); border:1px solid rgba(147, 197, 253, 0.28); color:#dbeafe; font-weight:700; }
         @media (max-width: 900px) { .app-shell { padding:14px; } .hero { border-radius:20px; padding:20px; } .content-shell { border-radius:20px; } .panel { padding:16px; } .tabs { padding:14px 14px 0; } .tab-btn { min-width:unset; flex:1 1 calc(50% - 10px); } }
         @media (max-width: 640px) { .hero-actions, .inline-actions { width:100%; } .hero-actions a, .hero-actions button, .inline-actions .btn { width:100%; } .tab-btn { flex:1 1 100%; border-radius:12px; } .tab-btn.active { border-bottom-color:var(--line); } }
     </style>
@@ -129,6 +130,7 @@
             facturacionConfigurada: {{ facturacion_configurada|tojson }},
             sqlserverDriver: {{ sqlserver_driver|tojson }},
             estacion: { deboHost: {{ (estacion['debo_host'] or 'sin configurar')|tojson }}, deboAllowRemitos: {{ estacion['debo_allow_remitos']|tojson }} },
+            adminNotice: {{ (admin_notice or '')|tojson }},
             config: {
                 minimoLitros: {{ (config['minimo_litros'] or 0)|tojson }},
                 consultaAutomaticaHora: {{ (((config['consulta_automatica_hora']|string)[:5]) if config['consulta_automatica_hora'] else '04:00')|tojson }},
@@ -622,7 +624,8 @@
                             e('div', { className: 'stat-card' }, e('div', { className: 'stat-label' }, 'Dudosos'), e('strong', null, data.totales.dudosos)),
                             e('div', { className: 'stat-card' }, e('div', { className: 'stat-label' }, 'Aprobados'), e('strong', null, data.totales.aprobados)),
                             e('div', { className: 'stat-card' }, e('div', { className: 'stat-label' }, 'Denegados'), e('strong', null, data.totales.denegados))
-                        )
+                        ),
+                        data.adminNotice ? e('div', { className: 'admin-notice' }, data.adminNotice) : null
                     ),
                     e('section', { className: 'content-shell' },
                         e('div', { className: 'tabs' }, tabs.map(function (item) { return e('button', { key: item.id, type: 'button', className: 'tab-btn' + (tab === item.id ? ' active' : ''), onClick: function () { setTab(item.id); } }, item.label); })),
