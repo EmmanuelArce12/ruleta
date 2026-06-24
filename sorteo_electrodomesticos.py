@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, session, Response, jsonify
 from werkzeug.security import check_password_hash
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from io import BytesIO
 from decimal import Decimal
 import os
@@ -108,6 +108,16 @@ def init_db():
     c.execute("ALTER TABLE sorteo_config ADD COLUMN IF NOT EXISTS consulta_automatica_hora TIME DEFAULT TIME '04:00'")
     c.execute("ALTER TABLE sorteo_config ADD COLUMN IF NOT EXISTS consulta_en_curso BOOLEAN DEFAULT FALSE")
     c.execute("ALTER TABLE sorteo_config ADD COLUMN IF NOT EXISTS estado_consulta TEXT")
+    c.execute("""
+        UPDATE sorteo_config
+        SET consulta_en_curso = FALSE,
+            estado_consulta = CASE
+                WHEN consulta_en_curso = TRUE THEN 'La consulta anterior se interrumpio por reinicio del servicio.'
+                ELSE estado_consulta
+            END,
+            actualizado_en = CURRENT_TIMESTAMP
+        WHERE consulta_en_curso = TRUE
+    """)
     c.execute('''
         CREATE TABLE IF NOT EXISTS sorteo_participantes (
             id SERIAL PRIMARY KEY,
@@ -904,6 +914,27 @@ def ejecutar_consulta_manual_async(estacion_id):
         set_consulta_status(estacion_id, False, f'Error en consulta manual: {exc}')
 
 
+def iniciar_consulta_en_segundo_plano(estacion_id, origen='manual'):
+    config = get_sorteo_config(estacion_id) or {}
+    if config.get('consulta_en_curso'):
+        updated_at = config.get('actualizado_en')
+        if updated_at and isinstance(updated_at, datetime) and updated_at >= datetime.now(updated_at.tzinfo) - timedelta(minutes=20):
+            return False, 'Ya hay una consulta en curso para esta estacion.'
+        set_consulta_status(estacion_id, False, 'Se libero una consulta previa que habia quedado colgada.')
+
+    if origen == 'manual':
+        status_text = 'Consulta manual en curso. La pagina puede recargarse mientras se procesa.'
+        notice_text = 'Consulta manual iniciada en segundo plano.'
+    else:
+        status_text = 'Consulta automatica en curso.'
+        notice_text = 'Consulta automatica iniciada.'
+
+    set_consulta_status(estacion_id, True, status_text)
+    worker = threading.Thread(target=ejecutar_consulta_manual_async, args=(estacion_id,), daemon=True)
+    worker.start()
+    return True, notice_text
+
+
 def scheduler_loop():
     while True:
         time.sleep(60)
@@ -1005,15 +1036,8 @@ def forzar_consulta():
     if not admin_required():
         return redirect(sorteo_path('/admin/login'))
     estacion_id = session['sorteo_estacion_id']
-    config = get_sorteo_config(estacion_id)
-    if config and config.get('consulta_en_curso'):
-        session['sorteo_admin_notice'] = 'Ya hay una consulta manual en curso para esta estacion.'
-        return redirect(sorteo_path('/admin'))
-
-    set_consulta_status(estacion_id, True, 'Consulta manual en curso. La pagina puede recargarse mientras se procesa.')
-    worker = threading.Thread(target=ejecutar_consulta_manual_async, args=(estacion_id,), daemon=True)
-    worker.start()
-    session['sorteo_admin_notice'] = 'Consulta manual iniciada en segundo plano.'
+    _, notice = iniciar_consulta_en_segundo_plano(estacion_id, origen='manual')
+    session['sorteo_admin_notice'] = notice
     return redirect(sorteo_path('/admin'))
 
 
