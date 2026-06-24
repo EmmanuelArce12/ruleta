@@ -923,8 +923,8 @@ def iniciar_consulta_en_segundo_plano(estacion_id, origen='manual'):
         set_consulta_status(estacion_id, False, 'Se libero una consulta previa que habia quedado colgada.')
 
     if origen == 'manual':
-        status_text = 'Consulta manual en curso. La pagina puede recargarse mientras se procesa.'
-        notice_text = 'Consulta manual iniciada en segundo plano.'
+        status_text = 'Consulta manual en proceso. La pantalla se actualiza automaticamente.'
+        notice_text = 'Consulta manual iniciada. La pantalla se actualiza automaticamente.'
     else:
         status_text = 'Consulta automatica en curso.'
         notice_text = 'Consulta automatica iniciada.'

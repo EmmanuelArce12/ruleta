@@ -599,6 +599,15 @@
                 const panels = { overview: e(OverviewTab), pendientes: e(PendingTab), dudosos: e(SuspiciousTab), aprobados: e(ApprovedTab), denegados: e(DeniedTab), ranking: e(RankingTab), archivados: e(ArchiveTab) };
                 const titles = { overview: ['Resumen', 'Configuracion, promocion activa, QR, controles y exportaciones.'], pendientes: ['Pendientes', 'Lo que todavia no fue consultado contra DEBO.'], dudosos: ['Dudosos', 'Casos a revisar manualmente antes de aprobar o denegar.'], aprobados: ['Aprobados', 'Participantes validos listos para el sorteo.'], denegados: ['Denegadas', 'Facturas rechazadas por litros, combustible o datos invalidos.'], ranking: ['Ranking', 'Conteo de vendedores por facturas aprobadas.'], archivados: ['Archivados', 'Historial de promociones anteriores con exportacion disponible.'] };
                 useEffect(function () {
+                    if (!data.config.consultaEnCurso) return undefined;
+                    const timer = window.setTimeout(function () {
+                        window.location.reload();
+                    }, 3500);
+                    return function () {
+                        window.clearTimeout(timer);
+                    };
+                }, []);
+                useEffect(function () {
                     function handleOpen(event) {
                         setTicketDetail(event.detail || null);
                     }
