@@ -137,7 +137,9 @@
                 promocionDesde: {{ (config['promocion_desde'] and (config['promocion_desde']|string) or '')|tojson }},
                 promocionHasta: {{ (config['promocion_hasta'] and (config['promocion_hasta']|string) or '')|tojson }},
                 detenido: {{ config['detenido']|tojson }},
-                ultimaConsulta: {{ (config['ultima_consulta'] and (config['ultima_consulta']|string))|tojson }}
+                ultimaConsulta: {{ (config['ultima_consulta'] and (config['ultima_consulta']|string))|tojson }},
+                consultaEnCurso: {{ (config['consulta_en_curso'] or false)|tojson }},
+                estadoConsulta: {{ (config['estado_consulta'] or '')|tojson }}
             },
             totales: {{ totales|tojson }},
             sellerRanking: [{% for row in seller_ranking %}{ vendedor: {{ row['vendedor']|tojson }}, facturasAprobadas: {{ row['facturas_aprobadas']|tojson }} }{% if not loop.last %},{% endif %}{% endfor %}],
@@ -355,12 +357,13 @@
                             e('h3', null, 'Controles'),
                             e('p', null, 'Las consultas manuales y automaticas solo toman pendientes. Los dudosos quedan en revision manual.'),
                             e('div', { className: 'inline-actions' },
-                                e('button', { type: 'button', className: 'btn btn-success', onClick: function () { submitForm('forzar-form'); } }, 'Forzar consulta'),
+                                e('button', { type: 'button', className: 'btn btn-success', disabled: !!data.config.consultaEnCurso, onClick: function () { submitForm('forzar-form'); } }, data.config.consultaEnCurso ? 'Consulta en curso...' : 'Forzar consulta'),
                                 data.config.detenido
                                     ? e('button', { type: 'button', className: 'btn btn-primary', onClick: function () { submitForm('reanudar-form'); } }, 'Reanudar')
                                     : e('button', { type: 'button', className: 'btn btn-danger', onClick: function () { submitForm('detener-form'); } }, 'Detener')
                             ),
-                            e('p', { className: 'muted-note' }, 'Ultima consulta: ' + (data.config.ultimaConsulta || 'sin consultas') + '. Proxima ventana diaria: ' + (data.config.consultaAutomaticaHora || '04:00') + '. DEBO: ' + data.estacion.deboHost + '. Remitos: ' + (data.estacion.deboAllowRemitos ? 'permitidos' : 'denegados') + '.')
+                            e('p', { className: 'muted-note' }, 'Ultima consulta: ' + (data.config.ultimaConsulta || 'sin consultas') + '. Proxima ventana diaria: ' + (data.config.consultaAutomaticaHora || '04:00') + '. DEBO: ' + data.estacion.deboHost + '. Remitos: ' + (data.estacion.deboAllowRemitos ? 'permitidos' : 'denegados') + '.'),
+                            data.config.estadoConsulta ? e('p', { className: 'muted-note' }, 'Estado: ' + data.config.estadoConsulta) : null
                         ),
                         e('div', { className: 'panel-card stack' },
                             e('h3', null, 'Fraude y exportaciones'),

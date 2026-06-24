@@ -97,6 +97,8 @@ def init_db():
             activo BOOLEAN DEFAULT TRUE,
             detenido BOOLEAN DEFAULT FALSE,
             ultima_consulta TIMESTAMP,
+            consulta_en_curso BOOLEAN DEFAULT FALSE,
+            estado_consulta TEXT,
             creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -104,6 +106,8 @@ def init_db():
     c.execute("ALTER TABLE sorteo_config ADD COLUMN IF NOT EXISTS promocion_desde DATE")
     c.execute("ALTER TABLE sorteo_config ADD COLUMN IF NOT EXISTS promocion_hasta DATE")
     c.execute("ALTER TABLE sorteo_config ADD COLUMN IF NOT EXISTS consulta_automatica_hora TIME DEFAULT TIME '04:00'")
+    c.execute("ALTER TABLE sorteo_config ADD COLUMN IF NOT EXISTS consulta_en_curso BOOLEAN DEFAULT FALSE")
+    c.execute("ALTER TABLE sorteo_config ADD COLUMN IF NOT EXISTS estado_consulta TEXT")
     c.execute('''
         CREATE TABLE IF NOT EXISTS sorteo_participantes (
             id SERIAL PRIMARY KEY,
@@ -878,6 +882,28 @@ def validar_pendientes(estacion_id=None):
     return len(pendientes)
 
 
+def set_consulta_status(estacion_id, en_curso, mensaje):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''
+        UPDATE sorteo_config
+        SET consulta_en_curso = %s,
+            estado_consulta = %s,
+            actualizado_en = CURRENT_TIMESTAMP
+        WHERE estacion_id = %s
+    ''', (en_curso, mensaje, estacion_id))
+    conn.commit()
+    conn.close()
+
+
+def ejecutar_consulta_manual_async(estacion_id):
+    try:
+        procesados = validar_pendientes(estacion_id)
+        set_consulta_status(estacion_id, False, f'Consulta manual finalizada. Pendientes revisados: {procesados}.')
+    except Exception as exc:
+        set_consulta_status(estacion_id, False, f'Error en consulta manual: {exc}')
+
+
 def scheduler_loop():
     while True:
         time.sleep(60)
@@ -978,11 +1004,16 @@ def configurar():
 def forzar_consulta():
     if not admin_required():
         return redirect(sorteo_path('/admin/login'))
-    try:
-        procesados = validar_pendientes(session['sorteo_estacion_id'])
-        session['sorteo_admin_notice'] = f'Consulta forzada ejecutada. Pendientes revisados: {procesados}.'
-    except Exception as exc:
-        session['sorteo_admin_notice'] = f'Error al forzar la consulta: {exc}'
+    estacion_id = session['sorteo_estacion_id']
+    config = get_sorteo_config(estacion_id)
+    if config and config.get('consulta_en_curso'):
+        session['sorteo_admin_notice'] = 'Ya hay una consulta manual en curso para esta estacion.'
+        return redirect(sorteo_path('/admin'))
+
+    set_consulta_status(estacion_id, True, 'Consulta manual en curso. La pagina puede recargarse mientras se procesa.')
+    worker = threading.Thread(target=ejecutar_consulta_manual_async, args=(estacion_id,), daemon=True)
+    worker.start()
+    session['sorteo_admin_notice'] = 'Consulta manual iniciada en segundo plano.'
     return redirect(sorteo_path('/admin'))
 
 
